@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ricerca Inventario</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+    <div class="container">
+
+
+        <a class="button is-link" href="{{ url_for('index') }}">Torna alla lista</a>
+
+        <br><br>
+
+        <h1 class="title">Ricerca Inventario</h1>
+
+        <form method="get" action="{{ url_for('search') }}">
+            <div class="columns is-multiline">
+                {% for field in fields %}
+                <div class="column is-one-quarter">
+                    <div class="field">
+                        <label class="label">{{ field.replace('_', ' ').capitalize() }}</label>
+                        <div class="control">
+                            <input class="input" 
+                                   type="text"
+                                   name="{{ field }}" 
+                                   value="{{ request_args.get(field, '') }}"
+                                   placeholder="Cerca {{ field.replace('_', ' ') }}" />
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="field is-grouped">
+                <div class="control">
+                    <button class="button is-primary" type="submit">Cerca</button>
+                </div>
+                <div class="control">
+                    <button class="button is-info" type="submit" name="export" value="xlsx">Export XLSX</button>
+                </div>
+                <div class="control">
+                    <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
+                </div>
+            </div>
+        </form>
+
+        <hr />
+
+        {% if records %}
+        <table class="table is-striped is-fullwidth">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'codice_sipi_torino', 'num_inventario', 'data_carico', 'note'] %}
+                    <th>{{ field.replace('_', ' ').capitalize() }}</th>
+                    {% endfor %}
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.descrizione_bene }}</td>
+                    <td>{{ r.responsabile_laboratorio }}</td>
+                    <td>{{ r.codice_sipi_torino }}</td>
+                    <td>{{ r.num_inventario }}</td>
+                    <td>{{ r.data_carico }}</td>
+                    <td>{{ r.note }}</td>
+                    <td><a href="{{ url_for('modifica', record_id=r.id) }}" class="button is-small is-info">Modifica</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Nessun risultato trovato.</p>
+        {% endif %}
+    </div>
+</section>
+</body>
+</html>

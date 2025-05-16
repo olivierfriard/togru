@@ -1,0 +1,329 @@
+from flask import Flask, request, render_template, redirect, url_for, flash, send_file
+from markupsafe import Markup
+
+from sqlalchemy import create_engine, text
+import pandas as pd
+from io import BytesIO
+
+APP_ROOT = "/togru"
+
+app = Flask(__name__)
+app.secret_key = "your_secret_key"  # needed for flash messages
+
+DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
+engine = create_engine(DATABASE_URL)
+
+# Creazione tabella
+with engine.connect() as conn:
+    conn.execute(
+        text("""
+        CREATE TABLE IF NOT EXISTS inventario (
+            id SERIAL PRIMARY KEY,
+            descrizione_inventario TEXT,
+            num_inventario TEXT,
+            num_inventario_ateneo TEXT,
+            data_carico TEXT,
+            descrizione_bene TEXT,
+            codice_sipi_torino TEXT,
+            codice_sipi_grugliasco TEXT,
+            destinazione TEXT,
+            rosso_fase_alimentazione_privilegiata TEXT,
+            valore_convenzionale TEXT,
+            esercizio_bene_migrato TEXT,
+            responsabile_laboratorio TEXT,
+            denominazione_fornitore TEXT,
+            anno_fabbricazione TEXT,
+            numero_seriale TEXT,
+            categoria_inventoriale TEXT,
+            catalogazione_materiale_strumentazione TEXT,
+            peso TEXT,
+            dimensioni TEXT,
+            ditta_costruttrice_fornitrice TEXT,
+            note TEXT
+        )
+    """)
+    )
+    conn.commit()
+
+
+# Visualizza record
+@app.route(APP_ROOT)
+def index():
+    with engine.connect() as conn:
+        result = conn.execute(
+            text(
+                "SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+            )
+        )
+        records = result.fetchall()
+    return render_template("index.html", records=records)
+
+
+@app.route(APP_ROOT + "/view/<int:record_id>")
+def view(record_id):
+    with engine.connect() as conn:
+        sql = text("SELECT * FROM inventario WHERE id = :id")
+        result = conn.execute(sql, {"id": record_id}).fetchone()
+        if not result:
+            return f"Bene con ID {record_id} non trovato", 404
+
+        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+
+    return render_template("view.html", record=record_dict)
+
+
+# Aggiungi record
+@app.route(APP_ROOT + "/aggiungi", methods=["GET", "POST"])
+def aggiungi():
+    if request.method == "GET":
+        return render_template("aggiungi.html")
+
+    if request.method == "POST":
+        data = request.form
+        query = text("""
+            INSERT INTO inventario (
+                descrizione_inventario, num_inventario, num_inventario_ateneo, data_carico,
+                descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                ditta_costruttrice_fornitrice, note
+            ) VALUES (
+                :descrizione_inventario, :num_inventario, :num_inventario_ateneo, :data_carico,
+                :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
+                :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
+                :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
+                :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
+                :ditta_costruttrice_fornitrice, :note
+            )
+        """)
+        with engine.connect() as conn:
+            conn.execute(query, data)
+            conn.commit()
+        return redirect(url_for("index"))
+
+
+# Modifica record - form
+@app.route(APP_ROOT + "/modifica/<int:record_id>")
+def modifica(record_id):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id}
+        )
+        record = result.fetchone()
+    return render_template("modifica.html", record=record)
+
+
+# Modifica record - salvataggio
+@app.route(APP_ROOT + "/salva_modifiche/<int:record_id>", methods=["POST"])
+def salva_modifiche(record_id):
+    data = request.form
+    query = text("""
+        UPDATE inventario SET
+            descrizione_inventario = :descrizione_inventario,
+            num_inventario = :num_inventario,
+            num_inventario_ateneo = :num_inventario_ateneo,
+            data_carico = :data_carico,
+            descrizione_bene = :descrizione_bene,
+            codice_sipi_torino = :codice_sipi_torino,
+            codice_sipi_grugliasco = :codice_sipi_grugliasco,
+            destinazione = :destinazione,
+            rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata,
+            valore_convenzionale = :valore_convenzionale,
+            esercizio_bene_migrato = :esercizio_bene_migrato,
+            responsabile_laboratorio = :responsabile_laboratorio,
+            denominazione_fornitore = :denominazione_fornitore,
+            anno_fabbricazione = :anno_fabbricazione,
+            numero_seriale = :numero_seriale,
+            categoria_inventoriale = :categoria_inventoriale,
+            catalogazione_materiale_strumentazione = :catalogazione_materiale_strumentazione,
+            peso = :peso,
+            dimensioni = :dimensioni,
+            ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice,
+            note = :note
+        WHERE id = :id
+    """)
+    with engine.connect() as conn:
+        conn.execute(query, {**data, "id": record_id})
+        conn.commit()
+    return redirect(url_for("index"))
+
+
+@app.route(APP_ROOT + "/upload_excel", methods=["GET", "POST"])
+def upload_excel():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file:
+            flash("Nessun file caricato", "danger")
+            return redirect(request.url)
+
+        try:
+            df = pd.read_excel(file)
+            df.columns = df.columns.str.strip()
+
+            excel_to_db_fields = {
+                "Descrizione Inventario": "descrizione_inventario",
+                "Numero inventario": "num_inventario",
+                "Num inventario Ateneo": "num_inventario_ateneo",
+                "Data carico": "data_carico",
+                "Descrizione bene": "descrizione_bene",
+                "Codice Sipi Torino": "codice_sipi_torino",
+                "Codice Sipi Grugliasco": "codice_sipi_grugliasco",
+                "Destinazione (colori legenda)": "destinazione",
+                "Rosso fase_alimentazione privilegiata": "rosso_fase_alimentazione_privilegiata",
+                "Valore convenzionale": "valore_convenzionale",
+                "Esercizio bene migrato": "esercizio_bene_migrato",
+                "Responsabile di Laboratorio": "responsabile_laboratorio",
+                "Denominazione Fornitore": "denominazione_fornitore",
+                "Anno fabbricazione": "anno_fabbricazione",
+                "Numero seriale": "numero_seriale",
+                "Categoria inventariale": "categoria_inventoriale",
+                "Catalogazione del materiale/strumentazione": "catalogazione_materiale_strumentazione",
+                "Peso": "peso",
+                "Dimensioni (Altezza e larghezza/lunghezza espressi in cm)": "dimensioni",
+                "Ditta costruttrice/Fornitrice": "ditta_costruttrice_fornitrice",
+                "Note": "note",
+            }
+
+            for col in df.columns:
+                if col.startswith("Peso"):
+                    df.rename(columns={col: "Peso"}, inplace=True)
+                    break  # Se vuoi rinominare solo la prima colonna che matcha
+
+            df.rename(columns=excel_to_db_fields, inplace=True)
+            df.fillna("", inplace=True)
+
+            expected_cols = list(excel_to_db_fields.values())
+            missing_cols = [c for c in expected_cols if c not in df.columns]
+            if missing_cols:
+                flash(f"Mancano colonne nel file Excel: {missing_cols}", "danger")
+                return redirect(request.url)
+
+            # record senza responsabile
+            senza_responsabile = df[df["responsabile_laboratorio"] == ""]
+
+            with engine.connect() as conn:
+                for _, row in df.iterrows():
+                    sql = text("""
+                    INSERT INTO inventario (
+                        descrizione_inventario, num_inventario, num_inventario_ateneo, data_carico,
+                        descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                        rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                        responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                        categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                        ditta_costruttrice_fornitrice, note
+                    ) VALUES (
+                        :descrizione_inventario, :num_inventario, :num_inventario_ateneo, :data_carico,
+                        :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
+                        :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
+                        :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
+                        :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
+                        :ditta_costruttrice_fornitrice, :note
+                    )
+                    """)
+                    conn.execute(sql, row.to_dict())
+                conn.commit()
+
+            flash("File caricato e dati inseriti con successo!", "success")
+
+            # se ci sono record senza responsabile -> flash di report sintetico
+            count_senza_responsabile = len(senza_responsabile)
+
+            if count_senza_responsabile > 0:
+                # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
+                dettagli = [
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in senza_responsabile.iterrows()
+                ]
+                inventari = "<br>".join(dettagli)
+                flash(
+                    Markup(
+                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
+                    ),
+                    "warning",
+                )
+
+            return redirect(url_for("index"))
+
+        except Exception as e:
+            flash(f"Errore nel caricamento del file: {e}", "danger")
+            return redirect(request.url)
+
+    return render_template("upload_excel.html")
+
+
+@app.route(APP_ROOT + "/search", methods=["GET"])
+def search():
+    # Lista di tutti i campi su cui cercare
+    fields = [
+        # "descrizione_inventario",
+        "descrizione_bene",
+        "responsabile_laboratorio",
+        "num_inventario",
+        "num_inventario_ateneo",
+        "data_carico",
+        "codice_sipi_torino",
+        "codice_sipi_grugliasco",
+        "destinazione",
+        "rosso_fase_alimentazione_privilegiata",
+        "valore_convenzionale",
+        "esercizio_bene_migrato",
+        "denominazione_fornitore",
+        "anno_fabbricazione",
+        "numero_seriale",
+        "categoria_inventoriale",
+        "catalogazione_materiale_strumentazione",
+        "peso",
+        "dimensioni",
+        "ditta_costruttrice_fornitrice",
+        "note",
+    ]
+
+    # Controlla se almeno un parametro di ricerca è presente e non vuoto
+    has_filter = any(request.args.get(field, "").strip() for field in fields)
+
+    if not has_filter:
+        # Nessun filtro: non eseguire query, ritorna lista vuota o messaggio
+        records = []
+        keys = fields  # se vuoi colonne vuote per tabella nel template
+    else:
+        query = "SELECT * FROM inventario WHERE TRUE"
+        params = {}
+
+        for field in fields:
+            value = request.args.get(field, "").strip()
+            if value:
+                # Per testo, ricerca con ILIKE e wildcard %
+                query += f" AND {field} ILIKE :{field}"
+                params[field] = f"%{value}%"
+
+        query += " ORDER BY id DESC LIMIT 100"
+
+        sql = text(query)
+        with engine.connect() as conn:
+            result = conn.execute(sql, params)
+            records = result.fetchall()
+            keys = result.keys()
+
+    # Se viene richiesta esportazione Excel e ci sono risultati
+    if request.args.get("export", "").lower() == "xlsx" and records:
+        df = pd.DataFrame(records, columns=keys)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Risultati")
+        output.seek(0)
+
+        return send_file(
+            output,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="risultati_ricerca.xlsx",
+        )
+
+    return render_template(
+        "search.html", records=records, request_args=request.args, fields=fields
+    )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

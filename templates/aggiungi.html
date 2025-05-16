@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Aggiungi Bene</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+</head>
+<body>
+
+<section class="section">
+    <div class="container">
+
+        <a class="button is-link" href="{{ url_for('index') }}">Torna alla lista</a>
+
+        <br><br>
+
+        <h2 class="title is-4">Aggiungi Nuovo Bene</h2>
+
+        <form action="{{ url_for('aggiungi') }}" method="POST">
+            <div class="columns is-multiline">
+                {% for field in [
+                    'descrizione_inventario', 'num_inventario', 'num_inventario_ateneo', 'data_carico',
+                    'descrizione_bene', 'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
+                    'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
+                    'responsabile_laboratorio', 'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
+                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 'peso', 'dimensioni',
+                    'ditta_costruttrice_fornitrice'
+                ] %}
+                <div class="column is-one-third">
+                    <div class="field">
+                        <label class="label is-small">{{ field.replace('_',' ').capitalize() }} {% if 'data' in field %}(DD/MM/AAAA){%endif%}</label>
+                        <div class="control">
+                            <input class="input is-small" type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').capitalize() }}">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="field">
+                <label class="label">Note</label>
+                <div class="control">
+                    <textarea class="textarea is-small" name="note" placeholder="Note"></textarea>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" type="submit">Aggiungi</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</section>
+
+</body>
+</html>

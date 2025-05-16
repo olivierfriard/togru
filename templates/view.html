@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualizza Bene (ID: {{ record.id }})</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+
+            <a class="button is-link" href="{{ url_for('index') }}">Torna alla lista</a>
+
+            <a class="button is-warning" href="{{ url_for('modifica', record_id=record['id']) }}">Modifica</a>
+
+<br><br>
+
+            <h1 class="title">Bene ID: {{ record.id }}</h1>
+
+            <table class="table is-striped is-hoverable is-fullwidth">
+                <tbody>
+                    {% for key, value in record.items() %}
+                    <tr>
+                        <th>{{ key.replace('_', ' ').capitalize() }}</th>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+
+            
+        </div>
+    </section>
+</body>
+</html>

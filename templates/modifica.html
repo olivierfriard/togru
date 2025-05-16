@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifica Bene (ID: {{ record.id }})</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+</head>
+<body>
+<section class="section">
+    <div class="container">
+
+        <a class="button" href="{{ url_for('index') }}">Torna alla lista</a>
+
+<br><br>
+
+        <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
+
+        <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
+            <div class="columns is-multiline is-mobile">
+                {% for field in [
+                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 'data_carico',
+                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
+                    'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
+                     'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
+                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 'peso', 'dimensioni',
+                    'ditta_costruttrice_fornitrice'
+                ] %}
+                <div class="column is-one-quarter">
+                    <div class="field">
+                        <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}</label>
+                        <div class="control">
+                            <input class="input" type="text" name="{{ field }}" value="{{ record[field] }}">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="field">
+                <label class="label">Note</label>
+                <div class="control">
+                    <textarea class="textarea" name="note">{{ record.note }}</textarea>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" type="submit">Salva modifiche</button>
+                </div>
+            </div>
+        </form>
+
+        <p><a href="{{ url_for('index') }}">Torna alla lista</a></p>
+    </div>
+</section>
+</body>
+</html>
