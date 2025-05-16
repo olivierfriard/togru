@@ -7,7 +7,7 @@ from io import BytesIO
 
 APP_ROOT = "/togru"
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="/togru/static")
 app.secret_key = "your_secret_key"  # needed for flash messages
 
 DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
