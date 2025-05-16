@@ -193,6 +193,63 @@ def upload_excel():
             df.rename(columns=excel_to_db_fields, inplace=True)
             df.fillna("", inplace=True)
 
+            """
+            # Trasforma num_inventario in intero dove possibile
+            df["num_inventario"] = (
+                pd.to_numeric(df["num_inventario"], errors="coerce")
+                .fillna(0)
+                .astype(int)
+            )
+            """
+
+            # Controllo duplicati nel num_inventario
+            """
+            duplicati = df[df.duplicated(subset=["num_inventario"], keep=False)]
+
+            if not duplicati.empty:
+                dettagli = [
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in duplicati.iterrows()
+                ]
+                inventari = "<br>".join(dettagli)
+                flash(
+                    Markup(
+                        f"<b>Trovati {len(duplicati)} beni con num_inventario duplicato nel file</b>:<br>{inventari}"
+                    ),
+                    "danger",
+                )
+                return redirect(request.url)
+            """
+
+            # Controllo duplicati su num_inventario, solo se diverso da NaN
+            """
+            duplicati = df[df["num_inventario"].notna()]["num_inventario"].duplicated(
+                keep=False
+            )
+            """
+
+            # Controllo duplicati su num_inventario solo se diverso da NaN e stringa vuota
+            mask_validi = (df["num_inventario"].notna()) & (df["num_inventario"] != "")
+            duplicati = df.loc[mask_validi, "num_inventario"].duplicated(keep=False)
+
+            if duplicati.any():
+                num_duplicati = duplicati.sum()
+                inv_duplicati = df.loc[
+                    duplicati.index[duplicati], ["num_inventario", "descrizione_bene"]
+                ]
+                elenco = "<br>".join(
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in inv_duplicati.iterrows()
+                )
+                flash(
+                    Markup(
+                        f"<b>Nessun dato caricato</b> perché sono stati trovati <b>{num_duplicati} beni con numero di inventario duplicato nel file</b>:<br><br>{elenco}"
+                    ),
+                    "danger",
+                )
+
+                return redirect(request.url)
+
             expected_cols = list(excel_to_db_fields.values())
             missing_cols = [c for c in expected_cols if c not in df.columns]
             if missing_cols:
@@ -246,6 +303,7 @@ def upload_excel():
             return redirect(url_for("index"))
 
         except Exception as e:
+            raise
             flash(f"Errore nel caricamento del file: {e}", "danger")
             return redirect(request.url)
 

@@ -16,9 +16,33 @@
         <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
 
         <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
+
+
+<!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
+<div class="columns">
+    <div class="column is-half">
+        <div class="field">
+            <label class="label">Descrizione bene</label>
+            <div class="control">
+                <input class="input" type="text" name="descrizione_bene" placeholder="Descrizione bene"  value="{{ record['descrizione_bene'] }}">
+            </div>
+        </div>
+    </div>
+    <div class="column is-half">
+        <div class="field">
+            <label class="label">Responsabile laboratorio</label>
+            <div class="control">
+                <input class="input" type="text" name="responsabile_laboratorio" placeholder="Responsabile laboratorio"  value="{{ record['responsabile_laboratorio'] }}">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
             <div class="columns is-multiline is-mobile">
                 {% for field in [
-                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 'data_carico',
+                    'num_inventario', 'num_inventario_ateneo', 'data_carico',
                      'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
                     'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
                      'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
