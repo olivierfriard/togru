@@ -120,7 +120,6 @@ def salva_modifiche(record_id):
     data = request.form
     query = text("""
         UPDATE inventario SET
-            descrizione_inventario = :descrizione_inventario,
             num_inventario = :num_inventario,
             num_inventario_ateneo = :num_inventario_ateneo,
             data_carico = :data_carico,

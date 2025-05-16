@@ -17,7 +17,7 @@
 
         <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
 
-
+{#
 <!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
 <div class="columns">
     <div class="column is-half">
@@ -37,12 +37,12 @@
         </div>
     </div>
 </div>
-
+#}
 
 
             <div class="columns is-multiline is-mobile">
                 {% for field in [
-                    'num_inventario', 'num_inventario_ateneo', 'data_carico',
+                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 'data_carico',
                      'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
                     'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
                      'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
