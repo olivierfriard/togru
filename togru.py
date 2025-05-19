@@ -1,17 +1,39 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, send_file
+from flask import Flask, request, render_template, redirect, url_for, flash, send_file, session
 from markupsafe import Markup
-
+from requests_oauthlib import OAuth2Session
 from sqlalchemy import create_engine, text
 import pandas as pd
+import json
 from io import BytesIO
+import os
 
 APP_ROOT = "/togru"
 
 app = Flask(__name__, static_url_path="/togru/static")
-app.secret_key = "your_secret_key"  # needed for flash messages
+app.secret_key = os.urandom(24)  # needed for flash messages
 
 DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
 engine = create_engine(DATABASE_URL)
+
+
+# Carico le credenziali dal JSON
+with open("client_secret.json") as f:
+    config = json.load(f)["web"]
+
+client_id = config["client_id"]
+client_secret = config["client_secret"]
+authorization_base_url = config["auth_uri"]
+token_url = config["token_uri"]
+redirect_uri = config["redirect_uris"][0]
+
+print(f"{redirect_uri=}")
+
+scope = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
+
+
+# solo per DEV
+if "127.0.0.1" in redirect_uri:
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 # Creazione tabella
 with engine.connect() as conn:
@@ -46,14 +68,48 @@ with engine.connect() as conn:
     conn.commit()
 
 
+@app.route(APP_ROOT + "/login")
+def login():
+    """Reindirizza l'utente alla schermata di autorizzazione di Google"""
+    google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
+    authorization_url, state = google.authorization_url(authorization_base_url, access_type="offline", prompt="select_account")
+    session["oauth_state"] = state
+    return redirect(authorization_url)
+
+
+@app.route(APP_ROOT + "/callback")
+def callback():
+    """Callback dopo il login Google"""
+    google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
+    token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
+
+    session["oauth_token"] = token
+
+    # Recupero dati utente
+    response = google.get("https://www.googleapis.com/oauth2/v1/userinfo")
+    userinfo = response.json()
+
+    session["name"] = userinfo["name"]
+    session["email"] = userinfo["email"]
+
+    return redirect(url_for("index"))
+
+
+@app.route(APP_ROOT + "/logout")
+def logout():
+    """logout"""
+    del session["email"]
+    del session["name"]
+
+    return redirect(url_for("index"))
+
+
 # Visualizza record
 @app.route(APP_ROOT)
 def index():
     with engine.connect() as conn:
         result = conn.execute(
-            text(
-                "SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
-            )
+            text("SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id ")
         )
         records = result.fetchall()
     return render_template("index.html", records=records)
@@ -107,9 +163,7 @@ def aggiungi():
 @app.route(APP_ROOT + "/modifica/<int:record_id>")
 def modifica(record_id):
     with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id}
-        )
+        result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
         record = result.fetchone()
     return render_template("modifica.html", record=record)
 
@@ -233,13 +287,8 @@ def upload_excel():
 
             if duplicati.any():
                 num_duplicati = duplicati.sum()
-                inv_duplicati = df.loc[
-                    duplicati.index[duplicati], ["num_inventario", "descrizione_bene"]
-                ]
-                elenco = "<br>".join(
-                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
-                    for _, row in inv_duplicati.iterrows()
-                )
+                inv_duplicati = df.loc[duplicati.index[duplicati], ["num_inventario", "descrizione_bene"]]
+                elenco = "<br>".join(f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in inv_duplicati.iterrows())
                 flash(
                     Markup(
                         f"<b>Nessun dato caricato</b> perché sono stati trovati <b>{num_duplicati} beni con numero di inventario duplicato nel file</b>:<br><br>{elenco}"
@@ -287,15 +336,10 @@ def upload_excel():
 
             if count_senza_responsabile > 0:
                 # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
-                dettagli = [
-                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
-                    for _, row in senza_responsabile.iterrows()
-                ]
+                dettagli = [f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in senza_responsabile.iterrows()]
                 inventari = "<br>".join(dettagli)
                 flash(
-                    Markup(
-                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
-                    ),
+                    Markup(f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"),
                     "warning",
                 )
 
@@ -377,9 +421,7 @@ def search():
             download_name="risultati_ricerca.xlsx",
         )
 
-    return render_template(
-        "search.html", records=records, request_args=request.args, fields=fields
-    )
+    return render_template("search.html", records=records, request_args=request.args, fields=fields)
 
 
 if __name__ == "__main__":
