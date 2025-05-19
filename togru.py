@@ -1,11 +1,13 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, send_file, session
+from fpdf import FPDF
+from io import BytesIO
 from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
 from sqlalchemy import create_engine, text
 import pandas as pd
 import json
-from io import BytesIO
 import os
+import qrcode
 
 APP_ROOT = "/togru"
 
@@ -118,7 +120,12 @@ def index():
 @app.route(APP_ROOT + "/view/<int:record_id>")
 def view(record_id):
     with engine.connect() as conn:
-        sql = text("SELECT * FROM inventario WHERE id = :id")
+        sql = text("""SELECT id,descrizione_bene, responsabile_laboratorio,num_inventario, num_inventario_ateneo, data_carico,
+                 codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                 denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                ditta_costruttrice_fornitrice, note FROM inventario WHERE id = :id""")
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
@@ -138,14 +145,14 @@ def aggiungi():
         data = request.form
         query = text("""
             INSERT INTO inventario (
-                descrizione_inventario, num_inventario, num_inventario_ateneo, data_carico,
+                 num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
                 rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note
             ) VALUES (
-                :descrizione_inventario, :num_inventario, :num_inventario_ateneo, :data_carico,
+                 :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
                 :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
@@ -422,6 +429,82 @@ def search():
         )
 
     return render_template("search.html", records=records, request_args=request.args, fields=fields)
+
+
+@app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
+def etichetta(record_id):
+    with engine.connect() as conn:
+        sql = text("""SELECT * FROM inventario WHERE id = :id""")
+        result = conn.execute(sql, {"id": record_id}).fetchone()
+        if not result:
+            return f"Bene con ID {record_id} non trovato", 404
+
+        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+
+    # Créer le QR code en mémoire
+    qr_data = f"http://penelope.unito.it/togru/view/{record_id}"
+    qr = qrcode.QRCode(box_size=10, border=4)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+
+    img_qr = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    # Sauvegarder le QR code dans un buffer BytesIO
+    qr_buffer = BytesIO()
+    img_qr.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+
+    # Sauvegarder le buffer QR dans un fichier temporaire car FPDF2 attend un fichier
+    temp_qr_path = f"temp_{record_id}.png"
+    img_qr.save(temp_qr_path)
+
+    try:
+        font_size = 12
+        # Créer le PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=font_size)
+        h = font_size * 0.7
+        pdf.cell(
+            0,
+            h,
+            txt=f"{record_dict['descrizione_bene']}",
+            ln=True,
+            align="L",
+        )
+        pdf.cell(200, h, txt=f"Responsabile laboratorio: {record_dict['responsabile_laboratorio']}", ln=True, align="L")
+        pdf.cell(
+            200, h, txt=f"Inventario: {record_dict['num_inventario']}  Ateneo: {record_dict['num_inventario_ateneo']}", ln=True, align="L"
+        )
+        pdf.cell(
+            200,
+            h,
+            txt=f"Codice SIPI TORINO: {record_dict['codice_sipi_torino']}  GRUGLIASCO: {record_dict['codice_sipi_grugliasco']}",
+            ln=True,
+            align="L",
+        )
+        if record_dict["destinazione"]:
+            pdf.cell(200, h, txt=f"Destinazione: {record_dict['destinazione']}", ln=True, align="L")
+        if record_dict["note"]:
+            pdf.cell(200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L")
+
+        pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
+
+        # Ajouter une image si tu veux
+        pdf.image(temp_qr_path, x=5, y=50, w=50)
+
+        # Sauvegarder le PDF dans un buffer mémoire
+        pdf_buffer = BytesIO()
+        pdf.output(pdf_buffer)
+        pdf_buffer.seek(0)
+
+        # Retourner le fichier au navigateur
+        return send_file(pdf_buffer, mimetype="application/pdf", as_attachment=False, download_name=f"document_{record_id}.pdf")
+
+    finally:
+        # Supprimer le fichier QR temporaire
+        if os.path.exists(temp_qr_path):
+            os.remove(temp_qr_path)
 
 
 if __name__ == "__main__":
