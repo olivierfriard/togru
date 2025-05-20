@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>To-Gru</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+<meta charset="UTF-8">
+<title>To-Gru</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
 </head>
 <body>
     <section class="section">
         <div class="container">
 
-            <h3 class="title is-3">TO-GRU</h3>
-
-
-
+        <h3 class="title is-3">TO-GRU</h3>
 
 
 {% if session['email'] %}
@@ -22,9 +19,10 @@
 <a class="button is-link" href="{{ url_for('aggiungi') }}">Aggiungi record</a>
 
 <a class="button is-link" href="{{ url_for('upload_excel') }}">Carica file Excel</a>
-
+<br><br>
 <a class="button is-link" href="{{ url_for('search') }}">Cerca</a>
 
+<a class="button is-link" href="{{ url_for('search_resp') }}">Cerca per responsabile</a>
 
 <br><br>
 
@@ -49,7 +47,7 @@
                         <th>Descrizione Bene</th>
                         <th>Responsabile laboratorio</th>
                         <th>Num Inventario</th>
-                        <th>Data Carico</th>
+                        <th>Dextinazione</th>
                         <th>Note</th>
                         <th>Azioni</th>
                     </tr>
@@ -62,7 +60,7 @@
                         <td>{{ r.descrizione_bene }}</td>
                         <td>{{ r.responsabile_laboratorio }}</td>
                         <td>{{ r.num_inventario }}</td>
-                        <td>{{ r.data_carico }}</td>
+                        <td>{{ r.destinazione }}</td>
                         <td>{{ r.note }}</td>
                         <td>
                             <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id) }}">dettagli</a>

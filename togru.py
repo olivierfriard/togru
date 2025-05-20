@@ -128,12 +128,15 @@ def index():
 @app.route(APP_ROOT + "/view/<int:record_id>/<query_string>")
 def view(record_id: int, query_string: str = ""):
     with engine.connect() as conn:
-        sql = text("""SELECT id,descrizione_bene, responsabile_laboratorio,num_inventario, num_inventario_ateneo, data_carico,
-                 codice_sipi_torino, codice_sipi_grugliasco, destinazione,
-                rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
-                 denominazione_fornitore, anno_fabbricazione, numero_seriale,
-                categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
-                ditta_costruttrice_fornitrice, note FROM inventario WHERE id = :id""")
+        sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
+                      num_inventario, num_inventario_ateneo, data_carico,
+                     codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                     rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                     denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                     categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                    ditta_costruttrice_fornitrice, note 
+                    FROM inventario 
+                    WHERE id = :id""")
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
@@ -215,7 +218,38 @@ def salva_modifiche(record_id):
     with engine.connect() as conn:
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
+
+    query_string = request.form.get("query_string", "")
+    if query_string:
+        return redirect(APP_ROOT + f"/search?{query_string}")
+
     return redirect(url_for("index"))
+
+
+@app.route(APP_ROOT + "/modifica_multipla", methods=["POST"])
+def modifica_multipla():
+    campo = request.form.get("campo")
+    nuovo_valore = request.form.get("nuovo_valore")
+    record_ids = request.form.getlist("record_ids")
+    query_string = request.form.get("query_string", "")
+
+    if (
+        nuovo_valore
+        and record_ids
+        and campo in ("responsabile_laboratorio", "codice_sipi_torino", "codice_sipi_grugliasco", "destinazione", "note")
+    ):
+        for rid in record_ids:
+            print(f"{campo=}")
+            print(f"{nuovo_valore=}")
+            print(f"{rid=}")
+            print("==")
+
+            query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
+            with engine.connect() as conn:
+                conn.execute(query, {"id": rid, "nuovo_valore": nuovo_valore})
+                conn.commit()
+
+    return redirect(url_for("search") + "?" + query_string)
 
 
 @app.route(APP_ROOT + "/upload_excel", methods=["GET", "POST"])
@@ -441,6 +475,34 @@ def search():
         )
 
     return render_template("search.html", records=records, request_args=request.args, fields=fields, query_string=query_string)
+
+
+@app.route(APP_ROOT + "/search_resp")
+@app.route(APP_ROOT + "/search_resp/<responsabile_laboratorio>")
+def search_resp(responsabile_laboratorio: str = ""):
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"))
+        resp = result.fetchall()
+
+    # responsabile = request.args.get("responsabile_laboratorio")
+    # descrizione = request.args.get("descrizione_bene")
+
+    sql = "SELECT * FROM inventario WHERE True "
+    params = {}
+
+    if responsabile_laboratorio:
+        sql += " AND responsabile_laboratorio = :responsabile_laboratorio"
+        params["responsabile_laboratorio"] = responsabile_laboratorio
+
+        with engine.connect() as conn:
+            result = conn.execute(text(sql), params)
+            records = result.fetchall()
+    else:
+        records = {}
+        request_args = {}
+    return render_template(
+        "search_responsabile.html", responsabile_laboratorio=responsabile_laboratorio, resp=resp, records=records, request_args=request.args
+    )
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
