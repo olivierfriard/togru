@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ricerca Inventario</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+    <div class="container">
+
+        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+        <br><br>
+
+        <h1 class="title">Filtra per Responsabile Laboratorio</h1>
+
+        <!-- Pulsanti di filtro per responsabile laboratorio -->
+        <div class="buttons">
+{% for r in resp %}
+{% if r.responsabile_laboratorio==responsabile_laboratorio %}
+            <a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-primary">                {{ r.responsabile_laboratorio  }}</a>
+{%else%}
+<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-light">            {{ r.responsabile_laboratorio  }}</a>
+{%endif%}
+
+            {%endfor%}
+
+           
+        </div>
+<a href="{{ url_for('search_resp') }}" class="button">Reset</a>
+        <hr />
+
+
+        {% if records %}
+        <table class="table is-striped is-fullwidth">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descrizione Bene</th>
+                    <th>Responsabile</th>
+                    <th>Inventario</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.descrizione_bene }}</td>
+                    <td>{{ r.responsabile_laboratorio }}</td>
+                    <td>{{ r.num_inventario }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% endif %}
+
+    </div>
+</section>
+</body>
+</html>
