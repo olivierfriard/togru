@@ -13,6 +13,8 @@
 
             <a class="button is-warning" href="{{ url_for('modifica', record_id=record['id']) }}">Modifica</a>
 
+<a class="button is-link" href="{{ url_for('etichetta', record_id=record.id) }}">Stampa etichetta</a>
+
 <br><br>
 
             <h1 class="title">Bene ID: {{ record.id }}</h1>
@@ -29,7 +31,7 @@
                 </tbody>
             </table>
 
- <a class="button is-link" href="{{ url_for('etichetta', record_id=record.id) }}">Stampa etichetta</a>
+ 
             
         </div>
     </section>
