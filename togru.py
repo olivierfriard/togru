@@ -19,23 +19,26 @@ engine = create_engine(DATABASE_URL)
 
 
 # Carico le credenziali dal JSON
-with open("client_secret.json") as f:
-    config = json.load(f)["web"]
+try:
+    with open("client_secret.json") as f:
+        config = json.load(f)["web"]
 
-client_id = config["client_id"]
-client_secret = config["client_secret"]
-authorization_base_url = config["auth_uri"]
-token_url = config["token_uri"]
-redirect_uri = config["redirect_uris"][0]
+    client_id = config["client_id"]
+    client_secret = config["client_secret"]
+    authorization_base_url = config["auth_uri"]
+    token_url = config["token_uri"]
+    redirect_uri = config["redirect_uris"][0]
 
-print(f"{redirect_uri=}")
+    scope = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
 
-scope = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
+    # solo per DEV
+    if "127.0.0.1" in redirect_uri:
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 
-# solo per DEV
-if "127.0.0.1" in redirect_uri:
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+except Exception:
+    pass
+
 
 # Creazione tabella
 with engine.connect() as conn:
@@ -108,7 +111,11 @@ def logout():
 
 # Visualizza record
 @app.route(APP_ROOT)
+@app.route(APP_ROOT + "/")
 def index():
+    # test
+    session["name"] = "test"
+    session["email"] = "test"
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id ")
@@ -439,7 +446,7 @@ def etichetta(record_id):
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
 
-        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+        record_dict = dict(result._mapping)
 
     # Créer le QR code en mémoire
     qr_data = f"http://penelope.unito.it/togru/view/{record_id}"
@@ -449,12 +456,12 @@ def etichetta(record_id):
 
     img_qr = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    # Sauvegarder le QR code dans un buffer BytesIO
+    # Save QR code in a BytesIO buffer
     qr_buffer = BytesIO()
     img_qr.save(qr_buffer, format="PNG")
     qr_buffer.seek(0)
 
-    # Sauvegarder le buffer QR dans un fichier temporaire car FPDF2 attend un fichier
+    # Save QR in a temporary file
     temp_qr_path = f"temp_{record_id}.png"
     img_qr.save(temp_qr_path)
 
