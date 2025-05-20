@@ -54,7 +54,7 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'codice_sipi_torino', 'num_inventario', 'destinazione', 'note'] %}
+                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
                     <th>{{ field.replace('_', ' ').capitalize() }}</th>
                     {% endfor %}
                     <th>Azioni</th>
@@ -70,7 +70,6 @@
                     <td>{{ r.codice_sipi_torino }}</td>
                     <td>{{ r.destinazione }}</td>
                     <td>{{ r.note }}</td>
-
                     <td>
                         <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
                         <a class="button is-small is-info" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>

@@ -33,13 +33,14 @@
 
 
         {% if records %}
-        <table class="table is-striped is-fullwidth">
+              <table class="table is-striped is-fullwidth">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Descrizione Bene</th>
-                    <th>Responsabile</th>
-                    <th>Inventario</th>
+                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
+                    <th>{{ field.replace('_', ' ').capitalize() }}</th>
+                    {% endfor %}
+                    <th>Azioni</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,10 +50,18 @@
                     <td>{{ r.descrizione_bene }}</td>
                     <td>{{ r.responsabile_laboratorio }}</td>
                     <td>{{ r.num_inventario }}</td>
+                    <td>{{ r.codice_sipi_torino }}</td>
+                    <td>{{ r.destinazione }}</td>
+                    <td>{{ r.note }}</td>
+                    <td>
+                        <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
+                        <a class="button is-small is-info" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
         
         {% endif %}
 
