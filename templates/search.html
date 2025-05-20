@@ -10,7 +10,7 @@
     <div class="container">
 
 
-        <a class="button is-link" href="{{ url_for('index') }}">Torna alla lista</a>
+        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
         <br><br>
 
@@ -70,7 +70,11 @@
                     <td>{{ r.num_inventario }}</td>
                     <td>{{ r.data_carico }}</td>
                     <td>{{ r.note }}</td>
-                    <td><a href="{{ url_for('modifica', record_id=r.id) }}" class="button is-small is-info">Modifica</a></td>
+
+                    <td>
+                        <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
+                        <a class="button is-small is-info" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

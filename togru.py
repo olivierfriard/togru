@@ -125,7 +125,8 @@ def index():
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
-def view(record_id):
+@app.route(APP_ROOT + "/view/<int:record_id>/<query_string>")
+def view(record_id: int, query_string: str = ""):
     with engine.connect() as conn:
         sql = text("""SELECT id,descrizione_bene, responsabile_laboratorio,num_inventario, num_inventario_ateneo, data_carico,
                  codice_sipi_torino, codice_sipi_grugliasco, destinazione,
@@ -139,7 +140,7 @@ def view(record_id):
 
         record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
 
-    return render_template("view.html", record=record_dict)
+    return render_template("view.html", record=record_dict, query_string=query_string)
 
 
 # Aggiungi record
@@ -175,11 +176,12 @@ def aggiungi():
 
 # Modifica record - form
 @app.route(APP_ROOT + "/modifica/<int:record_id>")
-def modifica(record_id):
+@app.route(APP_ROOT + "/modifica/<int:record_id>/<query_string>")
+def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
         record = result.fetchone()
-    return render_template("modifica.html", record=record)
+    return render_template("modifica.html", record=record, query_string=query_string)
 
 
 # Modifica record - salvataggio
@@ -394,6 +396,9 @@ def search():
         "note",
     ]
 
+    query_string = request.query_string.decode("utf-8")
+    # print(f"{request.query_string.decode('utf-8')=}")
+
     # Controlla se almeno un parametro di ricerca è presente e non vuoto
     has_filter = any(request.args.get(field, "").strip() for field in fields)
 
@@ -402,7 +407,7 @@ def search():
         records = []
         keys = fields  # se vuoi colonne vuote per tabella nel template
     else:
-        query = "SELECT * FROM inventario WHERE TRUE"
+        query = "SELECT * FROM inventario WHERE TRUE "
         params = {}
 
         for field in fields:
@@ -412,7 +417,7 @@ def search():
                 query += f" AND {field} ILIKE :{field}"
                 params[field] = f"%{value}%"
 
-        query += " ORDER BY id DESC LIMIT 100"
+        query += " ORDER BY id DESC"
 
         sql = text(query)
         with engine.connect() as conn:
@@ -435,7 +440,7 @@ def search():
             download_name="risultati_ricerca.xlsx",
         )
 
-    return render_template("search.html", records=records, request_args=request.args, fields=fields)
+    return render_template("search.html", records=records, request_args=request.args, fields=fields, query_string=query_string)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])

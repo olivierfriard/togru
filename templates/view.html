@@ -9,7 +9,12 @@
     <section class="section">
         <div class="container">
 
-            <a class="button is-link" href="{{ url_for('index') }}">Torna alla lista</a>
+            <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+{% if query_string %}
+<a class="button is-link" href="/togru/search?{{ query_string }}">Torna alla ricerca</a>
+{%endif%}
+
 
             <a class="button is-warning" href="{{ url_for('modifica', record_id=record['id']) }}">Modifica</a>
 
