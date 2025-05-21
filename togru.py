@@ -96,7 +96,8 @@ def login():
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
-    print(f"{session=}")
+    with open("log", "w") as f_out:
+        print(f"{session=}\n", file=f_out)
     google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
     token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
 
