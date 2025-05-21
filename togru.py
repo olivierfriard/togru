@@ -17,7 +17,7 @@ app.secret_key = os.urandom(24)  # needed for flash messages
 
 DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
 engine = create_engine(DATABASE_URL)
-
+SESSION_PERMANENT = False
 
 # Carico le credenziali dal JSON
 try:
@@ -114,8 +114,10 @@ def callback():
 @app.route(APP_ROOT + "/logout")
 def logout():
     """logout"""
-    del session["email"]
-    del session["name"]
+    if "email" in session:
+        del session["email"]
+    if "name" in session:
+        del session["name"]
 
     return redirect(url_for("index"))
 
