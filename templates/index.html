@@ -4,13 +4,16 @@
 <meta charset="UTF-8">
 <title>To-Gru</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+ <!--<link rel="stylesheet" href="/togru/static/style.css">-->
 </head>
 <body>
     <section class="section">
         <div class="container">
 
         <h3 class="title is-3">TO-GRU</h3>
-
+<!--
+<button id="theme-toggle" class="button is-small is-light">🌙 Mode sombre</button>
+-->
 
 {% if session['email'] %}
 <br>
@@ -78,7 +81,32 @@
 
         </div>
     </section>
+<!--
+    <script>
+  // Au chargement de la page
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  body.classList.remove('light-mode', 'dark-mode');
+  body.classList.add(savedTheme);
+  toggleButton.textContent = savedTheme === 'dark-mode' ? '☀️ Mode clair' : '🌙 Mode sombre';
+}
 
+// Lors du clic sur le bouton
+toggleButton.addEventListener('click', () => {
+  if (body.classList.contains('light-mode')) {
+    body.classList.remove('light-mode');
+    body.classList.add('dark-mode');
+    toggleButton.textContent = '☀️ Mode clair';
+    localStorage.setItem('theme', 'dark-mode');
+  } else {
+    body.classList.remove('dark-mode');
+    body.classList.add('light-mode');
+    toggleButton.textContent = '🌙 Mode sombre';
+    localStorage.setItem('theme', 'light-mode');
+  }
+});
+</script>
+-->
 </body>
 </html>
 

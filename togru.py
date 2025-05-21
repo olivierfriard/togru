@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, send_file, session
 from fpdf import FPDF
+from functools import wraps
 from io import BytesIO
 from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
@@ -73,6 +74,16 @@ with engine.connect() as conn:
     conn.commit()
 
 
+def check_login(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "email" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 @app.route(APP_ROOT + "/login")
 def login():
     """Reindirizza l'utente alla schermata di autorizzazione di Google"""
@@ -126,6 +137,7 @@ def index():
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
 @app.route(APP_ROOT + "/view/<int:record_id>/<query_string>")
+@check_login
 def view(record_id: int, query_string: str = ""):
     with engine.connect() as conn:
         sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
@@ -172,6 +184,7 @@ def aggiungi():
             )
         """)
         with engine.connect() as conn:
+            conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
             conn.execute(query, data)
             conn.commit()
         return redirect(url_for("index"))
@@ -216,6 +229,7 @@ def salva_modifiche(record_id):
         WHERE id = :id
     """)
     with engine.connect() as conn:
+        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
 
@@ -246,6 +260,7 @@ def modifica_multipla():
 
             query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
             with engine.connect() as conn:
+                conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
                 conn.execute(query, {"id": rid, "nuovo_valore": nuovo_valore})
                 conn.commit()
 
@@ -358,6 +373,7 @@ def upload_excel():
             senza_responsabile = df[df["responsabile_laboratorio"] == ""]
 
             with engine.connect() as conn:
+                conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
                 for _, row in df.iterrows():
                     sql = text("""
                     INSERT INTO inventario (
@@ -417,15 +433,15 @@ def search():
         "codice_sipi_grugliasco",
         "destinazione",
         "rosso_fase_alimentazione_privilegiata",
-        "valore_convenzionale",
-        "esercizio_bene_migrato",
+        # "valore_convenzionale",
+        # "esercizio_bene_migrato",
         "denominazione_fornitore",
         "anno_fabbricazione",
         "numero_seriale",
         "categoria_inventoriale",
         "catalogazione_materiale_strumentazione",
-        "peso",
-        "dimensioni",
+        # "peso",
+        # "dimensioni",
         "ditta_costruttrice_fornitrice",
         "note",
     ]
