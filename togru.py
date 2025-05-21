@@ -38,7 +38,7 @@ try:
 
 
 except Exception:
-    pass
+    raise
 
 
 # Creazione tabella
@@ -97,7 +97,7 @@ def login():
 def callback():
     """Callback dopo il login Google"""
     with open("log", "w") as f_out:
-        print(f"{session=}\n", file=f_out)
+        print(f"{session.keys()=}\n", file=f_out)
     google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
     token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
 
