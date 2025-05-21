@@ -158,6 +158,7 @@ def view(record_id: int, query_string: str = ""):
 
 # Aggiungi record
 @app.route(APP_ROOT + "/aggiungi", methods=["GET", "POST"])
+@check_login
 def aggiungi():
     if request.method == "GET":
         return render_template("aggiungi.html")
@@ -192,6 +193,7 @@ def aggiungi():
 @app.route(APP_ROOT + "/modifica/<int:record_id>")
 @app.route(APP_ROOT + "/modifica/<int:record_id>/")
 @app.route(APP_ROOT + "/modifica/<int:record_id>/<query_string>")
+@check_login
 def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
         result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
@@ -201,6 +203,7 @@ def modifica(record_id, query_string: str = ""):
 
 # Modifica record - salvataggio
 @app.route(APP_ROOT + "/salva_modifiche/<int:record_id>", methods=["POST"])
+@check_login
 def salva_modifiche(record_id):
     data = request.form
     query = text("""
@@ -240,6 +243,7 @@ def salva_modifiche(record_id):
 
 
 @app.route(APP_ROOT + "/modifica_multipla", methods=["POST"])
+@check_login
 def modifica_multipla():
     campo = request.form.get("campo")
     nuovo_valore = request.form.get("nuovo_valore")
@@ -267,6 +271,7 @@ def modifica_multipla():
 
 
 @app.route(APP_ROOT + "/upload_excel", methods=["GET", "POST"])
+@check_login
 def upload_excel():
     if request.method == "POST":
         file = request.files.get("file")
@@ -419,6 +424,7 @@ def upload_excel():
 
 
 @app.route(APP_ROOT + "/search", methods=["GET"])
+@check_login
 def search():
     # Lista di tutti i campi su cui cercare
     fields = [
@@ -494,6 +500,7 @@ def search():
 
 @app.route(APP_ROOT + "/search_resp")
 @app.route(APP_ROOT + "/search_resp/<responsabile_laboratorio>")
+@check_login
 def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
         result = conn.execute(text("SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"))
@@ -542,6 +549,7 @@ def view_qrcode(record_id: int, query_string: str = ""):
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
+@check_login
 def etichetta(record_id):
     with engine.connect() as conn:
         sql = text("""SELECT * FROM inventario WHERE id = :id""")
