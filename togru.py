@@ -124,9 +124,6 @@ def logout():
 @app.route(APP_ROOT)
 @app.route(APP_ROOT + "/")
 def index():
-    # test
-    session["name"] = "test"
-    session["email"] = "test"
     with engine.connect() as conn:
         result = conn.execute(
             text("SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id ")
@@ -136,6 +133,7 @@ def index():
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
+@app.route(APP_ROOT + "/view/<int:record_id>/")
 @app.route(APP_ROOT + "/view/<int:record_id>/<query_string>")
 @check_login
 def view(record_id: int, query_string: str = ""):
@@ -192,6 +190,7 @@ def aggiungi():
 
 # Modifica record - form
 @app.route(APP_ROOT + "/modifica/<int:record_id>")
+@app.route(APP_ROOT + "/modifica/<int:record_id>/")
 @app.route(APP_ROOT + "/modifica/<int:record_id>/<query_string>")
 def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
