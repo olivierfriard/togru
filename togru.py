@@ -88,15 +88,17 @@ def check_login(f):
 def login():
     """Reindirizza l'utente alla schermata di autorizzazione di Google"""
     google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(authorization_base_url, access_type="offline", prompt="select_account")
+    authorization_url, state = google.authorization_url(authorization_base_url)  # , access_type="offline", prompt="select_account")
     session["oauth_state"] = state
+    with open("login_log", "w") as f_out:
+        print(f"{session.keys()=}\n", file=f_out)
     return redirect(authorization_url)
 
 
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
-    with open("log", "w") as f_out:
+    with open("callback_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
     google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
     token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
