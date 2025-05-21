@@ -499,10 +499,31 @@ def search_resp(responsabile_laboratorio: str = ""):
             records = result.fetchall()
     else:
         records = {}
-        request_args = {}
+
     return render_template(
         "search_responsabile.html", responsabile_laboratorio=responsabile_laboratorio, resp=resp, records=records, request_args=request.args
     )
+
+
+@app.route(APP_ROOT + "/view_qrcode/<int:record_id>")
+def view_qrcode(record_id: int, query_string: str = ""):
+    with engine.connect() as conn:
+        sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
+                      num_inventario, num_inventario_ateneo, data_carico,
+                     codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                     rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                     denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                     categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                    ditta_costruttrice_fornitrice, note 
+                    FROM inventario 
+                    WHERE id = :id""")
+        result = conn.execute(sql, {"id": record_id}).fetchone()
+        if not result:
+            return f"Bene con ID {record_id} non trovato", 404
+
+        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+
+    return render_template("view.html", record=record_dict, query_string=query_string)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
@@ -516,7 +537,7 @@ def etichetta(record_id):
         record_dict = dict(result._mapping)
 
     # Créer le QR code en mémoire
-    qr_data = f"http://penelope.unito.it/togru/view/{record_id}"
+    qr_data = f"http://penelope.unito.it/togru/view_qrcode/{record_id}"
     qr = qrcode.QRCode(box_size=10, border=4)
     qr.add_data(qr_data)
     qr.make(fit=True)
