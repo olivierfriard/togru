@@ -1,4 +1,13 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, send_file, session
+from flask import (
+    Flask,
+    request,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    session,
+)
 from fpdf import FPDF
 from functools import wraps
 from io import BytesIO
@@ -17,7 +26,7 @@ app.secret_key = os.urandom(24)  # needed for flash messages
 
 DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
 engine = create_engine(DATABASE_URL)
-SESSION_PERMANENT = False
+# SESSION_PERMANENT = False
 
 # Carico le credenziali dal JSON
 try:
@@ -30,7 +39,10 @@ try:
     token_url = config["token_uri"]
     redirect_uri = config["redirect_uris"][0]
 
-    scope = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
+    scope = [
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+    ]
 
     # solo per DEV
     if "127.0.0.1" in redirect_uri:
@@ -88,7 +100,9 @@ def check_login(f):
 def login():
     """Reindirizza l'utente alla schermata di autorizzazione di Google"""
     google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(authorization_base_url)  # , access_type="offline", prompt="select_account")
+    authorization_url, state = google.authorization_url(
+        authorization_base_url
+    )  # , access_type="offline", prompt="select_account")
     session["oauth_state"] = state
     with open("login_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
@@ -100,8 +114,12 @@ def callback():
     """Callback dopo il login Google"""
     with open("callback_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
-    google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
-    token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
+    google = OAuth2Session(
+        client_id, state=session["oauth_state"], redirect_uri=redirect_uri
+    )
+    token = google.fetch_token(
+        token_url, client_secret=client_secret, authorization_response=request.url
+    )
 
     session["oauth_token"] = token
 
@@ -132,7 +150,9 @@ def logout():
 def index():
     with engine.connect() as conn:
         result = conn.execute(
-            text("SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id ")
+            text(
+                "SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+            )
         )
         records = result.fetchall()
     return render_template("index.html", records=records)
@@ -189,7 +209,9 @@ def aggiungi():
             )
         """)
         with engine.connect() as conn:
-            conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+            conn.execute(
+                text("SET LOCAL application_name = :user"), {"user": session["email"]}
+            )
             conn.execute(query, data)
             conn.commit()
         return redirect(url_for("index"))
@@ -202,7 +224,9 @@ def aggiungi():
 @check_login
 def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
+        result = conn.execute(
+            text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id}
+        )
         record = result.fetchone()
     return render_template("modifica.html", record=record, query_string=query_string)
 
@@ -237,7 +261,9 @@ def salva_modifiche(record_id):
         WHERE id = :id
     """)
     with engine.connect() as conn:
-        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
 
@@ -259,7 +285,14 @@ def modifica_multipla():
     if (
         nuovo_valore
         and record_ids
-        and campo in ("responsabile_laboratorio", "codice_sipi_torino", "codice_sipi_grugliasco", "destinazione", "note")
+        and campo
+        in (
+            "responsabile_laboratorio",
+            "codice_sipi_torino",
+            "codice_sipi_grugliasco",
+            "destinazione",
+            "note",
+        )
     ):
         for rid in record_ids:
             print(f"{campo=}")
@@ -267,9 +300,14 @@ def modifica_multipla():
             print(f"{rid=}")
             print("==")
 
-            query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
+            query = text(
+                f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id"
+            )
             with engine.connect() as conn:
-                conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+                conn.execute(
+                    text("SET LOCAL application_name = :user"),
+                    {"user": session["email"]},
+                )
                 conn.execute(query, {"id": rid, "nuovo_valore": nuovo_valore})
                 conn.commit()
 
@@ -362,8 +400,13 @@ def upload_excel():
 
             if duplicati.any():
                 num_duplicati = duplicati.sum()
-                inv_duplicati = df.loc[duplicati.index[duplicati], ["num_inventario", "descrizione_bene"]]
-                elenco = "<br>".join(f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in inv_duplicati.iterrows())
+                inv_duplicati = df.loc[
+                    duplicati.index[duplicati], ["num_inventario", "descrizione_bene"]
+                ]
+                elenco = "<br>".join(
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in inv_duplicati.iterrows()
+                )
                 flash(
                     Markup(
                         f"<b>Nessun dato caricato</b> perché sono stati trovati <b>{num_duplicati} beni con numero di inventario duplicato nel file</b>:<br><br>{elenco}"
@@ -383,7 +426,10 @@ def upload_excel():
             senza_responsabile = df[df["responsabile_laboratorio"] == ""]
 
             with engine.connect() as conn:
-                conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+                conn.execute(
+                    text("SET LOCAL application_name = :user"),
+                    {"user": session["email"]},
+                )
                 for _, row in df.iterrows():
                     sql = text("""
                     INSERT INTO inventario (
@@ -412,10 +458,15 @@ def upload_excel():
 
             if count_senza_responsabile > 0:
                 # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
-                dettagli = [f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in senza_responsabile.iterrows()]
+                dettagli = [
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in senza_responsabile.iterrows()
+                ]
                 inventari = "<br>".join(dettagli)
                 flash(
-                    Markup(f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"),
+                    Markup(
+                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
+                    ),
                     "warning",
                 )
 
@@ -501,7 +552,13 @@ def search():
             download_name="risultati_ricerca.xlsx",
         )
 
-    return render_template("search.html", records=records, request_args=request.args, fields=fields, query_string=query_string)
+    return render_template(
+        "search.html",
+        records=records,
+        request_args=request.args,
+        fields=fields,
+        query_string=query_string,
+    )
 
 
 @app.route(APP_ROOT + "/search_resp")
@@ -509,7 +566,11 @@ def search():
 @check_login
 def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"))
+        result = conn.execute(
+            text(
+                "SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"
+            )
+        )
         resp = result.fetchall()
 
     # responsabile = request.args.get("responsabile_laboratorio")
@@ -529,7 +590,11 @@ def search_resp(responsabile_laboratorio: str = ""):
         records = {}
 
     return render_template(
-        "search_responsabile.html", responsabile_laboratorio=responsabile_laboratorio, resp=resp, records=records, request_args=request.args
+        "search_responsabile.html",
+        responsabile_laboratorio=responsabile_laboratorio,
+        resp=resp,
+        records=records,
+        request_args=request.args,
     )
 
 
@@ -596,9 +661,19 @@ def etichetta(record_id):
             ln=True,
             align="L",
         )
-        pdf.cell(200, h, txt=f"Responsabile laboratorio: {record_dict['responsabile_laboratorio']}", ln=True, align="L")
         pdf.cell(
-            200, h, txt=f"Inventario: {record_dict['num_inventario']}  Ateneo: {record_dict['num_inventario_ateneo']}", ln=True, align="L"
+            200,
+            h,
+            txt=f"Responsabile laboratorio: {record_dict['responsabile_laboratorio']}",
+            ln=True,
+            align="L",
+        )
+        pdf.cell(
+            200,
+            h,
+            txt=f"Inventario: {record_dict['num_inventario']}  Ateneo: {record_dict['num_inventario_ateneo']}",
+            ln=True,
+            align="L",
         )
         pdf.cell(
             200,
@@ -608,9 +683,17 @@ def etichetta(record_id):
             align="L",
         )
         if record_dict["destinazione"]:
-            pdf.cell(200, h, txt=f"Destinazione: {record_dict['destinazione']}", ln=True, align="L")
+            pdf.cell(
+                200,
+                h,
+                txt=f"Destinazione: {record_dict['destinazione']}",
+                ln=True,
+                align="L",
+            )
         if record_dict["note"]:
-            pdf.cell(200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L")
+            pdf.cell(
+                200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L"
+            )
 
         pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
 
@@ -623,7 +706,12 @@ def etichetta(record_id):
         pdf_buffer.seek(0)
 
         # Retourner le fichier au navigateur
-        return send_file(pdf_buffer, mimetype="application/pdf", as_attachment=False, download_name=f"document_{record_id}.pdf")
+        return send_file(
+            pdf_buffer,
+            mimetype="application/pdf",
+            as_attachment=False,
+            download_name=f"document_{record_id}.pdf",
+        )
 
     finally:
         # Supprimer le fichier QR temporaire
