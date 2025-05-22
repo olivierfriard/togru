@@ -9,6 +9,8 @@
 <section class="section">
     <div class="container">
 
+      
+
 
         <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
@@ -44,6 +46,9 @@
                 <div class="control">
                     <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
                 </div>
+
+                   
+
             </div>
         </form>
 
@@ -51,39 +56,60 @@
 
         {% if records %}
         
+        <div class="mb-5">
+        <button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
+        </div>
+
+        <div id="form_modifica_multipla_wrapper" style="display: none;">
+            <!-- Form per aggiornamento multiplo di un campo -->
+            <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
+                <input type="hidden" name="query_string" value="{{ query_string }}">
+            
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Campo</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <div class="select">
+                                    <select name="campo">
+                                        <option value="responsabile_laboratorio">Responsabile laboratorio</option>
+                                        <option value="codice_sipi_torino">Codice SIPI Torino</option>
+                                        <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
+                                        <option value="destinazione">Destinazione</option>
+                                        <option value="note">Note</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Nuovo valore</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="control mb-5 mt-4">
+                    <button class="button is-danger" type="submit">Aggiorna selezionati</button>
+                </div>
+            </form>
+        </div><!-- per nascondere -->
+    
+
+
 {% include "table.html" %}
 
 
-        <!-- Form per aggiornamento multiplo di un campo -->
-        <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
-            <input type="hidden" name="query_string" value="{{ query_string }}">
-
-            <div class="field">
-                <label class="label">Campo da modificare sui beni selezionati</label>
-                <div class="control">
-                    <div class="select">
-                        <select name="campo">
-                            <option value="responsabile_laboratorio">Responsabile laboratorio</option>
-                            <option value="codice_sipi_torino">Codice SIPI Torino</option>
-                            <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
-                            <option value="destinazione">Destinazione</option>
-                            <option value="note">Note</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="field">
-                <label class="label">Nuovo valore</label>
-                <div class="control">
-                    <input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
-                </div>
-            </div>
-
-            <div class="control">
-                <button class="button is-danger" type="submit">Aggiorna selezionati</button>
-            </div>
-        </form>
 
         {% else %}
         <p>Nessun risultato trovato.</p>
@@ -96,7 +122,14 @@
         const checkboxes = document.querySelectorAll('input[name="record_ids"]');
         checkboxes.forEach(cb => cb.checked = this.checked);
     });
-    </script>
+
+    document.getElementById('toggle_modifica_multipla').addEventListener('click', function() {
+    const wrapper = document.getElementById('form_modifica_multipla_wrapper');
+    wrapper.style.display = (wrapper.style.display === 'none' || wrapper.style.display === '') ? 'block' : 'none';
+});
+
+
+</script>
 
 </body>
 </html>
