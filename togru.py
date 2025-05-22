@@ -388,33 +388,8 @@ def upload_excel():
             )
             """
 
-            # Controllo duplicati nel num_inventario
-            """
-            duplicati = df[df.duplicated(subset=["num_inventario"], keep=False)]
-
-            if not duplicati.empty:
-                dettagli = [
-                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
-                    for _, row in duplicati.iterrows()
-                ]
-                inventari = "<br>".join(dettagli)
-                flash(
-                    Markup(
-                        f"<b>Trovati {len(duplicati)} beni con num_inventario duplicato nel file</b>:<br>{inventari}"
-                    ),
-                    "danger",
-                )
-                return redirect(request.url)
-            """
-
-            # Controllo duplicati su num_inventario, solo se diverso da NaN
-            """
-            duplicati = df[df["num_inventario"].notna()]["num_inventario"].duplicated(
-                keep=False
-            )
-            """
-
             # Controllo duplicati su num_inventario solo se diverso da NaN e stringa vuota
+            """
             mask_validi = (df["num_inventario"].notna()) & (df["num_inventario"] != "")
             duplicati = df.loc[mask_validi, "num_inventario"].duplicated(keep=False)
 
@@ -435,6 +410,7 @@ def upload_excel():
                 )
 
                 return redirect(request.url)
+            """
 
             expected_cols = list(excel_to_db_fields.values())
             missing_cols = [c for c in expected_cols if c not in df.columns]
@@ -592,7 +568,7 @@ def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                """( select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario) ORDER by LOWER(responsabile_laboratorio)"""
+                """( select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"""
             )
         )
         resp = result.fetchall()
