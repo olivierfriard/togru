@@ -18,6 +18,7 @@ import pandas as pd
 import json
 import os
 import qrcode
+from datetime import datetime
 
 APP_ROOT = "/togru"
 
@@ -79,7 +80,8 @@ with engine.connect() as conn:
             peso TEXT,
             dimensioni TEXT,
             ditta_costruttrice_fornitrice TEXT,
-            note TEXT
+            note TEXT,
+    deleted TIMESTAMP DEFAULT NULL
         )
     """)
     )
@@ -151,7 +153,7 @@ def index():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT * FROM inventario GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+                "SELECT * FROM inventario WHERE deleted IS NULL GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
             )
         )
         records = result.fetchall()
@@ -519,7 +521,7 @@ def search():
         records = []
         keys = fields  # se vuoi colonne vuote per tabella nel template
     else:
-        query = "SELECT * FROM inventario WHERE TRUE "
+        query = "SELECT * FROM inventario WHERE deleted IS NULL "
         params = {}
 
         for field in fields:
@@ -576,7 +578,7 @@ def search_resp(responsabile_laboratorio: str = ""):
     # responsabile = request.args.get("responsabile_laboratorio")
     # descrizione = request.args.get("descrizione_bene")
 
-    sql = "SELECT * FROM inventario WHERE True "
+    sql = "SELECT * FROM inventario WHERE delted IS NULL "
     params = {}
 
     if responsabile_laboratorio:
@@ -598,8 +600,29 @@ def search_resp(responsabile_laboratorio: str = ""):
     )
 
 
+@app.route("/delete/<int:record_id>", methods=["POST"])
+@check_login
+def delete_record(record_id):
+    """
+    delete record
+    """
+    with engine.connect() as conn:
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
+        sql = text(
+            "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
+        )
+        conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
+        conn.commit()
+
+    flash(f"Record {record_id} eliminato (soft delete).", "success")
+
+    return redirect(url_for("search"))
+
+
 @app.route(APP_ROOT + "/view_qrcode/<int:record_id>")
-def view_qrcode(record_id: int, query_string: str = ""):
+def view_qrcode(record_id: int):
     with engine.connect() as conn:
         sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
                       num_inventario, num_inventario_ateneo, data_carico,
@@ -616,7 +639,7 @@ def view_qrcode(record_id: int, query_string: str = ""):
 
         record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
 
-    return render_template("view.html", record=record_dict, query_string=query_string)
+    return render_template("view.html", record=record_dict, query_string="")
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
