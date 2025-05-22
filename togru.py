@@ -22,7 +22,7 @@ import qrcode
 APP_ROOT = "/togru"
 
 app = Flask(__name__, static_url_path="/togru/static")
-app.secret_key = os.urandom(24)  # needed for flash messages
+app.secret_key = "sldjhalsdasd2435"  # needed for flash messages
 
 DATABASE_URL = "postgresql://togru_user:password123@localhost:5432/togru"
 engine = create_engine(DATABASE_URL)
