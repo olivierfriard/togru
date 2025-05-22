@@ -7,7 +7,7 @@
 </head>
 <body>
 <section class="section">
-    <div class="container">
+    <!--<div class="container">-->
 
       
 
@@ -104,8 +104,10 @@
                 </div>
             </form>
         </div><!-- per nascondere -->
-    
 
+<div class="mb-5">
+<b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
+</div>
 
 {% include "table.html" %}
 
@@ -114,7 +116,7 @@
         {% else %}
         <p>Nessun risultato trovato.</p>
         {% endif %}
-    </div>
+<!-- container    </div>-->
 </section>
 
 <script>
