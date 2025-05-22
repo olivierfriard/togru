@@ -170,11 +170,12 @@ def index():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT * FROM inventario WHERE deleted IS NULL GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+                "SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"  # GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
             )
         )
-        records = result.fetchall()
-    return render_template("index.html", records=records)
+        n = result.fetchone()[0]
+        print(n)
+    return render_template("index.html", n_records=n)
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
@@ -591,7 +592,7 @@ def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                """(select 'SENZA' AS "responsabile_laboratorio" UNION select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario) ORDER by responsabile_laboratorio"""
+                """( select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario) ORDER by LOWER(responsabile_laboratorio)"""
             )
         )
         resp = result.fetchall()
@@ -667,6 +668,22 @@ def view_qrcode(record_id: int):
         record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
 
     return render_template("view.html", record=record_dict, query_string="")
+
+
+@app.route(APP_ROOT + "/storico/<int:record_id>", methods=["GET"])
+@check_login
+def storico(record_id):
+    with engine.connect() as conn:
+        sql = text(
+            "SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC"
+        )
+        audits = conn.execute(sql, {"id": record_id}).fetchall()
+        if not audits:
+            return f"Bene con ID {record_id} non trovato", 404
+
+        # record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+
+    return render_template("storico.html", audits=audits, record_id=record_id)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])

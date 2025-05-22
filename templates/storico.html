@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Storico modifiche record {{ record_id }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+    <div class="container">
+        <a class="button is-link" href="{{ url_for('search') }}">← Torna alla ricerca</a>
+        <h1 class="title mt-5">Storico modifiche per Record ID {{ record_id }}</h1>
+
+        {% if audits %}
+        <table class="table is-striped is-fullwidth mt-5">
+            <thead>
+                <tr>
+                    <th>Operazione</th>
+                    <th>Eseguito da</th>
+                    <th>Data</th>
+                    <th>Dettaglio Modifiche</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in audits %}
+                <tr>
+                    <td>{{ a.operation_type }}</td>
+                    <td>{{ a.executed_by or '—' }}</td>
+                    <td>{{ a.executed_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        <table class="table is-fullwidth is-size-7">
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th>Vecchio valore</th>
+                                    <th>Nuovo valore</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set old = a.old_data or {} %}
+                                {% set new = a.new_data or {} %}
+                                {% set all_keys = (old.keys() | list + new.keys() | list) | unique %}
+                                {% for key in all_keys %}
+                                {% set old_value = old.get(key, '—') %}
+                                {% set new_value = new.get(key, '—') %}
+                                {% set changed = old_value != new_value %}
+                                <tr {% if changed %}class="has-background-danger"{% endif %}>
+                                    <td>{{ key }}</td>
+                                    <td>{{ old_value }}</td>
+                                    <td>{{ new_value }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="has-text-grey">Nessuna modifica registrata per questo record.</p>
+        {% endif %}
+    </div>
+</section>
+</body>
+</html>

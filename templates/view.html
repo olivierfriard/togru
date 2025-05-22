@@ -9,6 +9,8 @@
     <section class="section">
         <div class="container">
 
+
+            <div class="field is-grouped">
             <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
 {% if query_string %}
@@ -20,7 +22,10 @@
 
 <a class="button is-link" href="{{ url_for('etichetta', record_id=record.id) }}">Stampa etichetta</a>
 
-<br><br>
+<a class="button is-link" href="{{ url_for('storico', record_id=record.id) }}">Storico bene</a>
+
+</div>
+
 
             <h1 class="title">Bene ID: {{ record.id }}</h1>
 

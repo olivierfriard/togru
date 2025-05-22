@@ -17,6 +17,8 @@
 
 <!-- Pulsanti di filtro per responsabile laboratorio -->
 <div class="buttons">
+<a href="/togru/search?responsabile_laboratorio=SENZA" class="button is-danger">Senza responsabile</a>
+
 {% for r in resp %}
 <a href="/togru/search?responsabile_laboratorio={{r.responsabile_laboratorio}}" class="button is-light">{{ r.responsabile_laboratorio  }}</a>
 

@@ -39,10 +39,9 @@
 
 <br><br>
 
-<p class="subtitle is-5">Numero totale beni: <b>{{ records|length }}</b></p>
+<p class="subtitle is-5">Numero totale beni: <b>{{ n_records }}</b></p>
 
-
-
+{#
 
             <table class="table is-striped is-fullwidth is-hoverable">
                 <thead>
@@ -76,6 +75,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+#}
 
 {% else %}
 <a class="button button is-link" href="{{ url_for('login') }}">Accedi con Google Unito</a>

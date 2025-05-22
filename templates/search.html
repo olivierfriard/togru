@@ -7,10 +7,6 @@
 </head>
 <body>
 <section class="section">
-    <!--<div class="container">-->
-
-      
-
 
         <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
@@ -111,12 +107,9 @@
 
 {% include "table.html" %}
 
-
-
         {% else %}
         <p>Nessun risultato trovato.</p>
         {% endif %}
-<!-- container    </div>-->
 </section>
 
 <script>
@@ -130,6 +123,14 @@
     wrapper.style.display = (wrapper.style.display === 'none' || wrapper.style.display === '') ? 'block' : 'none';
 });
 
+
+document.getElementById('form_modifica_multipla').addEventListener('submit', function(e) {
+    const selected = document.querySelectorAll('input[name="record_ids"]:checked');
+    if (selected.length === 0) {
+        e.preventDefault();
+        alert('Seleziona almeno un record da aggiornare.');
+    }
+});
 
 </script>
 
