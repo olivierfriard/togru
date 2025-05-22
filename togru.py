@@ -1,3 +1,4 @@
+import sys
 from flask import (
     Flask,
     request,
@@ -49,10 +50,8 @@ try:
     if "127.0.0.1" in redirect_uri:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-
 except Exception:
     raise
-
 
 # Creazione tabella
 with engine.connect() as conn:
@@ -87,6 +86,14 @@ with engine.connect() as conn:
     )
     conn.commit()
 
+# load email of users
+try:
+    with open("email_tdr.txt", "r") as f_in:
+        autorizzati = [x.strip() for x in f_in.readlines()]
+except Exception:
+    print("Problema di lettura su file email_tdr.txt")
+    sys.exit(1)
+
 
 def check_login(f):
     @wraps(f)
@@ -106,16 +113,20 @@ def login():
         authorization_base_url
     )  # , access_type="offline", prompt="select_account")
     session["oauth_state"] = state
+    """
     with open("login_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
+    """
     return redirect(authorization_url)
 
 
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
+    """
     with open("callback_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
+    """
     google = OAuth2Session(
         client_id, state=session["oauth_state"], redirect_uri=redirect_uri
     )
@@ -128,6 +139,12 @@ def callback():
     # Recupero dati utente
     response = google.get("https://www.googleapis.com/oauth2/v1/userinfo")
     userinfo = response.json()
+
+    if userinfo["email"] not in autorizzati:
+        flash(
+            f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger"
+        )
+        return redirect(url_for("index"))
 
     session["name"] = userinfo["name"]
     session["email"] = userinfo["email"]
@@ -511,7 +528,6 @@ def search():
     ]
 
     query_string = request.query_string.decode("utf-8")
-    # print(f"{request.query_string.decode('utf-8')=}")
 
     # Controlla se almeno un parametro di ricerca è presente e non vuoto
     has_filter = any(request.args.get(field, "").strip() for field in fields)
@@ -527,9 +543,14 @@ def search():
         for field in fields:
             value = request.args.get(field, "").strip()
             if value:
-                # Per testo, ricerca con ILIKE e wildcard %
-                query += f" AND {field} ILIKE :{field}"
-                params[field] = f"%{value}%"
+                # add senza responsabile
+                if field == "responsabile_laboratorio" and value == "SENZA":
+                    query += f" AND ({field} = '' OR {field} IS NULL)"
+
+                else:
+                    # Per testo, ricerca con ILIKE e wildcard %
+                    query += f" AND {field} ILIKE :{field}"
+                    params[field] = f"%{value}%"
 
         query += " ORDER BY id DESC"
 
@@ -570,20 +591,24 @@ def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"
+                """(select 'SENZA' AS "responsabile_laboratorio" UNION select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario) ORDER by responsabile_laboratorio"""
             )
         )
         resp = result.fetchall()
 
-    # responsabile = request.args.get("responsabile_laboratorio")
-    # descrizione = request.args.get("descrizione_bene")
+    # query_string = request.query_string.decode("utf-8")
 
-    sql = "SELECT * FROM inventario WHERE delted IS NULL "
+    sql = "SELECT * FROM inventario WHERE deleted IS NULL "
     params = {}
 
     if responsabile_laboratorio:
-        sql += " AND responsabile_laboratorio = :responsabile_laboratorio"
-        params["responsabile_laboratorio"] = responsabile_laboratorio
+        if responsabile_laboratorio == "SENZA":
+            sql += (
+                " AND responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL"
+            )
+        else:
+            sql += " AND responsabile_laboratorio ILIKE :responsabile_laboratorio"
+            params["responsabile_laboratorio"] = f"%{responsabile_laboratorio}%"
 
         with engine.connect() as conn:
             result = conn.execute(text(sql), params)
@@ -600,9 +625,11 @@ def search_resp(responsabile_laboratorio: str = ""):
     )
 
 
-@app.route("/delete/<int:record_id>", methods=["POST"])
+@app.route(APP_ROOT + "/delete/<int:record_id>", methods=["POST"])
+@app.route(APP_ROOT + "/delete/<int:record_id>/", methods=["POST"])
+@app.route(APP_ROOT + "/delete/<int:record_id>/<query_string>", methods=["POST"])
 @check_login
-def delete_record(record_id):
+def delete_record(record_id, query_string: str = ""):
     """
     delete record
     """
@@ -618,7 +645,7 @@ def delete_record(record_id):
 
     flash(f"Record {record_id} eliminato (soft delete).", "success")
 
-    return redirect(url_for("search"))
+    return redirect(APP_ROOT + f"/search?{query_string}")
 
 
 @app.route(APP_ROOT + "/view_qrcode/<int:record_id>")

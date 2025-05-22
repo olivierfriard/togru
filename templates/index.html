@@ -15,6 +15,16 @@
 <button id="theme-toggle" class="button is-small is-light">🌙 Mode sombre</button>
 -->
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+
 {% if session['email'] %}
 <br>
 <h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a></h4>
@@ -31,15 +41,7 @@
 
 <p class="subtitle is-5">Numero totale beni: <b>{{ records|length }}</b></p>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-  {% for category, message in messages %}
-    <div class="notification is-{{ category }}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
-{% endwith %}
+
 
 
             <table class="table is-striped is-fullwidth is-hoverable">
@@ -75,12 +77,12 @@
                 </tbody>
             </table>
 
-        {% else %}
+{% else %}
 <a class="button button is-link" href="{{ url_for('login') }}">Accedi con Google Unito</a>
-        {% endif %}
+{% endif %}
 
-        </div>
-    </section>
+</div>
+</section>
 <!--
     <script>
   // Au chargement de la page

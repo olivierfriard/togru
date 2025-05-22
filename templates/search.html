@@ -50,72 +50,40 @@
         <hr />
 
         {% if records %}
-        <table class="table is-striped is-fullwidth">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="select_all" /></th>
-                    <th>ID</th>
-                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
-                    <th>{{ field.replace('_', ' ').capitalize() }}</th>
-                    {% endfor %}
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in records %}
-                <tr>
-                    <td><input type="checkbox" name="record_ids" value="{{ r.id }}" form="form_modifica_multipla"></td>
-                    <td>{{ r.id }}</td>
-                    <td>{{ r.descrizione_bene }}</td>
-                    <td>{{ r.responsabile_laboratorio }}</td>
-                    <td>{{ r.num_inventario }}</td>
-                    <td>{{ r.codice_sipi_torino }}</td>
-                    <td>{{ r.destinazione }}</td>
-                    <td>{{ r.note }}</td>
-                    <td>
-                        <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
-                        <a class="button is-small is-info" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+        
+{% include "table.html" %}
 
-                        <form method="post" action="{{ url_for('delete_record', record_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
-                            <button class="button is-small is-danger" type="submit">Elimina</button>
-                        </form>
 
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Form per aggiornamento multiplo di un campo -->
+        <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
+            <input type="hidden" name="query_string" value="{{ query_string }}">
 
-<!-- Form per aggiornamento multiplo di un campo -->
-<form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
-    <input type="hidden" name="query_string" value="{{ query_string }}">
-
-    <div class="field">
-        <label class="label">Campo da modificare sui beni selezionati</label>
-        <div class="control">
-            <div class="select">
-                <select name="campo">
-                    <option value="responsabile_laboratorio">Responsabile laboratorio</option>
-                    <option value="codice_sipi_torino">Codice SIPI Torino</option>
-                    <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
-                    <option value="destinazione">Destinazione</option>
-                    <option value="note">Note</option>
-                </select>
+            <div class="field">
+                <label class="label">Campo da modificare sui beni selezionati</label>
+                <div class="control">
+                    <div class="select">
+                        <select name="campo">
+                            <option value="responsabile_laboratorio">Responsabile laboratorio</option>
+                            <option value="codice_sipi_torino">Codice SIPI Torino</option>
+                            <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
+                            <option value="destinazione">Destinazione</option>
+                            <option value="note">Note</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="field">
-        <label class="label">Nuovo valore</label>
-        <div class="control">
-            <input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
-        </div>
-    </div>
+            <div class="field">
+                <label class="label">Nuovo valore</label>
+                <div class="control">
+                    <input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
+                </div>
+            </div>
 
-    <div class="control">
-        <button class="button is-danger" type="submit">Aggiorna selezionati</button>
-    </div>
-</form>
+            <div class="control">
+                <button class="button is-danger" type="submit">Aggiorna selezionati</button>
+            </div>
+        </form>
 
         {% else %}
         <p>Nessun risultato trovato.</p>

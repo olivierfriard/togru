@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8" />
-    <title>Ricerca Inventario</title>
+    <title>Ricerca Inventario per responsabile</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
 </head>
 <body>
@@ -15,57 +15,33 @@
 
         <h1 class="title">Filtra per Responsabile Laboratorio</h1>
 
-        <!-- Pulsanti di filtro per responsabile laboratorio -->
-        <div class="buttons">
+<!-- Pulsanti di filtro per responsabile laboratorio -->
+<div class="buttons">
 {% for r in resp %}
+<a href="/togru/search?responsabile_laboratorio={{r.responsabile_laboratorio}}" class="button is-light">{{ r.responsabile_laboratorio  }}</a>
+
+{#
 {% if r.responsabile_laboratorio==responsabile_laboratorio %}
-            <a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-primary">                {{ r.responsabile_laboratorio  }}</a>
+<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-primary">{{ r.responsabile_laboratorio  }}</a>
 {%else%}
-<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-light">            {{ r.responsabile_laboratorio  }}</a>
+<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-light">{{ r.responsabile_laboratorio  }}</a>
 {%endif%}
+#}
 
-            {%endfor%}
-
+{%endfor%}
            
-        </div>
-<a href="{{ url_for('search_resp') }}" class="button">Reset</a>
-        <hr />
+</div>
+{# <a href="{{ url_for('search_resp') }}" class="button">Reset</a> #}
+<hr />
 
+{#
+{% if records %}
+   
+{% include "table.html" %}
 
-        {% if records %}
-              <table class="table is-striped is-fullwidth">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
-                    <th>{{ field.replace('_', ' ').capitalize() }}</th>
-                    {% endfor %}
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in records %}
-                <tr>
-                    <td>{{ r.id }}</td>
-                    <td>{{ r.descrizione_bene }}</td>
-                    <td>{{ r.responsabile_laboratorio }}</td>
-                    <td>{{ r.num_inventario }}</td>
-                    <td>{{ r.codice_sipi_torino }}</td>
-                    <td>{{ r.destinazione }}</td>
-                    <td>{{ r.note }}</td>
-                    <td>
-                        <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
-                        <a class="button is-small is-info" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        
-        {% endif %}
-
-    </div>
+{% endif %}
+#}
+</div>
 </section>
 </body>
 </html>
