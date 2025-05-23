@@ -42,6 +42,11 @@ def upload_excel(file_path, user_email="cli_uploader"):
         df = pd.read_excel(file_path)
         df.columns = df.columns.str.strip()
 
+        for col in df.columns:
+            df[col] = df[col].astype(str)
+
+        df.fillna("", inplace=True)
+
         # Eventuale rinomina colonna "Peso"
         for col in df.columns:
             if col.startswith("Peso"):
