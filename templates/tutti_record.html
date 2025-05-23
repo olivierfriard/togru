@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>To-Gru</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+ <!--<link rel="stylesheet" href="/togru/static/style.css">-->
+</head>
+<body>
+    <section class="section">
+
+        <h3 class="title is-3">TO-GRU</h3>
+
+        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<!--
+<button id="theme-toggle" class="button is-small is-light">🌙 Mode sombre</button>
+-->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+
+
+
+<p class="subtitle is-5 mt-5">Numero totale beni: <b>{{ records|length }}</b></p>
+
+<table class="table is-striped is-fullwidth is-hoverable">
+<thead>
+<tr>
+    <th>ID</th>
+    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
+    <th>{{ field.replace('_', ' ').capitalize() }}</th>
+    {% endfor %}
+    <th>Azioni</th>
+</tr>
+</thead>
+<tbody>
+{% for r in records %}
+<tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.descrizione_bene }}</td>
+    <td>{{ r.responsabile_laboratorio }}</td>
+    <td>{{ r.num_inventario }}</td>
+    <td>{{ r.codice_sipi_torino }}</td>
+    <td>{{ r.destinazione }}</td>
+    <td>{{ r.note }}</td>
+<td>
+   <!-- <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id) }}">dettagli</a>
+    <a class="button is-small is-responsive  is-warning" href="{{ url_for('modifica', record_id=r.id) }}">Modifica</a>
+-->
+    <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
+    <a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+
+    <a class="button is-small is-info" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+</section>
+
+</body>
+</html>
+

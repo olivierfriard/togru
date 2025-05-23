@@ -163,7 +163,7 @@ def logout():
     return redirect(url_for("index"))
 
 
-# Visualizza record
+# Visualizza home page
 @app.route(APP_ROOT)
 @app.route(APP_ROOT + "/")
 def index():
@@ -174,8 +174,20 @@ def index():
             )
         )
         n = result.fetchone()[0]
-        print(n)
     return render_template("index.html", n_records=n)
+
+
+# Visualizza record
+@app.route(APP_ROOT + "/tutti")
+def tutti():
+    with engine.connect() as conn:
+        result = conn.execute(
+            text(
+                "SELECT *  FROM inventario WHERE deleted IS NULL GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+            )
+        )
+        records = result.fetchall()
+    return render_template("tutti_record.html", records=records)
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")

@@ -36,15 +36,16 @@
                 <div class="control">
                     <button class="button is-primary" type="submit">Cerca</button>
                 </div>
+
+                {% if records %}
                 <div class="control">
-                    <button class="button is-info" type="submit" name="export" value="xlsx">Export XLSX</button>
+                    <button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
                 </div>
+                {% endif %}
+
                 <div class="control">
                     <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
                 </div>
-
-                   
-
             </div>
         </form>
 

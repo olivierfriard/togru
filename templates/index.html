@@ -29,14 +29,19 @@
 <br>
 <h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a></h4>
 
-<a class="button is-link" href="{{ url_for('aggiungi') }}">Aggiungi record</a>
+<a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a>
 
-<a class="button is-link" href="{{ url_for('upload_excel') }}">Carica file Excel</a>
-<br><br>
+
 <a class="button is-link" href="{{ url_for('search') }}">Cerca</a>
 
 <a class="button is-link" href="{{ url_for('search_resp') }}">Cerca per responsabile</a>
 
+<br><br>
+
+
+<a class="button is-link" href="{{ url_for('aggiungi') }}">Aggiungi record</a>
+
+<a class="button is-link" href="{{ url_for('upload_excel') }}">Carica file Excel</a>
 <br><br>
 
 <p class="subtitle is-5">Numero totale beni: <b>{{ n_records }}</b></p>
