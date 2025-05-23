@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Storico modifiche utente</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+    <style>
+        .removed { color: #b30000; }
+        .added   { color: #007700; }
+    </style>
+</head>
+<body>
+<section class="section">
+
+    <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+    <br><br>
+
+    <h1 class="title">Storico modifiche per <u>{{ username }}</u></h1>
+
+    {% if audit_records %}
+    <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+            <tr>
+                <th>Operazione</th>
+                <th>ID Record</th>
+                <th>Responsabile laboratorio</th>
+                <th>Descrizione bene</th>
+                <th>Eseguito il</th>
+                <th>Modifiche</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in audit_records %}
+            <tr>
+                <td>{{ record.operation_type }}</td>
+                <td><a href="{{ url_for('view', record_id=record.record_id) }}">{{ record.record_id }}</a></td>
+                <td>{{ record.responsabile_laboratorio }}</td>                
+                <td>{{ record.descrizione_bene }}</td>                
+                <td>{{ record.executed_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                <td>
+                    {% set old = record.old_data or {} %}
+                    {% set new = record.new_data or {} %}
+                    {% set changes = [] %}
+                    {% for key in (old.keys() | list + new.keys() | list) | unique %}
+                        {% if old.get(key) != new.get(key) %}
+                            {% set _ = changes.append(key) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if changes %}
+                        <ul>
+                        {% for key in changes %}
+                            <li>
+                                <strong>{{ key }}:</strong>
+                                <span class="removed">{{ old.get(key, 'N/A') }}</span> →
+                                <span class="added">{{ new.get(key, 'N/A') }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        Nessuna differenza.
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <p>Nessuna operazione registrata per questo utente.</p>
+    {% endif %}
+
+</section>
+</body>
+</html>
