@@ -183,7 +183,7 @@ def tutti():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT *  FROM inventario WHERE deleted IS NULL GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
+                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio , descrizione_bene "
             )
         )
         records = result.fetchall()
@@ -632,9 +632,12 @@ def delete_record(record_id, query_string: str = ""):
         conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
         conn.commit()
 
-    flash(f"Record {record_id} eliminato (soft delete).", "success")
+    flash(f"Record {record_id} eliminato", "success")
 
-    return redirect(APP_ROOT + f"/search?{query_string}")
+    if query_string == "view":
+        return redirect(APP_ROOT + "/tutti")
+    else:
+        return redirect(APP_ROOT + f"/search?{query_string}")
 
 
 @app.route(APP_ROOT + "/view_qrcode/<int:record_id>")
