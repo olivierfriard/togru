@@ -672,14 +672,40 @@ def storico(record_id):
         if not audits:
             return f"Bene con ID {record_id} non trovato", 404
 
-        # record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
-
     return render_template("storico.html", audits=audits, record_id=record_id)
+
+
+@app.route(APP_ROOT + "/storico_utente", methods=["GET"])
+@app.route(APP_ROOT + "/storico_utente/", methods=["GET"])
+@app.route(APP_ROOT + "/storico_utente/<email>", methods=["GET"])
+@check_login
+def storico_utente(email: str = ""):
+    if not email:
+        return "utente non trovato"
+    with engine.connect() as conn:
+        sql = text(
+            """
+SELECT 
+    *
+FROM inventario_audit a
+INNER JOIN inventario i ON a.record_id = i.id
+WHERE a.executed_by = :email
+ORDER BY a.executed_at DESC;
+            """
+        )
+        audits = conn.execute(sql, {"email": email}).fetchall()
+        if not audits:
+            return f"utente {email} non trovato/a", 404
+
+    return render_template("storico_utente.html", audit_records=audits, username=email)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
 @check_login
 def etichetta(record_id):
+    """
+    Stampa etichetta da incollare sul bene
+    """
     with engine.connect() as conn:
         sql = text("""SELECT * FROM inventario WHERE id = :id""")
         result = conn.execute(sql, {"id": record_id}).fetchone()
