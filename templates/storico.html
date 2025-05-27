@@ -8,7 +8,7 @@
 <body>
 <section class="section">
     <div class="container">
-        <a class="button is-link" href="{{ url_for('search') }}">← Torna alla ricerca</a>
+        <a href="javascript:history.back()" class="button is-link">Indietro</a>
         <h1 class="title mt-5">Storico modifiche per Record ID {{ record_id }}</h1>
 
         {% if audits %}

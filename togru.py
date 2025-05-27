@@ -183,11 +183,11 @@ def tutti():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio , descrizione_bene "
+                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "
             )
         )
         records = result.fetchall()
-    return render_template("tutti_record.html", records=records)
+    return render_template("tutti_record.html", records=records, query_string="tutti")
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
@@ -300,10 +300,12 @@ def salva_modifiche(record_id):
         conn.commit()
 
     query_string = request.form.get("query_string", "")
-    if query_string:
+    if query_string == "tutti":
+        return redirect(APP_ROOT + "/tutti")
+    elif query_string:
         return redirect(APP_ROOT + f"/search?{query_string}")
-
-    return redirect(url_for("index"))
+    else:
+        return redirect(url_for("index"))
 
 
 @app.route(APP_ROOT + "/modifica_multipla", methods=["POST"])
@@ -580,7 +582,7 @@ def search_resp(responsabile_laboratorio: str = ""):
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                """( select DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"""
+                """( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"""
             )
         )
         resp = result.fetchall()

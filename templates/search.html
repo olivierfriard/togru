@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>Ricerca Inventario</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+    <link rel="stylesheet" href="/togru/static/static_header.css">
 </head>
 <body>
 <section class="section">
@@ -17,11 +18,11 @@
         <form method="get" action="{{ url_for('search') }}">
             <div class="columns is-multiline">
                 {% for field in fields %}
-                <div class="column is-one-quarter">
-                    <div class="field">
-                        <label class="label">{{ field.replace('_', ' ').capitalize() }}</label>
+                <div class="column is-2">
+                    <div class="field is-small">
+                        <label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
                         <div class="control">
-                            <input class="input" 
+                            <input class="input is-small" 
                                    type="text"
                                    name="{{ field }}" 
                                    value="{{ request_args.get(field, '') }}"
@@ -105,9 +106,9 @@
 <div class="mb-5">
 <b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
 </div>
-
+<div class="table-container">
 {% include "table.html" %}
-
+</div>
         {% else %}
         <p>Nessun risultato trovato.</p>
         {% endif %}
