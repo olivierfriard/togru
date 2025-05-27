@@ -1,0 +1,22 @@
+.table-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.table-container table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table-container thead th {
+  position: sticky;
+  top: 0;
+  background-color: #000000; /* sfondo opaco */
+  z-index: 2;
+  border-bottom: 2px solid #dbdbdb; /* bordino sotto */
+}
+
+/* facoltativo: puoi anche fissare l'altezza delle righe header */
+.table-container thead th {
+  height: 50px;
+}
