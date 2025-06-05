@@ -4,104 +4,104 @@
     <meta charset="UTF-8" />
     <title>Ricerca Inventario</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
-    <link rel="stylesheet" href="/togru/static/static_header.css">
+<!--  <link rel="stylesheet" href="/togru/static/static_header.css"> -->
 </head>
 <body>
 <section class="section">
 
-        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
-        <br><br>
+<br><br>
 
-        <h1 class="title">Ricerca Inventario</h1>
+<h1 class="title">Ricerca Inventario</h1>
 
-        <form method="get" action="{{ url_for('search') }}">
-            <div class="columns is-multiline">
-                {% for field in fields %}
-                <div class="column is-2">
-                    <div class="field is-small">
-                        <label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
-                        <div class="control">
-                            <input class="input is-small" 
-                                   type="text"
-                                   name="{{ field }}" 
-                                   value="{{ request_args.get(field, '') }}"
-                                   placeholder="Cerca {{ field.replace('_', ' ') }}" />
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="field is-grouped">
-                <div class="control">
-                    <button class="button is-primary" type="submit">Cerca</button>
-                </div>
-
-                {% if records %}
-                <div class="control">
-                    <button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
-                </div>
-                {% endif %}
-
-                <div class="control">
-                    <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
-                </div>
-            </div>
-        </form>
-
-        <hr />
-
-        {% if records %}
-        
-        <div class="mb-5">
-        <button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
+<form method="get" action="{{ url_for('search') }}">
+<div class="columns is-multiline">
+{% for field in fields %}
+<div class="column is-2">
+    <div class="field is-small">
+        <label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
+        <div class="control">
+            <input class="input is-small" 
+                    type="text"
+                    name="{{ field }}" 
+                    value="{{ request_args.get(field, '') }}"
+                    placeholder="Cerca {{ field.replace('_', ' ') }}" />
         </div>
+    </div>
+</div>
+{% endfor %}
+</div>
 
-        <div id="form_modifica_multipla_wrapper" style="display: none;">
-            <!-- Form per aggiornamento multiplo di un campo -->
-            <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
-                <input type="hidden" name="query_string" value="{{ query_string }}">
-            
-                <div class="field is-horizontal">
-                    <div class="field-label is-normal">
-                        <label class="label">Campo</label>
-                    </div>
-                    <div class="field-body">
-                        <div class="field">
-                            <div class="control">
-                                <div class="select">
-                                    <select name="campo">
-                                        <option value="responsabile_laboratorio">Responsabile laboratorio</option>
-                                        <option value="codice_sipi_torino">Codice SIPI Torino</option>
-                                        <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
-                                        <option value="destinazione">Destinazione</option>
-                                        <option value="note">Note</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-                <div class="field is-horizontal">
-                    <div class="field-label is-normal">
-                        <label class="label">Nuovo valore</label>
-                    </div>
-                    <div class="field-body">
-                        <div class="field">
-                            <div class="control">
-                                <input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            
-                <div class="control mb-5 mt-4">
-                    <button class="button is-danger" type="submit">Aggiorna selezionati</button>
-                </div>
-            </form>
-        </div><!-- per nascondere -->
+<div class="field is-grouped">
+<div class="control">
+    <button class="button is-primary" type="submit">Cerca</button>
+</div>
+
+{% if records %}
+<div class="control">
+    <button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
+</div>
+{% endif %}
+
+<div class="control">
+    <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
+</div>
+</div>
+</form>
+
+<hr />
+
+{% if records %}
+
+<div class="mb-5">
+<button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
+</div>
+
+<div id="form_modifica_multipla_wrapper" style="display: none;">
+<!-- Form per aggiornamento multiplo di un campo -->
+<form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
+<input type="hidden" name="query_string" value="{{ query_string }}">
+
+<div class="field is-horizontal">
+<div class="field-label is-normal">
+<label class="label">Campo</label>
+</div>
+<div class="field-body">
+<div class="field">
+<div class="control">
+<div class="select">
+<select name="campo">
+<option value="responsabile_laboratorio">Responsabile laboratorio</option>
+<option value="codice_sipi_torino">Codice SIPI Torino</option>
+<option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
+<option value="destinazione">Destinazione</option>
+<option value="note">Note</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="field is-horizontal">
+<div class="field-label is-normal">
+<label class="label">Nuovo valore</label>
+</div>
+<div class="field-body">
+<div class="field">
+<div class="control">
+<input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
+</div>
+</div>
+</div>
+</div>
+
+<div class="control mb-5 mt-4">
+<button class="button is-danger" type="submit">Aggiorna selezionati</button>
+</div>
+</form>
+</div><!-- per nascondere -->
 
 <div class="mb-5">
 <b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
@@ -109,9 +109,9 @@
 <div class="table-container">
 {% include "table.html" %}
 </div>
-        {% else %}
-        <p>Nessun risultato trovato.</p>
-        {% endif %}
+{% else %}
+<p>Nessun risultato trovato.</p>
+{% endif %}
 </section>
 
 <script>

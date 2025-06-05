@@ -4,15 +4,13 @@
 <meta charset="UTF-8">
 <title>To-Gru</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
- <link rel="stylesheet" href="/togru/static/static_header.css">
 </head>
 <body>
-    <section class="section">
+<section class="section">
 
-        <h3 class="title is-3">TO-GRU</h3>
+<h3 class="title is-3">TO-GRU</h3>
 
-        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
-
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
@@ -40,24 +38,30 @@
 <tbody>
 {% for r in records %}
 <tr>
-    <td>{{ r.id }}</td>
-    <td>{{ r.descrizione_bene }}</td>
-    <td>{{ r.responsabile_laboratorio }}</td>
-    <td>{{ r.num_inventario }}</td>
-    <td>{{ r.codice_sipi_torino }}</td>
-    <td>{{ r.destinazione }}</td>
-    <td>{{ r.note }}</td>
+<td>{{ r.id }}</td>
+<td>{{ r.descrizione_bene }}</td>
+<td>{{ r.responsabile_laboratorio }}</td>
+<td>{{ r.num_inventario }}</td>
+<td>{{ r.codice_sipi_torino }}</td>
+<td>{{ r.destinazione }}</td>
+<td>{{ r.note }}</td>
 <td>
-    <a class="button is-small " href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
-    <a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
-    <a class="button is-small " href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
+<a class="button is-small is-info" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
+<a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+
+
+<form method="post" action="{{ url_for('delete_record', record_id=r.id, query_string=query_string) }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
+<button class="button is-small is-danger" type="submit">Elimina</button>
+</form>
+
+<a class="button is-small" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
+
 </td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 </div><!-- table-container -->
-
 
 </section>
 

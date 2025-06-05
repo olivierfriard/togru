@@ -42,10 +42,10 @@ def upload_excel(file_path, user_email="cli_uploader"):
         df = pd.read_excel(file_path)
         df.columns = df.columns.str.strip()
 
+        df.fillna("", inplace=True)
+
         for col in df.columns:
             df[col] = df[col].astype(str)
-
-        df.fillna("", inplace=True)
 
         # Eventuale rinomina colonna "Peso"
         for col in df.columns:
@@ -54,7 +54,6 @@ def upload_excel(file_path, user_email="cli_uploader"):
                 break
 
         df.rename(columns=excel_to_db_fields, inplace=True)
-        df.fillna("", inplace=True)
 
         # Controllo colonne mancanti
         expected_cols = list(excel_to_db_fields.values())
@@ -97,9 +96,7 @@ def upload_excel(file_path, user_email="cli_uploader"):
         print("✅ File caricato e dati inseriti con successo!")
 
         if not senza_responsabile.empty:
-            print(
-                f"⚠️ {len(senza_responsabile)} beni senza responsabile di laboratorio:"
-            )
+            print(f"⚠️ {len(senza_responsabile)} beni senza responsabile di laboratorio:")
             for _, row in senza_responsabile.iterrows():
                 print(f"- {row['descrizione_bene']} (inv: {row['num_inventario']})")
 
