@@ -1,3 +1,25 @@
+<style>
+.table-container {
+  max-height: 80vh; /* oppure 100vh meno eventuali header/footer */
+  overflow-y: auto;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  color: #ffffff;
+  background: #111111;
+  z-index: 2;
+}
+
+/* opzionale: bordi sopra/sotto header */
+.table thead {
+  border-bottom: 2px solid #ddd;
+}
+</style>
+
+
+<div class="table-container">
 <table class="table is-striped is-fullwidth">
 <thead>
 <tr>
@@ -28,8 +50,11 @@
 <button class="button is-small is-danger" type="submit">Elimina</button>
 </form>
 
+<a class="button is-small" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
+
 </td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
+</div>
