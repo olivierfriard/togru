@@ -109,9 +109,7 @@ def check_login(f):
 def login():
     """Reindirizza l'utente alla schermata di autorizzazione di Google"""
     google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(
-        authorization_base_url
-    )  # , access_type="offline", prompt="select_account")
+    authorization_url, state = google.authorization_url(authorization_base_url)  # , access_type="offline", prompt="select_account")
     session["oauth_state"] = state
     """
     with open("login_log", "w") as f_out:
@@ -127,12 +125,8 @@ def callback():
     with open("callback_log", "w") as f_out:
         print(f"{session.keys()=}\n", file=f_out)
     """
-    google = OAuth2Session(
-        client_id, state=session["oauth_state"], redirect_uri=redirect_uri
-    )
-    token = google.fetch_token(
-        token_url, client_secret=client_secret, authorization_response=request.url
-    )
+    google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
+    token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
 
     session["oauth_token"] = token
 
@@ -141,9 +135,7 @@ def callback():
     userinfo = response.json()
 
     if userinfo["email"] not in autorizzati:
-        flash(
-            f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger"
-        )
+        flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
         return redirect(url_for("index"))
 
     session["name"] = userinfo["name"]
@@ -181,11 +173,7 @@ def index():
 @app.route(APP_ROOT + "/tutti")
 def tutti():
     with engine.connect() as conn:
-        result = conn.execute(
-            text(
-                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "
-            )
-        )
+        result = conn.execute(text("SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "))
         records = result.fetchall()
     return render_template("tutti_record.html", records=records, query_string="tutti")
 
@@ -241,9 +229,7 @@ def aggiungi():
             )
         """)
         with engine.connect() as conn:
-            conn.execute(
-                text("SET LOCAL application_name = :user"), {"user": session["email"]}
-            )
+            conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
             conn.execute(query, data)
             conn.commit()
         return redirect(url_for("index"))
@@ -256,9 +242,7 @@ def aggiungi():
 @check_login
 def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id}
-        )
+        result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
         record = result.fetchone()
     return render_template("modifica.html", record=record, query_string=query_string)
 
@@ -293,9 +277,7 @@ def salva_modifiche(record_id):
         WHERE id = :id
     """)
     with engine.connect() as conn:
-        conn.execute(
-            text("SET LOCAL application_name = :user"), {"user": session["email"]}
-        )
+        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
 
@@ -334,9 +316,7 @@ def modifica_multipla():
             print(f"{rid=}")
             print("==")
 
-            query = text(
-                f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id"
-            )
+            query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
             with engine.connect() as conn:
                 conn.execute(
                     text("SET LOCAL application_name = :user"),
@@ -468,15 +448,10 @@ def upload_excel():
 
             if count_senza_responsabile > 0:
                 # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
-                dettagli = [
-                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
-                    for _, row in senza_responsabile.iterrows()
-                ]
+                dettagli = [f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in senza_responsabile.iterrows()]
                 inventari = "<br>".join(dettagli)
                 flash(
-                    Markup(
-                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
-                    ),
+                    Markup(f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"),
                     "warning",
                 )
 
@@ -594,9 +569,7 @@ def search_resp(responsabile_laboratorio: str = ""):
 
     if responsabile_laboratorio:
         if responsabile_laboratorio == "SENZA":
-            sql += (
-                " AND responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL"
-            )
+            sql += " AND responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL"
         else:
             sql += " AND responsabile_laboratorio ILIKE :responsabile_laboratorio"
             params["responsabile_laboratorio"] = f"%{responsabile_laboratorio}%"
@@ -616,6 +589,43 @@ def search_resp(responsabile_laboratorio: str = ""):
     )
 
 
+@app.route(APP_ROOT + "/search_sipi_torino")
+@app.route(APP_ROOT + "/search_sipi_torino/<sipi>")
+@check_login
+def search_sipi_torino(sipi: str = ""):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("""( SELECT DISTINCT codice_sipi_torino FROM inventario WHERE codice_sipi_torino != '') ORDER BY codice_sipi_torino""")
+        )
+        sipi_list = result.fetchall()
+
+    # query_string = request.query_string.decode("utf-8")
+
+    sql = "SELECT * FROM inventario WHERE deleted IS NULL "
+    params = {}
+
+    if sipi:
+        if sipi == "SENZA":
+            sql += " AND codice_sipi_torino = '' OR codice_sipi_torino IS NULL"
+        else:
+            sql += " AND codice_sipi_torino =  :codice_sipi_torino"
+            params["codice_sipi_torino"] = sipi
+
+        with engine.connect() as conn:
+            result = conn.execute(text(sql), params)
+            records = result.fetchall()
+    else:
+        records = {}
+
+    return render_template(
+        "search_sipi_torino.html",
+        sipi=sipi,
+        sipi_list=sipi_list,
+        records=records,
+        request_args=request.args,
+    )
+
+
 @app.route(APP_ROOT + "/delete/<int:record_id>", methods=["POST"])
 @app.route(APP_ROOT + "/delete/<int:record_id>/", methods=["POST"])
 @app.route(APP_ROOT + "/delete/<int:record_id>/<query_string>", methods=["POST"])
@@ -625,12 +635,8 @@ def delete_record(record_id, query_string: str = ""):
     delete record
     """
     with engine.connect() as conn:
-        conn.execute(
-            text("SET LOCAL application_name = :user"), {"user": session["email"]}
-        )
-        sql = text(
-            "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
-        )
+        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+        sql = text("UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id")
         conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
         conn.commit()
 
@@ -667,9 +673,7 @@ def view_qrcode(record_id: int):
 @check_login
 def storico(record_id):
     with engine.connect() as conn:
-        sql = text(
-            "SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC"
-        )
+        sql = text("SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC")
         audits = conn.execute(sql, {"id": record_id}).fetchall()
         if not audits:
             return f"Bene con ID {record_id} non trovato", 404
@@ -777,9 +781,7 @@ def etichetta(record_id):
                 align="L",
             )
         if record_dict["note"]:
-            pdf.cell(
-                200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L"
-            )
+            pdf.cell(200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L")
 
         pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
 

@@ -29,12 +29,14 @@
 <br>
 <h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a></h4>
 
-<a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a>
-
+<a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a><br>
+<br>
 
 <a class="button is-link" href="{{ url_for('search') }}">Cerca</a>
 
-<a class="button is-link" href="{{ url_for('search_resp') }}">Cerca per responsabile</a>
+<a class="button is-link" href="{{ url_for('search_resp') }}">Filtra per responsabile</a>
+
+<a class="button is-link" href="{{ url_for('search_sipi_torino') }}">Filtra per codice SIPI Torino</a>
 
 <br><br>
 
