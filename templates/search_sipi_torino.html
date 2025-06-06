@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Ricerca Inventario per responsabile</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+<div class="container">
+
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<br><br>
+
+<h1 class="title">Filtra per Codice SIPI Torino</h1>
+
+
+<!-- Form di filtro con select -->
+<form method="get" action="/togru/search">
+  <div class="field">
+    <label class="label">Codice SIPI Torino</label>
+    <div class="control">
+      <div class="select">
+        <select name="codice_sipi_torino">
+          <option value="SENZA">Senza SIPI</option>
+          {% for r in sipi_list %}
+          <option value="{{ r.codice_sipi_torino }}">{{ r.codice_sipi_torino }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="control">
+    <button type="submit" class="button is-link">Filtra</button>
+  </div>
+</form>
+
+
+</div>
+</section>
+</body>
+</html>
