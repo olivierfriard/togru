@@ -15,34 +15,29 @@
 
 <h1 class="title">Filtra per Responsabile Laboratorio</h1>
 
-<!-- Pulsanti di filtro per responsabile laboratorio -->
-<div class="buttons">
-<a href="/togru/search?responsabile_laboratorio=SENZA" class="button is-danger">Senza responsabile</a>
 
-{% for r in resp %}
-<a href="/togru/search?responsabile_laboratorio={{r.responsabile_laboratorio}}" class="button is-light">{{ r.responsabile_laboratorio  }}</a>
+<!-- Form di filtro con select -->
+<form method="get" action="/togru/search">
+  <div class="field">
+    <label class="label">Responsabile Laboratorio</label>
+    <div class="control">
+      <div class="select">
+        <select name="responsabile_laboratorio">
+          <option value="SENZA">Senza responsabile</option>
+          {% for r in resp %}
+          <option value="{{ r.responsabile_laboratorio }}">{{ r.responsabile_laboratorio }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
 
-{#
-{% if r.responsabile_laboratorio==responsabile_laboratorio %}
-<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-primary">{{ r.responsabile_laboratorio  }}</a>
-{%else%}
-<a href="{{ url_for('search_resp', responsabile_laboratorio=r.responsabile_laboratorio) }}" class="button is-light">{{ r.responsabile_laboratorio  }}</a>
-{%endif%}
-#}
+  <div class="control">
+    <button type="submit" class="button is-link">Filtra</button>
+  </div>
+</form>
 
-{%endfor%}
-           
-</div>
-{# <a href="{{ url_for('search_resp') }}" class="button">Reset</a> #}
-<hr />
 
-{#
-{% if records %}
-   
-{% include "table.html" %}
-
-{% endif %}
-#}
 </div>
 </section>
 </body>
