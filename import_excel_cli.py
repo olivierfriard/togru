@@ -41,7 +41,6 @@ def upload_excel(file_path, user_email="cli_uploader"):
     try:
         df = pd.read_excel(file_path)
         df.columns = df.columns.str.strip()
-
         df.fillna("", inplace=True)
 
         for col in df.columns:

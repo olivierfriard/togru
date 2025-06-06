@@ -512,6 +512,9 @@ def search():
                 # add senza responsabile
                 if field == "responsabile_laboratorio" and value == "SENZA":
                     query += f" AND ({field} = '' OR {field} IS NULL)"
+                # add senza Codice SIPI Torino
+                if field == "codice_sipi_torino" and value == "SENZA":
+                    query += f" AND ({field} = '' OR {field} IS NULL)"
 
                 else:
                     # Per testo, ricerca con ILIKE e wildcard %
@@ -551,9 +554,8 @@ def search():
 
 
 @app.route(APP_ROOT + "/search_resp")
-@app.route(APP_ROOT + "/search_resp/<responsabile_laboratorio>")
 @check_login
-def search_resp(responsabile_laboratorio: str = ""):
+def search_resp():
     with engine.connect() as conn:
         result = conn.execute(
             text(
@@ -562,67 +564,24 @@ def search_resp(responsabile_laboratorio: str = ""):
         )
         resp = result.fetchall()
 
-    # query_string = request.query_string.decode("utf-8")
-
-    sql = "SELECT * FROM inventario WHERE deleted IS NULL "
-    params = {}
-
-    if responsabile_laboratorio:
-        if responsabile_laboratorio == "SENZA":
-            sql += " AND responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL"
-        else:
-            sql += " AND responsabile_laboratorio ILIKE :responsabile_laboratorio"
-            params["responsabile_laboratorio"] = f"%{responsabile_laboratorio}%"
-
-        with engine.connect() as conn:
-            result = conn.execute(text(sql), params)
-            records = result.fetchall()
-    else:
-        records = {}
-
     return render_template(
         "search_responsabile.html",
-        responsabile_laboratorio=responsabile_laboratorio,
         resp=resp,
-        records=records,
-        request_args=request.args,
     )
 
 
 @app.route(APP_ROOT + "/search_sipi_torino")
-@app.route(APP_ROOT + "/search_sipi_torino/<sipi>")
 @check_login
-def search_sipi_torino(sipi: str = ""):
+def search_sipi_torino():
     with engine.connect() as conn:
         result = conn.execute(
             text("""( SELECT DISTINCT codice_sipi_torino FROM inventario WHERE codice_sipi_torino != '') ORDER BY codice_sipi_torino""")
         )
         sipi_list = result.fetchall()
 
-    # query_string = request.query_string.decode("utf-8")
-
-    sql = "SELECT * FROM inventario WHERE deleted IS NULL "
-    params = {}
-
-    if sipi:
-        if sipi == "SENZA":
-            sql += " AND codice_sipi_torino = '' OR codice_sipi_torino IS NULL"
-        else:
-            sql += " AND codice_sipi_torino =  :codice_sipi_torino"
-            params["codice_sipi_torino"] = sipi
-
-        with engine.connect() as conn:
-            result = conn.execute(text(sql), params)
-            records = result.fetchall()
-    else:
-        records = {}
-
     return render_template(
         "search_sipi_torino.html",
-        sipi=sipi,
         sipi_list=sipi_list,
-        records=records,
-        request_args=request.args,
     )
 
 
