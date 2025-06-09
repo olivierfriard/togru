@@ -44,43 +44,9 @@
 <a class="button is-link" href="{{ url_for('upload_excel') }}">Carica file Excel</a>
 <br><br>
 
+<a class="button is-link" href="{{ url_for('mappe') }}">Mappe</a>
+
 <p class="subtitle is-5">Numero totale beni: <b>{{ n_records }}</b></p>
-
-{#
-
-            <table class="table is-striped is-fullwidth is-hoverable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                       
-                        <th>Descrizione Bene</th>
-                        <th>Responsabile laboratorio</th>
-                        <th>Num Inventario</th>
-                        <th>Destinazione</th>
-                        <th>Note</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in records %}
-                    <tr>
-                        <td>{{ r.id }}</td>
-                      
-                        <td>{{ r.descrizione_bene }}</td>
-                        <td>{{ r.responsabile_laboratorio }}</td>
-                        <td>{{ r.num_inventario }}</td>
-                        <td>{{ r.destinazione }}</td>
-                        <td>{{ r.note }}</td>
-                        <td>
-                            <a class="button is-small is-responsive" href="{{ url_for('view', record_id=r.id) }}">dettagli</a>
-                            <a class="button is-small is-responsive  is-warning" href="{{ url_for('modifica', record_id=r.id) }}">Modifica</a>
-                          <!--  <a class="button is-small is-responsive" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a> -->
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-#}
 
 {% else %}
 <a class="button button is-link" href="{{ url_for('login') }}">Accedi con Google Unito</a>

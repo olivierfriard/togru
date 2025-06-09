@@ -766,5 +766,11 @@ def etichetta(record_id):
             os.remove(temp_qr_path)
 
 
+@app.route(APP_ROOT + "/mappe", methods=["GET"])
+@check_login
+def mappe():
+    return render_template("mappe.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
