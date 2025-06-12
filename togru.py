@@ -137,7 +137,7 @@ def callback():
     userinfo = response.json()
 
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT FROM users WHERE email = :email"), {"email": userinfo["email"]})
+        result = conn.execute(text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"), {"email": userinfo["email"]}).fetchone()[0]
         if not result:
             flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
             return redirect(url_for("index"))
@@ -169,8 +169,10 @@ def index():
 
         admin = False
         if "email" in session:
-            result = conn.execute(text("SELECT email FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]})
-            if result:
+            result = conn.execute(
+                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+            )
+            if result.fetchone()[0]:
                 admin = True
 
     return render_template("index.html", n_records=n, admin=admin)
