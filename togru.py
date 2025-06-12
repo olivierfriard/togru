@@ -1,4 +1,3 @@
-import sys
 from flask import (
     Flask,
     request,
@@ -111,6 +110,23 @@ def check_login(f):
         if "email" not in session:
             return redirect(url_for("login"))
         return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def check_admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        with engine.connect() as conn:
+            if "email" not in session:
+                return redirect(url_for("index"))
+            result = conn.execute(
+                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+            )
+            if not result.fetchone()[0]:
+                return redirect(url_for("index"))
+            else:
+                return f(*args, **kwargs)
 
     return decorated_function
 
@@ -783,6 +799,7 @@ def mappe():
 
 @app.route(APP_ROOT + "/aggiungi_user", methods=["GET", "POST"])
 @check_login
+@check_admin
 def aggiungi_user():
     if request.method == "GET":
         with engine.connect() as conn:
