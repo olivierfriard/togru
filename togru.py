@@ -785,7 +785,10 @@ def mappe():
 @check_login
 def aggiungi_user():
     if request.method == "GET":
-        return render_template("aggiungi_user.html")
+        with engine.connect() as conn:
+            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+
+        return render_template("aggiungi_user.html", users=users)
 
     if request.method == "POST":
         email = request.form.get("email")
