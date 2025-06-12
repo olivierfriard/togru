@@ -167,11 +167,11 @@ def index():
         result = conn.execute(text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"))
         n = result.fetchone()[0]
 
-        result = conn.execute(text("SELECT email FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]})
-        if result:
-            admin = True
-        else:
-            admin = False
+        admin = False
+        if "email" in session:
+            result = conn.execute(text("SELECT email FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]})
+            if result:
+                admin = True
 
     return render_template("index.html", n_records=n, admin=admin)
 
