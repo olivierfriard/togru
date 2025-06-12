@@ -25,7 +25,9 @@
 
 {% if session['email'] %}
 <br>
-<h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a></h4>
+<h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a>
+{%if admin %}<a class="button  is-small is-danger" href="{{ url_for('aggiungi_user') }}">Admin</a>{%endif%}
+</h4>
 
 <a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a><br>
 <br>

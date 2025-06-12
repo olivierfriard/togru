@@ -86,13 +86,23 @@ with engine.connect() as conn:
     )
     conn.commit()
 
+"""
 # load email of users
 try:
-    with open("email_tdr.txt", "r") as f_in:
+    with open("email_users.txt", "r") as f_in:
         autorizzati = [x.strip() for x in f_in.readlines()]
 except Exception:
-    print("Problema di lettura su file email_tdr.txt")
+    print("Problema di lettura su file email_users.txt")
     sys.exit(1)
+
+# load administrators
+try:
+    with open("email_admin.txt", "r") as f_in:
+        administrators = [x.strip() for x in f_in.readlines()]
+except Exception:
+    print("Problema di lettura su file email_admin.txt")
+    sys.exit(1)
+"""
 
 
 def check_login(f):
@@ -111,20 +121,12 @@ def login():
     google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
     authorization_url, state = google.authorization_url(authorization_base_url)  # , access_type="offline", prompt="select_account")
     session["oauth_state"] = state
-    """
-    with open("login_log", "w") as f_out:
-        print(f"{session.keys()=}\n", file=f_out)
-    """
     return redirect(authorization_url)
 
 
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
-    """
-    with open("callback_log", "w") as f_out:
-        print(f"{session.keys()=}\n", file=f_out)
-    """
     google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
     token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
 
@@ -134,9 +136,11 @@ def callback():
     response = google.get("https://www.googleapis.com/oauth2/v1/userinfo")
     userinfo = response.json()
 
-    if userinfo["email"] not in autorizzati:
-        flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
-        return redirect(url_for("index"))
+    with engine.connect() as conn:
+        result = conn.execute("SELECT FROM users WHERE email = :email", {"email": userinfo["email"]})
+        if not result:
+            flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
+            return redirect(url_for("index"))
 
     session["name"] = userinfo["name"]
     session["email"] = userinfo["email"]
@@ -160,13 +164,16 @@ def logout():
 @app.route(APP_ROOT + "/")
 def index():
     with engine.connect() as conn:
-        result = conn.execute(
-            text(
-                "SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"  # GROUP BY responsabile_laboratorio,id ORDER BY responsabile_laboratorio DESC,id "
-            )
-        )
+        result = conn.execute(text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"))
         n = result.fetchone()[0]
-    return render_template("index.html", n_records=n)
+
+        result = conn.execute(text("SELECT email FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]})
+        if result:
+            admin = True
+        else:
+            admin = False
+
+    return render_template("index.html", n_records=n, admin=admin)
 
 
 # Visualizza record
@@ -770,6 +777,22 @@ def etichetta(record_id):
 @check_login
 def mappe():
     return render_template("mappe.html")
+
+
+@app.route(APP_ROOT + "/aggiungi_user", methods=["GET", "POST"])
+@check_login
+def aggiungi_user():
+    if request.method == "GET":
+        return render_template("aggiungi_user.html")
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        with engine.connect() as conn:
+            sql = text("INSERT INTO users (email, admin) VALUES (:email, :admin)")
+            conn.execute(sql, {"email": email, "admin": False})
+            conn.commit()
+        flash("Utente aggiunto", "success")
+        return render_template("aggiungi_user.html")
 
 
 if __name__ == "__main__":
