@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aggiungi Email</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+</head>
+<body>
+  <section class="section">
+    <div class="container">
+
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<br><br>
+
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+
+
+
+      <h1 class="title">Aggiungi un utente</h1>
+
+      <form action="{{ url_for('aggiungi_user') }}" method="POST">
+        <div class="field">
+          <label class="label">Email</label>
+          <div class="control has-icons-left">
+            <input class="input" type="email" name="email" placeholder="esempio@unito.it" required>
+            <span class="icon is-small is-left">
+              <i class="fas fa-envelope"></i>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="control">
+            <button class="button is-primary" type="submit">Aggiungi</button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </section>
+
+</body>
+</html>
