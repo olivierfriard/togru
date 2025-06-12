@@ -137,7 +137,7 @@ def callback():
     userinfo = response.json()
 
     with engine.connect() as conn:
-        result = conn.execute("SELECT FROM users WHERE email = :email", {"email": userinfo["email"]})
+        result = conn.execute(text("SELECT FROM users WHERE email = :email"), {"email": userinfo["email"]})
         if not result:
             flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
             return redirect(url_for("index"))
