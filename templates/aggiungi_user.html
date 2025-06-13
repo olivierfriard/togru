@@ -26,39 +26,35 @@
 {% endwith %}
 
 
+<h1 class="title">Abilita un nuovo utente</h1>
 
-      <h1 class="title">Aggiungi un utente</h1>
+<form action="{{ url_for('aggiungi_user') }}" method="POST">
+<div class="field">
+<label class="label">Email</label>
+<div class="control has-icons-left">
+<input class="input" type="email" name="email" placeholder="nome.cognome@unito.it" required>
+<span class="icon is-small is-left">
+  <i class="fas fa-envelope"></i>
+</span>
+</div>
+</div>
 
-      <form action="{{ url_for('aggiungi_user') }}" method="POST">
-        <div class="field">
-          <label class="label">Email</label>
-          <div class="control has-icons-left">
-            <input class="input" type="email" name="email" placeholder="esempio@unito.it" required>
-            <span class="icon is-small is-left">
-              <i class="fas fa-envelope"></i>
-            </span>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="control">
-            <button class="button is-primary" type="submit">Aggiungi</button>
-          </div>
-        </div>
-      </form>
+<div class="field">
+<div class="control">
+<button class="button is-primary" type="submit">Aggiungi</button>
+</div>
+</div>
+</form>
 
 <br><br>
-<h2 class="title">Utenti</h2>
+<h2 class="title">Utenti abilitati</h2>
 
 {%for user in users%}
-
-{{ user[0] }}<br>
-
+{{ user[0] }} <a href="{{ url_for('delete_user', email=user[0])}}" onclick="return confirm('Sei sicuro di voler cancellare questo utente?')">Cancella</a><br>
 {%endfor%}
 
-
-    </div>
-  </section>
+</div>
+</section>
 
 </body>
 </html>

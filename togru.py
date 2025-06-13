@@ -643,8 +643,6 @@ def storico(record_id):
     with engine.connect() as conn:
         sql = text("SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC")
         audits = conn.execute(sql, {"id": record_id}).fetchall()
-        if not audits:
-            return f"Bene con ID {record_id} non trovato", 404
 
     return render_template("storico.html", audits=audits, record_id=record_id)
 
@@ -658,18 +656,18 @@ def storico_utente(email: str = ""):
         return "utente non trovato"
     with engine.connect() as conn:
         sql = text(
-            """
-SELECT 
-    *
-FROM inventario_audit a
-INNER JOIN inventario i ON a.record_id = i.id
-WHERE a.executed_by = :email
-ORDER BY a.executed_at DESC;
-            """
+            (
+                "SELECT  "
+                "    * "
+                "FROM inventario_audit a "
+                "INNER JOIN inventario i ON a.record_id = i.id "
+                "WHERE a.executed_by = :email "
+                "ORDER BY a.executed_at DESC "
+            )
         )
         audits = conn.execute(sql, {"email": email}).fetchall()
         if not audits:
-            return f"utente {email} non trovato/a", 404
+            flash("Utente non trovato", "danger")
 
     return render_template("storico_utente.html", audit_records=audits, username=email)
 
@@ -799,6 +797,32 @@ def aggiungi_user():
             conn.commit()
         flash("Utente aggiunto", "success")
         return render_template("aggiungi_user.html")
+
+
+@app.route(APP_ROOT + "/delete_user/<email>")
+@check_login
+@check_admin
+def delete_user(email: str):
+    with engine.connect() as conn:
+        # check if email in DB
+        n_users = conn.execute(text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}).fetchone()[0]
+        if not n_users:
+            flash(f"Utente {email} non trovato", "danger")
+
+            # users list
+            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+
+            return render_template("aggiungi_user.html", users=users)
+
+        # delete user
+        conn.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
+        conn.commit()
+        flash(f"Utente {email} cancellato", "success")
+
+        # users list
+        users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+
+        return render_template("aggiungi_user.html", users=users)
 
 
 if __name__ == "__main__":
