@@ -85,24 +85,6 @@ with engine.connect() as conn:
     )
     conn.commit()
 
-"""
-# load email of users
-try:
-    with open("email_users.txt", "r") as f_in:
-        autorizzati = [x.strip() for x in f_in.readlines()]
-except Exception:
-    print("Problema di lettura su file email_users.txt")
-    sys.exit(1)
-
-# load administrators
-try:
-    with open("email_admin.txt", "r") as f_in:
-        administrators = [x.strip() for x in f_in.readlines()]
-except Exception:
-    print("Problema di lettura su file email_admin.txt")
-    sys.exit(1)
-"""
-
 
 def check_login(f):
     @wraps(f)
@@ -133,9 +115,11 @@ def check_admin(f):
 
 @app.route(APP_ROOT + "/login")
 def login():
-    """Reindirizza l'utente alla schermata di autorizzazione di Google"""
+    """
+    Reindirizza l'utente alla schermata di autorizzazione di Google
+    """
     google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(authorization_base_url)  # , access_type="offline", prompt="select_account")
+    authorization_url, state = google.authorization_url(authorization_base_url)
     session["oauth_state"] = state
     return redirect(authorization_url)
 
