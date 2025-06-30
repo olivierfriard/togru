@@ -589,9 +589,19 @@ def search():
                 value = request.args.get(field, "").strip()
                 if value:
                     # add senza responsabile
-                    if field == "responsabile_laboratorio" and value == "SENZA":
-                        query += f" AND ({field} = '' OR {field} IS NULL)"
-                        continue
+                    if field == "responsabile_laboratorio":
+                        if value == "SENZA":
+                            query += f" AND ({field} = '' OR {field} IS NULL)"
+                            continue
+                        if "," in value:
+                            subquery = ""
+                            for resp in [x.strip() for x in value.split(",")]:
+                                if subquery:
+                                    subquery += " OR "
+                                subquery += f"{field} ILIKE '%{resp}%' "
+                            query += f" AND ({subquery})"
+                            continue
+
                     # add senza Codice SIPI Torino
                     if field == "codice_sipi_torino" and value == "SENZA":
                         query += f" AND ({field} = '' OR {field} IS NULL)"
