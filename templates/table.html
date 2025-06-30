@@ -39,8 +39,8 @@
 <td>{{ r.descrizione_bene }}</td>
 <td>{{ r.responsabile_laboratorio }}</td>
 <td>{% if r.da_movimentare is true %}🟩{% elif r.da_movimentare is false %}🟥{% endif %}
-
-  {% if r.catena_del_freddo is true %}❄️{% endif %}
+{% if r.catena_del_freddo is true %}❄️{% endif %}
+{% if r.trasporto_in_autonomia is true %}🚗{% endif %}
 </td>
   
 
