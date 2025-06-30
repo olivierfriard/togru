@@ -22,49 +22,42 @@
 
 <br><br>
 
-        <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
+<h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
 
-        <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
+
+<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
 
 <input type="hidden" name="query_string" value="{{ query_string }}">
 
-{#
-<!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
-<div class="columns">
-    <div class="column is-half">
-        <div class="field">
-            <label class="label">Descrizione bene</label>
-            <div class="control">
-                <input class="input" type="text" name="descrizione_bene" placeholder="Descrizione bene"  value="{{ record['descrizione_bene'] }}">
-            </div>
-        </div>
-    </div>
-    <div class="column is-half">
-        <div class="field">
-            <label class="label">Responsabile laboratorio</label>
-            <div class="control">
-                <input class="input" type="text" name="responsabile_laboratorio" placeholder="Responsabile laboratorio"  value="{{ record['responsabile_laboratorio'] }}">
-            </div>
-        </div>
-    </div>
-</div>
-#}
 
 
-            <div class="columns is-multiline is-mobile">
+<div class="columns is-multiline is-mobile">
                 {% for field in [
-                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 'data_carico',
-                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
-                    'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
-                     'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
-                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 'peso', 'dimensioni',
+                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 
+                    'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
+                    'microscopia', 'catena_del_freddo','alta_specialistica','da_movimentare','trasporto_in_autonomia','da_disinventariare',
+                    'rosso_fase_alimentazione_privilegiata', 
+
+                    'data_carico', 'valore_convenzionale', 
+                    'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
+                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 
                     'ditta_costruttrice_fornitrice'
                 ] %}
                 <div class="column is-one-quarter">
                     <div class="field">
                         <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}</label>
                         <div class="control">
+                            {% if field in boolean_fields %}
+
+<select class="input" name="{{ field }}">
+    <option value="true" {% if record[field] == 'SI' %}selected{% endif %}>SI</option>
+    <option value="false" {% if record[field] == 'NO' %}selected{% endif %}>NO</option>
+</select>
+
+                            {% else %}
                             <input class="input" type="text" name="{{ field }}" value="{{ record[field] }}">
+                            {% endif %}
+
                         </div>
                     </div>
                 </div>

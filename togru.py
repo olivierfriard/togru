@@ -52,6 +52,16 @@ try:
 except Exception:
     raise
 
+
+BOOLEAN_FIELDS = [
+    "microscopia",
+    "catena_del_freddo",
+    "alta_specialistica",
+    "da_movimentare",
+    "trasporto_in_autonomia",
+    "da_disinventariare",
+]
+
 # Creazione tabella
 with engine.connect() as conn:
     conn.execute(
@@ -192,16 +202,29 @@ def tutti():
 @app.route(APP_ROOT + "/view/<int:record_id>/<query_string>")
 @check_login
 def view(record_id: int, query_string: str = ""):
+    """
+    visualizza bene
+    """
     with engine.connect() as conn:
-        sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
-                      num_inventario, num_inventario_ateneo, data_carico,
-                     codice_sipi_torino, codice_sipi_grugliasco, destinazione,
-                     rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
-                     denominazione_fornitore, anno_fabbricazione, numero_seriale,
-                     categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
-                    ditta_costruttrice_fornitrice, note 
-                    FROM inventario 
-                    WHERE id = :id""")
+        sql = text(
+            (
+                "SELECT id, descrizione_bene, responsabile_laboratorio, "
+                "num_inventario, num_inventario_ateneo, data_carico,"
+                "codice_sipi_torino, codice_sipi_grugliasco, destinazione,"
+                "CASE WHEN microscopia THEN 'SI' ELSE 'NO' END AS microscopia,"
+                "CASE WHEN catena_del_freddo THEN 'SI' ELSE 'NO' END AS catena_del_freddo,"
+                "CASE WHEN alta_specialistica THEN 'SI' ELSE 'NO' END AS alta_specialistica,                    "
+                "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
+                "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
+                "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
+                "rosso_fase_alimentazione_privilegiata, valore_convenzionale,"
+                "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
+                "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
+                "ditta_costruttrice_fornitrice, note "
+                "FROM inventario "
+                "WHERE id = :id"
+            )
+        )
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
@@ -251,40 +274,75 @@ def aggiungi():
 @check_login
 def modifica(record_id, query_string: str = ""):
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM inventario WHERE id = :id"), {"id": record_id})
+        result = conn.execute(
+            text(
+                (
+                    "SELECT id, descrizione_bene, responsabile_laboratorio, "
+                    "num_inventario, num_inventario_ateneo, data_carico,"
+                    "codice_sipi_torino, codice_sipi_grugliasco, destinazione,"
+                    "CASE WHEN microscopia THEN 'SI' ELSE 'NO' END AS microscopia,"
+                    "CASE WHEN catena_del_freddo THEN 'SI' ELSE 'NO' END AS catena_del_freddo,"
+                    "CASE WHEN alta_specialistica THEN 'SI' ELSE 'NO' END AS alta_specialistica,                    "
+                    "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
+                    "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
+                    "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
+                    "rosso_fase_alimentazione_privilegiata, valore_convenzionale,"
+                    "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
+                    "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
+                    "ditta_costruttrice_fornitrice, note "
+                    "FROM inventario "
+                    "WHERE id = :id"
+                )
+            ),
+            {"id": record_id},
+        )
         record = result.fetchone()
-    return render_template("modifica.html", record=record, query_string=query_string)
+
+    return render_template("modifica.html", record=record, query_string=query_string, boolean_fields=BOOLEAN_FIELDS)
 
 
 # Modifica record - salvataggio
 @app.route(APP_ROOT + "/salva_modifiche/<int:record_id>", methods=["POST"])
 @check_login
 def salva_modifiche(record_id):
-    data = request.form
-    query = text("""
-        UPDATE inventario SET
-            num_inventario = :num_inventario,
-            num_inventario_ateneo = :num_inventario_ateneo,
-            data_carico = :data_carico,
-            descrizione_bene = :descrizione_bene,
-            codice_sipi_torino = :codice_sipi_torino,
-            codice_sipi_grugliasco = :codice_sipi_grugliasco,
-            destinazione = :destinazione,
-            rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata,
-            valore_convenzionale = :valore_convenzionale,
-            esercizio_bene_migrato = :esercizio_bene_migrato,
-            responsabile_laboratorio = :responsabile_laboratorio,
-            denominazione_fornitore = :denominazione_fornitore,
-            anno_fabbricazione = :anno_fabbricazione,
-            numero_seriale = :numero_seriale,
-            categoria_inventoriale = :categoria_inventoriale,
-            catalogazione_materiale_strumentazione = :catalogazione_materiale_strumentazione,
-            peso = :peso,
-            dimensioni = :dimensioni,
-            ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice,
-            note = :note
-        WHERE id = :id
-    """)
+    data = dict(request.form)
+
+    for field in BOOLEAN_FIELDS:
+        value = request.form.get(field)
+        data[field] = value == "true"
+
+    query = text(
+        (
+            "UPDATE inventario SET "
+            "    num_inventario = :num_inventario, "
+            "    num_inventario_ateneo = :num_inventario_ateneo, "
+            "    data_carico = :data_carico, "
+            "    descrizione_bene = :descrizione_bene, "
+            "    codice_sipi_torino = :codice_sipi_torino, "
+            "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
+            "    destinazione = :destinazione, "
+            "    microscopia = :microscopia, "
+            "    catena_del_freddo = :catena_del_freddo, "
+            "    alta_specialistica = :alta_specialistica, "
+            "    da_movimentare = :da_movimentare, "
+            "    trasporto_in_autonomia = :trasporto_in_autonomia, "
+            "    da_disinventariare = :da_disinventariare, "
+            "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
+            "    valore_convenzionale = :valore_convenzionale, "
+            # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
+            "    responsabile_laboratorio = :responsabile_laboratorio, "
+            "    denominazione_fornitore = :denominazione_fornitore, "
+            "    anno_fabbricazione = :anno_fabbricazione, "
+            "    numero_seriale = :numero_seriale, "
+            "    categoria_inventoriale = :categoria_inventoriale, "
+            "    catalogazione_materiale_strumentazione = :catalogazione_materiale_strumentazione, "
+            "    peso = :peso, "
+            "    dimensioni = :dimensioni, "
+            "    ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice, "
+            "    note = :note "
+            "WHERE id = :id "
+        )
+    )
     with engine.connect() as conn:
         conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
         conn.execute(query, {**data, "id": record_id})
@@ -488,6 +546,12 @@ def search():
         "codice_sipi_torino",
         "codice_sipi_grugliasco",
         "destinazione",
+        "microscopia",
+        "catena_del_freddo",
+        "alta_specialistica",
+        "da_movimentare",
+        "trasporto_in_autonomia",
+        "da_disinventariare",
         "rosso_fase_alimentazione_privilegiata",
         # "valore_convenzionale",
         # "esercizio_bene_migrato",
@@ -516,21 +580,32 @@ def search():
         params = {}
 
         for field in fields:
-            value = request.args.get(field, "").strip()
-            if value:
-                # add senza responsabile
-                if field == "responsabile_laboratorio" and value == "SENZA":
-                    query += f" AND ({field} = '' OR {field} IS NULL)"
-                # add senza Codice SIPI Torino
-                if field == "codice_sipi_torino" and value == "SENZA":
-                    query += f" AND ({field} = '' OR {field} IS NULL)"
+            if field in BOOLEAN_FIELDS:
+                if not request.args.get(field, ""):
+                    continue
+                value = request.args.get(field, "") == "true"
+                query += f" AND {field} IS {value}"
+            else:
+                value = request.args.get(field, "").strip()
+                if value:
+                    # add senza responsabile
+                    if field == "responsabile_laboratorio" and value == "SENZA":
+                        query += f" AND ({field} = '' OR {field} IS NULL)"
+                    # add senza Codice SIPI Torino
+                    if field == "codice_sipi_torino" and value == "SENZA":
+                        query += f" AND ({field} = '' OR {field} IS NULL)"
+                    # add senza Codice SIPI Grugliasco
+                    if field == "codice_sipi_grugliasco" and value == "SENZA":
+                        query += f" AND ({field} = '' OR {field} IS NULL)"
 
-                else:
-                    # Per testo, ricerca con ILIKE e wildcard %
-                    query += f" AND {field} ILIKE :{field}"
-                    params[field] = f"%{value}%"
+                    else:
+                        # Per testo, ricerca con ILIKE e wildcard %
+                        query += f" AND {field} ILIKE :{field}"
+                        params[field] = f"%{value}%"
 
         query += " ORDER BY id DESC"
+
+        print(f"{query=}")
 
         sql = text(query)
         with engine.connect() as conn:
@@ -554,11 +629,7 @@ def search():
         )
 
     return render_template(
-        "search.html",
-        records=records,
-        request_args=request.args,
-        fields=fields,
-        query_string=query_string,
+        "search.html", records=records, request_args=request.args, fields=fields, query_string=query_string, boolean_fields=BOOLEAN_FIELDS
     )
 
 

@@ -20,20 +20,33 @@
 
 <h1 class="title">Ricerca Inventario</h1>
 
+
 <form method="get" action="{{ url_for('search') }}">
 <div class="columns is-multiline">
 {% for field in fields %}
 <div class="column is-2">
-    <div class="field is-small">
-        <label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
-        <div class="control">
-            <input class="input is-small" 
-                    type="text"
-                    name="{{ field }}" 
-                    value="{{ request_args.get(field, '') }}"
-                    placeholder="Cerca {{ field.replace('_', ' ') }}" />
-        </div>
-    </div>
+<div class="field is-small">
+<label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
+<div class="control">
+{% if field in boolean_fields %}
+
+<select class="input" name="{{ field }}">
+    <option value="" {% if request_args.get(field, '') == '' %}selected{% endif %}>Non specificato</option>
+    <option value="true" {% if request_args.get(field, '') == 'true' %}selected{% endif %}>SI</option>
+    <option value="false" {% if request_args.get(field, '') == 'false' %}selected{% endif %}>NO</option>
+</select>
+
+
+{% else %}
+    <input class="input is-small" 
+                type="text"
+                name="{{ field }}" 
+                value="{{ request_args.get(field, '') }}"
+                placeholder="Cerca {{ field.replace('_', ' ') }}" >
+{% endif %}
+
+</div>
+</div>
 </div>
 {% endfor %}
 </div>

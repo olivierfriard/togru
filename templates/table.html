@@ -25,7 +25,7 @@
 <tr>
 <th><input type="checkbox" id="select_all" /></th>
 <th>ID</th>
-{% for field in [ 'descrizione_bene', 'responsabile_laboratorio', 'num_inventario', 'codice_sipi_torino', 'destinazione', 'note'] %}
+{% for field in [ 'descrizione_bene', 'responsabile_laboratorio', '','codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'note'] %}
 <th>{{ field.replace('_', ' ').capitalize() }}</th>
 {% endfor %}
 <th>Azioni</th>
@@ -38,8 +38,9 @@
 <td>{{ r.id }}</td>
 <td>{{ r.descrizione_bene }}</td>
 <td>{{ r.responsabile_laboratorio }}</td>
-<td>{{ r.num_inventario }}</td>
+<td>{% if r.da_movimentare is true %}🟩{% endif %}</td>
 <td>{{ r.codice_sipi_torino }}</td>
+<td>{{ r.codice_sipi_grugliasco }}</td>
 <td>{{ r.destinazione }}</td>
 <td>{{ r.note }}</td>
 <td>
