@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>Ricerca Inventario</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
-<!--  <link rel="stylesheet" href="/togru/static/static_header.css"> -->
 </head>
 <body>
 <section class="section">
@@ -20,6 +19,16 @@
 
 <h1 class="title">Ricerca Inventario</h1>
 
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
 
 <form method="get" action="{{ url_for('search') }}">
 <div class="columns is-multiline">
