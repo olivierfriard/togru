@@ -655,7 +655,9 @@ def search_resp():
 def search_sipi_torino():
     with engine.connect() as conn:
         result = conn.execute(
-            text("""( SELECT DISTINCT codice_sipi_torino FROM inventario WHERE codice_sipi_torino != '') ORDER BY codice_sipi_torino""")
+            text(
+                "( SELECT DISTINCT codice_sipi_torino FROM inventario WHERE codice_sipi_torino != '' AND deleted IS NULL) ORDER BY codice_sipi_torino"
+            )
         )
         sipi_list = result.fetchall()
 
