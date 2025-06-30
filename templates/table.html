@@ -38,7 +38,13 @@
 <td>{{ r.id }}</td>
 <td>{{ r.descrizione_bene }}</td>
 <td>{{ r.responsabile_laboratorio }}</td>
-<td>{% if r.da_movimentare is true %}🟩{% elif r.da_movimentare is false %}🟥{% endif %}</td>
+<td>{% if r.da_movimentare is true %}🟩{% elif r.da_movimentare is false %}🟥{% endif %}
+
+  {% if r.catena_del_freddo is true %}❄️{% endif %}
+</td>
+  
+
+</td>
 <td>{{ r.codice_sipi_torino }}</td>
 <td>{{ r.codice_sipi_grugliasco }}</td>
 <td>{{ r.destinazione }}</td>
