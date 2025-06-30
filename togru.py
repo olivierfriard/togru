@@ -591,17 +591,19 @@ def search():
                     # add senza responsabile
                     if field == "responsabile_laboratorio" and value == "SENZA":
                         query += f" AND ({field} = '' OR {field} IS NULL)"
+                        continue
                     # add senza Codice SIPI Torino
                     if field == "codice_sipi_torino" and value == "SENZA":
                         query += f" AND ({field} = '' OR {field} IS NULL)"
+                        continue
                     # add senza Codice SIPI Grugliasco
                     if field == "codice_sipi_grugliasco" and value == "SENZA":
                         query += f" AND ({field} = '' OR {field} IS NULL)"
+                        continue
 
-                    else:
-                        # Per testo, ricerca con ILIKE e wildcard %
-                        query += f" AND {field} ILIKE :{field}"
-                        params[field] = f"%{value}%"
+                    # Per testo, ricerca con ILIKE e wildcard %
+                    query += f" AND {field} ILIKE :{field}"
+                    params[field] = f"%{value}%"
 
         query += " ORDER BY id DESC"
 
