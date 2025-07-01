@@ -60,6 +60,7 @@ BOOLEAN_FIELDS = [
     "da_movimentare",
     "trasporto_in_autonomia",
     "da_disinventariare",
+    "rosso_fase_alimentazione_privilegiata",
 ]
 
 # Creazione tabella
@@ -239,14 +240,20 @@ def view(record_id: int, query_string: str = ""):
 @check_login
 def aggiungi():
     if request.method == "GET":
-        return render_template("aggiungi.html")
+        return render_template("aggiungi.html", boolean_fields=BOOLEAN_FIELDS)
 
     if request.method == "POST":
-        data = request.form
+        data = dict(request.form)
+
+        for field in BOOLEAN_FIELDS:
+            value = request.form.get(field)
+            data[field] = value == "true"
+
         query = text("""
             INSERT INTO inventario (
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
+                microscopia,catena_del_freddo,alta_specialistica,da_movimentare,trasporto_in_autonomia,da_disinventariare,
                 rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
@@ -254,6 +261,7 @@ def aggiungi():
             ) VALUES (
                  :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
+                :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
                 :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
                 :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
                 :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,

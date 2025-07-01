@@ -16,7 +16,7 @@
 
         <h2 class="title is-4">Aggiungi Nuovo Bene</h2>
 
-        <form action="{{ url_for('aggiungi') }}" method="POST">
+        <form action="{{ url_for('aggiungi') }}" method="POST" onsubmit="return controllaMovimentazione();">
 
 
 <!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
@@ -43,6 +43,12 @@
                 {% for field in [
                     'num_inventario', 'num_inventario_ateneo', 'data_carico',
                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione',
+                    "microscopia",
+                    "catena_del_freddo",
+                    "alta_specialistica",
+                    "da_movimentare",
+                    "trasporto_in_autonomia",
+                    "da_disinventariare",
                     'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
                      'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
                     'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 'peso', 'dimensioni',
@@ -52,7 +58,19 @@
                     <div class="field">
                         <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }} {% if 'data' in field %}(DD/MM/AAAA){%endif%}</label>
                         <div class="control">
+
+                            {% if field in boolean_fields %}
+
+<select class="input" name="{{ field }}">
+    <option value="false">NO</option>
+    <option value="true">SI</option>
+   
+</select>
+
+                            {% else %}
+                            
                             <input class="input" type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').capitalize() }}">
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -75,6 +93,20 @@
 
     </div>
 </section>
+
+<script>
+function controllaMovimentazione() {
+    const daMovimentare = document.querySelector('select[name="da_movimentare"]').value;
+    const trasportoInAutonomia = document.querySelector('select[name="trasporto_in_autonomia"]').value;
+
+    if (trasportoInAutonomia === 'true' && daMovimentare !== 'true') {
+        alert('Se "Trasporto in autonomia" è impostato a SI, anche "Da movimentare" deve essere impostato a SI.');
+        return false; // blocca la submit
+    }
+    return true; // permette la submit
+}
+</script>
+
 
 </body>
 </html>
