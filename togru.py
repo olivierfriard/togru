@@ -765,9 +765,11 @@ def storico(record_id):
 @app.route(APP_ROOT + "/storico_utente/", methods=["GET"])
 @app.route(APP_ROOT + "/storico_utente/<email>", methods=["GET"])
 @check_login
+@check_admin
 def storico_utente(email: str = ""):
     if not email:
-        return "utente non trovato"
+        flash(f"Utente {email} non trovato", "danger")
+        return render_template("storico_utente.html", audit_records=[], username=[])
     with engine.connect() as conn:
         sql = text(
             (
@@ -781,7 +783,7 @@ def storico_utente(email: str = ""):
         )
         audits = conn.execute(sql, {"email": email}).fetchall()
         if not audits:
-            flash("Utente non trovato", "danger")
+            flash(f"Utente {email} non trovato", "danger")
 
     return render_template("storico_utente.html", audit_records=audits, username=email)
 
