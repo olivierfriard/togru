@@ -86,6 +86,8 @@
 </div>
 
 <div id="form_modifica_multipla_wrapper" style="display: none;">
+
+
 <!-- Form per aggiornamento multiplo di un campo -->
 <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
 <input type="hidden" name="query_string" value="{{ query_string }}">
@@ -102,6 +104,8 @@
 <option value="responsabile_laboratorio">Responsabile laboratorio</option>
 <option value="codice_sipi_torino">Codice SIPI Torino</option>
 <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
+<option value="da_movimentare">Da movimentare</option>
+<option value="trasporto_in_autonomia">Trasporto in autonomia</option>
 <option value="destinazione">Destinazione</option>
 <option value="note">Note</option>
 </select>

@@ -365,6 +365,13 @@ def modifica_multipla():
     record_ids = request.form.getlist("record_ids")
     query_string = request.form.get("query_string", "")
 
+    if campo in (
+        "da_movimentare",
+        "trasporto_in_autonomia",
+    ) and nuovo_valore not in ("SI", "NO"):
+        flash(Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"), "danger")
+        return redirect(url_for("search") + "?" + query_string)
+
     if (
         nuovo_valore
         and record_ids
@@ -373,24 +380,34 @@ def modifica_multipla():
             "responsabile_laboratorio",
             "codice_sipi_torino",
             "codice_sipi_grugliasco",
+            "da_movimentare",
+            "trasporto_in_autonomia",
             "destinazione",
             "note",
         )
     ):
-        for rid in record_ids:
-            print(f"{campo=}")
-            print(f"{nuovo_valore=}")
-            print(f"{rid=}")
-            print("==")
+        if campo in ("da_movimentare", "trasporto_in_autonomia"):
+            nuovo_valore = nuovo_valore == "SI"
 
-            query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
-            with engine.connect() as conn:
+        with engine.connect() as conn:
+            for rid in record_ids:
+                print(f"{rid=}")
+                print(f"{campo=}")
+                print(f"{nuovo_valore=}")
+
+                query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
+
                 conn.execute(
                     text("SET LOCAL application_name = :user"),
                     {"user": session["email"]},
                 )
                 conn.execute(query, {"id": rid, "nuovo_valore": nuovo_valore})
                 conn.commit()
+
+                # check trasporto autonomia
+                if campo == "trasporto_in_autonomia" and nuovo_valore:
+                    conn.execute(text("UPDATE inventario SET da_movimentare = True WHERE id = :id"), {"id": rid})
+                    conn.commit()
 
     return redirect(url_for("search") + "?" + query_string)
 
