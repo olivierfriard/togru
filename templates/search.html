@@ -40,7 +40,7 @@
 {% if field in boolean_fields %}
 
 <select class="input" name="{{ field }}">
-    <option value="" {% if request_args.get(field, '') == '' %}selected{% endif %}>Non specificato</option>
+    <option value="" {% if request_args.get(field, '') == '' %}selected{% endif %}>SI o NO</option>
     <option value="true" {% if request_args.get(field, '') == 'true' %}selected{% endif %}>SI</option>
     <option value="false" {% if request_args.get(field, '') == 'false' %}selected{% endif %}>NO</option>
 </select>
