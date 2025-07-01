@@ -64,6 +64,9 @@
 <td>{% if r.da_movimentare is true %}🟩{% elif r.da_movimentare is false %}🟥{% endif %}
 {% if r.catena_del_freddo is true %}❄️{% endif %}
 {% if r.trasporto_in_autonomia is true %}🚗{% endif %}
+{% if r.microscopia is true %}🔬{% endif %}
+{% if r.alta_specialistica is true %}⚙️{% endif %}
+
 </td>
 <td>{{ r.codice_sipi_torino }}</td>
 <td>{{ r.codice_sipi_grugliasco }}</td>
