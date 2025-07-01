@@ -42,6 +42,9 @@
 .table thead {
   border-bottom: 2px solid #ddd;
 }
+.emoji {
+      cursor: pointer;
+    }
 </style>
 
 <div class="table-container">
@@ -61,13 +64,17 @@
 <td>{{ r.id }}</td>
 <td>{{ r.descrizione_bene }}</td>
 <td>{{ r.responsabile_laboratorio }}</td>
-<td>{% if r.da_movimentare is true %}🟩{% elif r.da_movimentare is false %}🟥{% endif %}
-{% if r.catena_del_freddo is true %}❄️{% endif %}
-{% if r.trasporto_in_autonomia is true %}🚗{% endif %}
-{% if r.microscopia is true %}🔬{% endif %}
-{% if r.alta_specialistica is true %}⚙️{% endif %}
 
-</td>
+<td>{% if r.da_movimentare is true %}
+<span class="emoji" title="Da movimentare">🟩</span>
+{% elif r.da_movimentare is false %}
+<span class="emoji" title="Strumento/bene da non movimentare/dismettere">🟥</span>
+{% endif %}
+{% if r.catena_del_freddo is true %}<span class="emoji" title="Rispettare la catena del freddo">❄️</span>{% endif %}
+{% if r.trasporto_in_autonomia is true %}<span class="emoji" title="Trasporto in autonomia">🚗</span>{% endif %}
+{% if r.microscopia is true %}<span class="emoji" title="Microscopia">🔬</span>{% endif %}
+{% if r.alta_specialistica is true %}<span class="emoji" title="Alta specialistica">⚙️</span>{% endif %}
+</td>  
 <td>{{ r.codice_sipi_torino }}</td>
 <td>{{ r.codice_sipi_grugliasco }}</td>
 <td>{{ r.destinazione }}</td>
