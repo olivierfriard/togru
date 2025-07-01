@@ -376,7 +376,7 @@ def modifica_multipla():
     if campo in (
         "da_movimentare",
         "trasporto_in_autonomia",
-    ) and nuovo_valore not in ("SI", "NO"):
+    ) and nuovo_valore.upper() not in ("SI", "NO"):
         flash(Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"), "danger")
         return redirect(url_for("search") + "?" + query_string)
 
@@ -395,7 +395,7 @@ def modifica_multipla():
         )
     ):
         if campo in ("da_movimentare", "trasporto_in_autonomia"):
-            nuovo_valore = nuovo_valore == "SI"
+            nuovo_valore = nuovo_valore.upper() == "SI"
 
         with engine.connect() as conn:
             for rid in record_ids:
