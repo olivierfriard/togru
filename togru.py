@@ -729,20 +729,24 @@ def delete_record(record_id, query_string: str = ""):
 @app.route(APP_ROOT + "/view_qrcode/<int:record_id>")
 def view_qrcode(record_id: int):
     with engine.connect() as conn:
-        sql = text("""SELECT id, descrizione_bene, responsabile_laboratorio,
-                      num_inventario, num_inventario_ateneo, data_carico,
-                     codice_sipi_torino, codice_sipi_grugliasco, destinazione,
-                     rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
-                     denominazione_fornitore, anno_fabbricazione, numero_seriale,
-                     categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
-                    ditta_costruttrice_fornitrice, note 
-                    FROM inventario 
-                    WHERE id = :id""")
+        sql = text(
+            (
+                "SELECT id, descrizione_bene, responsabile_laborato "
+                "num_inventario, num_inventario_ateneo, data_car "
+                "codice_sipi_torino, codice_sipi_grugliasco, destinazi "
+                "rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migr "
+                "denominazione_fornitore, anno_fabbricazione, numero_seri "
+                "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensi "
+                "ditta_costruttrice_fornitrice, n "
+                "FROM inventa "
+                "WHERE id = :id "
+            )
+        )
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
 
-        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+        record_dict = dict(result._mapping)
 
     return render_template("view.html", record=record_dict, query_string="")
 
@@ -789,14 +793,14 @@ def etichetta(record_id):
     Stampa etichetta da incollare sul bene
     """
     with engine.connect() as conn:
-        sql = text("""SELECT * FROM inventario WHERE id = :id""")
+        sql = text("SELECT * FROM inventario WHERE id = :id")
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
 
         record_dict = dict(result._mapping)
 
-    # Créer le QR code en mémoire
+    # Create QR code
     qr_data = f"http://penelope.unito.it/togru/view_qrcode/{record_id}"
     qr = qrcode.QRCode(box_size=10, border=4)
     qr.add_data(qr_data)
@@ -814,13 +818,13 @@ def etichetta(record_id):
     img_qr.save(temp_qr_path)
 
     try:
-        font_size = 12
+        font_size = 10
         # Créer le PDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=font_size)
         h = font_size * 0.7
-        pdf.cell(
+        pdf.multi_cell(
             0,
             h,
             txt=f"{record_dict['descrizione_bene']}",
@@ -837,19 +841,77 @@ def etichetta(record_id):
         pdf.cell(
             200,
             h,
-            txt=f"Inventario: {record_dict['num_inventario']}  Ateneo: {record_dict['num_inventario_ateneo']}",
+            txt=f"Num. inv: {record_dict['num_inventario']}",
             ln=True,
             align="L",
         )
         pdf.cell(
             200,
             h,
-            txt=f"Codice SIPI TORINO: {record_dict['codice_sipi_torino']}  GRUGLIASCO: {record_dict['codice_sipi_grugliasco']}",
+            txt=f"SIPI TORINO: {record_dict['codice_sipi_torino']}  SIPI GRUGLIASCO: {record_dict['codice_sipi_grugliasco']}",
             ln=True,
             align="L",
         )
-        if record_dict["destinazione"]:
+
+        if record_dict["da_movimentare"]:
             pdf.cell(
+                200,
+                h,
+                txt="DA MOVIMENTARE",
+                ln=True,
+                align="L",
+            )
+        else:
+            pdf.cell(
+                200,
+                h,
+                txt="strumento/bene da non movimentare/dismettere",
+                ln=True,
+                align="L",
+            )
+
+        if record_dict["trasporto_in_autonomia"]:
+            pdf.cell(
+                200,
+                h,
+                txt="TRASPORTO IN AUTONOMIA",
+                ln=True,
+                align="L",
+            )
+        else:
+            pdf.cell(
+                200,
+                h,
+                txt=" ",
+                ln=True,
+                align="L",
+            )
+
+        if record_dict["da_disinventariare"]:
+            pdf.cell(
+                200,
+                h,
+                txt="DA DISINVENTARIARE",
+                ln=True,
+                align="L",
+            )
+        else:
+            pdf.cell(
+                200,
+                h,
+                txt=" ",
+                ln=True,
+                align="L",
+            )
+
+        if record_dict["da_movimentare"]:
+            pdf.set_fill_color(0, 255, 0)
+        else:
+            pdf.set_fill_color(255, 0, 0)
+        pdf.rect(130, 25, 30, 30, "F")
+
+        if record_dict["destinazione"]:
+            pdf.multi_cell(
                 200,
                 h,
                 txt=f"Destinazione: {record_dict['destinazione']}",
@@ -857,14 +919,14 @@ def etichetta(record_id):
                 align="L",
             )
         if record_dict["note"]:
-            pdf.cell(200, h, txt=f"Destinazione: {record_dict['note']}", ln=True, align="L")
+            pdf.multi_cell(200, h, txt=f"Note: {record_dict['note']}", ln=True, align="L")
 
-        pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
+        # pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
 
-        # Ajouter une image si tu veux
-        pdf.image(temp_qr_path, x=5, y=50, w=50)
+        # QR code image
+        pdf.image(temp_qr_path, x=160, y=20, w=38)
 
-        # Sauvegarder le PDF dans un buffer mémoire
+        # Save PDF in memory buffer
         pdf_buffer = BytesIO()
         pdf.output(pdf_buffer)
         pdf_buffer.seek(0)
