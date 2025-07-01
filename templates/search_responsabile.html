@@ -16,13 +16,12 @@
 <h1 class="title">Filtra per Responsabile Laboratorio</h1>
 
 
-<!-- Form di filtro con select -->
 <form method="get" action="/togru/search">
   <div class="field">
     <label class="label">Responsabile Laboratorio</label>
     <div class="control">
       <div class="select">
-        <select name="responsabile_laboratorio">
+        <select name="responsabile_laboratorio"  onchange="this.form.submit()">
           <option value="SENZA">Senza responsabile</option>
           {% for r in resp %}
           <option value="{{ r.responsabile_laboratorio }}">{{ r.responsabile_laboratorio }}</option>

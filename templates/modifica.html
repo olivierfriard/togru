@@ -25,7 +25,7 @@
 <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
 
 
-<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST">
+<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST" onsubmit="return controllaMovimentazione();">
 
 <input type="hidden" name="query_string" value="{{ query_string }}">
 
@@ -35,7 +35,7 @@
                 {% for field in [
                     'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 
                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
-                    'microscopia', 'catena_del_freddo','alta_specialistica','da_movimentare','trasporto_in_autonomia','da_disinventariare',
+                    'microscopia', 'catena_del_freddo', 'alta_specialistica', 'da_movimentare', 'trasporto_in_autonomia', 'da_disinventariare',
                     'rosso_fase_alimentazione_privilegiata', 
 
                     'data_carico', 'valore_convenzionale', 
@@ -80,5 +80,20 @@
 
     </div>
 </section>
+
+<script>
+function controllaMovimentazione() {
+    const daMovimentare = document.querySelector('select[name="da_movimentare"]').value;
+    const trasportoInAutonomia = document.querySelector('select[name="trasporto_in_autonomia"]').value;
+
+    if (trasportoInAutonomia === 'true' && daMovimentare !== 'true') {
+        alert('Se "Trasporto in autonomia" è impostato a SI, anche "Da movimentare" deve essere impostato a SI.');
+        return false; // blocca la submit
+    }
+    return true; // permette la submit
+}
+</script>
+
+
 </body>
 </html>

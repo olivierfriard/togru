@@ -22,7 +22,7 @@
     <label class="label">Codice SIPI Torino</label>
     <div class="control">
       <div class="select">
-        <select name="codice_sipi_torino">
+        <select name="codice_sipi_torino"  onchange="this.form.submit()">
           <option value="SENZA">Senza SIPI</option>
           {% for r in sipi_list %}
           <option value="{{ r.codice_sipi_torino }}">{{ r.codice_sipi_torino }}</option>
