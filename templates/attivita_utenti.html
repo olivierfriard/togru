@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Storico modifiche utente</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+    <style>
+        .removed { color: #b30000; }
+        .added   { color: #007700; }
+    </style>
+</head>
+<body>
+<section class="section">
+
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<br><br>
+
+<h1 class="title">Attività utenti</u></h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+  {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+{% endwith %}
+
+
+
+{% if audit_records %}
+<table class="table is-fullwidth is-striped is-hoverable">
+<thead>
+<tr>
+<th>Utente</th>
+<th>Numero operazioni</th>
+<th>Ultima operazione</th>
+</tr>
+</thead>
+<tbody>
+{% for record in audit_records %}
+<tr>
+<td>{{ record.user }}</td>
+<td>{{ record.num_operations }}</td>
+<td>{{ record.last_operation }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endif %}
+
+</section>
+</body>
+</html>
