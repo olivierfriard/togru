@@ -262,27 +262,46 @@ def view(record_id: int, query_string: str = ""):
 @app.route(APP_ROOT + "/aggiungi", methods=["GET", "POST"])
 @check_login
 def aggiungi():
+    """
+    aggiungi bene all'inventario
+    """
     if request.method == "GET":
-        return render_template("aggiungi.html", boolean_fields=BOOLEAN_FIELDS)
+        with engine.connect() as conn:
+            responsabili = conn.execute(
+                text(
+                    "SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"
+                )
+            ).fetchall()
+
+        return render_template(
+            "aggiungi.html", responsabili=responsabili, boolean_fields=BOOLEAN_FIELDS
+        )
 
     if request.method == "POST":
         data = dict(request.form)
 
+        # modify values for boolean fields
         for field in BOOLEAN_FIELDS:
             value = request.form.get(field)
             data[field] = value == "true"
+
+        # check for new responsabile
+        if data["responsabile_laboratorio"] == "altro":
+            data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
+
+        print(data)
 
         query = text("""
             INSERT INTO inventario (
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
-                microscopia,catena_del_freddo,alta_specialistica,da_movimentare,trasporto_in_autonomia,da_disinventariare,
+                microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
                 rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note
             ) VALUES (
-                 :num_inventario, :num_inventario_ateneo, :data_carico,
+                :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
                 :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
@@ -306,6 +325,9 @@ def aggiungi():
 @app.route(APP_ROOT + "/modifica/<int:record_id>/<query_string>")
 @check_login
 def modifica(record_id, query_string: str = ""):
+    """
+    modifica un bene
+    """
     with engine.connect() as conn:
         result = conn.execute(
             text(
@@ -319,7 +341,8 @@ def modifica(record_id, query_string: str = ""):
                     "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
                     "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                     "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
-                    "rosso_fase_alimentazione_privilegiata, valore_convenzionale,"
+                    "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
+                    "valore_convenzionale,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                     "ditta_costruttrice_fornitrice, note "
