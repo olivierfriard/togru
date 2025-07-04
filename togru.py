@@ -269,7 +269,7 @@ def aggiungi():
         with engine.connect() as conn:
             responsabili = conn.execute(
                 text(
-                    "SELECT DISTINCT responsabile_laboratorio FROM inventario ORDER BY responsabile_laboratorio"
+                    "SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deletede IS NULL ORDER BY responsabile_laboratorio"
                 )
             ).fetchall()
 
@@ -288,8 +288,6 @@ def aggiungi():
         # check for new responsabile
         if data["responsabile_laboratorio"] == "altro":
             data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
-
-        print(data)
 
         query = text("""
             INSERT INTO inventario (
@@ -354,10 +352,17 @@ def modifica(record_id, query_string: str = ""):
         )
         record = result.fetchone()
 
+        responsabili = conn.execute(
+            text(
+                "SELECT DISTINCT responsabile_laboratorio FROM inventario where deleted IS NULL ORDER BY responsabile_laboratorio"
+            )
+        ).fetchall()
+
     return render_template(
         "modifica.html",
         record=record,
         query_string=query_string,
+        responsabili=responsabili,
         boolean_fields=BOOLEAN_FIELDS,
     )
 
@@ -372,13 +377,18 @@ def salva_modifiche(record_id):
         value = request.form.get(field)
         data[field] = value == "true"
 
+    # check for new responsabile
+    if data["responsabile_laboratorio"] == "altro":
+        data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
+
     query = text(
         (
             "UPDATE inventario SET "
+            "    descrizione_bene = :descrizione_bene, "
+            "    responsabile_laboratorio = :responsabile_laboratorio, "
             "    num_inventario = :num_inventario, "
             "    num_inventario_ateneo = :num_inventario_ateneo, "
             "    data_carico = :data_carico, "
-            "    descrizione_bene = :descrizione_bene, "
             "    codice_sipi_torino = :codice_sipi_torino, "
             "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
             "    destinazione = :destinazione, "
@@ -391,7 +401,6 @@ def salva_modifiche(record_id):
             "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
             "    valore_convenzionale = :valore_convenzionale, "
             # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
-            "    responsabile_laboratorio = :responsabile_laboratorio, "
             "    denominazione_fornitore = :denominazione_fornitore, "
             "    anno_fabbricazione = :anno_fabbricazione, "
             "    numero_seriale = :numero_seriale, "

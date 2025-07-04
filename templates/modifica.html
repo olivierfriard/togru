@@ -25,15 +25,53 @@
 <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
 
 
-<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST" onsubmit="return controllaMovimentazione();">
+<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST" onsubmit="return controllaSubmit();">
 
 <input type="hidden" name="query_string" value="{{ query_string }}">
 
+<div class="columns">
 
+<div class="column is-half">
+    <div class="field">
+        <label class="label">Descrizione bene</label>
+        <div class="control">
+            <input class="input" type="text" name="descrizione_bene" placeholder="Descrizione bene" value="{{ record['descrizione_bene'] }}" required>
+        </div>
+    </div>
+</div>
+
+<div class="column is-half">
+    <div class="field">
+            <label class="label">Responsabile laboratorio</label>
+            <div class="control">
+                <div class="select">
+                <select id="responsabile_select" name="responsabile_laboratorio" onchange="toggleAltro()">
+                    <option value="">Seleziona un responsabile</option>
+                    {% for responsabile in responsabili %}
+                    <option value="{{ responsabile.responsabile_laboratorio }}" {% if responsabile.responsabile_laboratorio == record['responsabile_laboratorio'] %}SELECTED{% endif %}>{{ responsabile.responsabile_laboratorio }}</option>
+                    {% endfor %}
+                    <option value="altro">Altro...</option>
+                </select>
+    
+                </div>
+            </div>
+    </div>
+
+    <div class="field" id="altro_responsabile_field" style="display: none;">
+        <label class="label">Nuovo responsabile</label>
+        <div class="control">
+            <input class="input" type="text" id="nuovo_responsabile_input" name="nuovo_responsabile_laboratorio" placeholder="Inserisci nome responsabile">
+        </div>
+    </div>
+
+</div>
+
+
+</div>
 
 <div class="columns is-multiline is-mobile">
                 {% for field in [
-                    'descrizione_bene','responsabile_laboratorio','num_inventario', 'num_inventario_ateneo', 
+                    'num_inventario', 'num_inventario_ateneo', 
                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
                     'microscopia', 'catena_del_freddo', 'alta_specialistica', 'da_movimentare', 'trasporto_in_autonomia', 'da_disinventariare',
                     'rosso_fase_alimentazione_privilegiata', 
@@ -47,6 +85,7 @@
                     <div class="field">
                         <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}</label>
                         <div class="control">
+
                             {% if field in boolean_fields %}
 
 <select class="input" name="{{ field }}">
@@ -82,7 +121,7 @@
 </section>
 
 <script>
-function controllaMovimentazione() {
+function controllaSubmit() {
     const daMovimentare = document.querySelector('select[name="da_movimentare"]').value;
     const trasportoInAutonomia = document.querySelector('select[name="trasporto_in_autonomia"]').value;
 
@@ -90,8 +129,34 @@ function controllaMovimentazione() {
         alert('Se "Trasporto in autonomia" è impostato a SI, anche "Da movimentare" deve essere impostato a SI.');
         return false; // blocca la submit
     }
+
+    const select = document.getElementById('responsabile_select');
+    const nuovoResponsabile = document.getElementById('nuovo_responsabile_input').value.trim();
+
+    // Se nessun responsabile selezionato
+    if (select.value === '') {
+      event.preventDefault();
+      alert("Seleziona un responsabile laboratorio.");
+      return false;
+    }
+
+    // Se selezionato 'altro' ma campo vuoto
+    if (select.value === 'altro' && nuovoResponsabile === '') {
+      event.preventDefault();
+      alert("Inserisci il nome del nuovo responsabile.");
+      return false;
+    }
+
     return true; // permette la submit
 }
+
+
+function toggleAltro() {
+      const select = document.getElementById('responsabile_select');
+      const altroField = document.getElementById('altro_responsabile_field');
+      altroField.style.display = (select.value === 'altro') ? 'block' : 'none';
+    }
+
 </script>
 
 
