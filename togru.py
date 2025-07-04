@@ -848,10 +848,10 @@ def storico_utente(email: str = ""):
     return render_template("storico_utente.html", audit_records=audits, username=email)
 
 
-@app.route(APP_ROOT + "/storico_utenti", methods=["GET"])
+@app.route(APP_ROOT + "/attivita_utenti", methods=["GET"])
 @check_login
 @check_admin
-def storico_utenti():
+def attivita_utenti():
     """
     returns list of active users
     """
