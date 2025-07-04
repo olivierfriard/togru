@@ -269,7 +269,7 @@ def aggiungi():
         with engine.connect() as conn:
             responsabili = conn.execute(
                 text(
-                    "SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deletede IS NULL ORDER BY responsabile_laboratorio"
+                    "SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio"
                 )
             ).fetchall()
 
