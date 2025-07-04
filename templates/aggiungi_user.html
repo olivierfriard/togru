@@ -50,7 +50,7 @@
 <h2 class="title">Utenti abilitati</h2>
 
 {%for user in users%}
-{{ user[0] }} <a href="{{ url_for('delete_user', email=user[0])}}" onclick="return confirm('Sei sicuro di voler cancellare questo utente?')"> ❌</a><br>
+{{ user.name }} <a href="{{ url_for('delete_user', email=user.email)}}" onclick="return confirm('Sei sicuro di voler cancellare questo utente?')"> ❌</a><br>
 {%endfor%}
 
 </div>

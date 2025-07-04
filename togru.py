@@ -114,7 +114,10 @@ def check_admin(f):
             if "email" not in session:
                 return redirect(url_for("index"))
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+                text(
+                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
+                ),
+                {"email": session["email"]},
             )
             if not result.fetchone()[0]:
                 return redirect(url_for("index"))
@@ -138,8 +141,12 @@ def login():
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
-    google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
-    token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
+    google = OAuth2Session(
+        client_id, state=session["oauth_state"], redirect_uri=redirect_uri
+    )
+    token = google.fetch_token(
+        token_url, client_secret=client_secret, authorization_response=request.url
+    )
 
     session["oauth_token"] = token
 
@@ -148,9 +155,15 @@ def callback():
     userinfo = response.json()
 
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"), {"email": userinfo["email"]}).fetchone()[0]
+        result = conn.execute(
+            text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"),
+            {"email": userinfo["email"]},
+        ).fetchone()[0]
         if not result:
-            flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
+            flash(
+                f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere",
+                "danger",
+            )
             return redirect(url_for("index"))
 
     session["name"] = userinfo["name"]
@@ -175,13 +188,18 @@ def logout():
 @app.route(APP_ROOT + "/")
 def index():
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"))
+        result = conn.execute(
+            text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL")
+        )
         n = result.fetchone()[0]
 
         admin = False
         if "email" in session:
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+                text(
+                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
+                ),
+                {"email": session["email"]},
             )
             if result.fetchone()[0]:
                 admin = True
@@ -193,7 +211,11 @@ def index():
 @app.route(APP_ROOT + "/tutti")
 def tutti():
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "))
+        result = conn.execute(
+            text(
+                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "
+            )
+        )
         records = result.fetchall()
     return render_template("tutti_record.html", records=records, query_string="tutti")
 
@@ -269,7 +291,9 @@ def aggiungi():
             )
         """)
         with engine.connect() as conn:
-            conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+            conn.execute(
+                text("SET LOCAL application_name = :user"), {"user": session["email"]}
+            )
             conn.execute(query, data)
             conn.commit()
         return redirect(url_for("index"))
@@ -306,7 +330,12 @@ def modifica(record_id, query_string: str = ""):
         )
         record = result.fetchone()
 
-    return render_template("modifica.html", record=record, query_string=query_string, boolean_fields=BOOLEAN_FIELDS)
+    return render_template(
+        "modifica.html",
+        record=record,
+        query_string=query_string,
+        boolean_fields=BOOLEAN_FIELDS,
+    )
 
 
 # Modifica record - salvataggio
@@ -352,7 +381,9 @@ def salva_modifiche(record_id):
         )
     )
     with engine.connect() as conn:
-        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
 
@@ -377,7 +408,12 @@ def modifica_multipla():
         "da_movimentare",
         "trasporto_in_autonomia",
     ) and nuovo_valore.upper() not in ("SI", "NO"):
-        flash(Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"), "danger")
+        flash(
+            Markup(
+                f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"
+            ),
+            "danger",
+        )
         return redirect(url_for("search") + "?" + query_string)
 
     if (
@@ -403,7 +439,9 @@ def modifica_multipla():
                 print(f"{campo=}")
                 print(f"{nuovo_valore=}")
 
-                query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
+                query = text(
+                    f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id"
+                )
 
                 conn.execute(
                     text("SET LOCAL application_name = :user"),
@@ -414,7 +452,12 @@ def modifica_multipla():
 
                 # check trasporto autonomia
                 if campo == "trasporto_in_autonomia" and nuovo_valore:
-                    conn.execute(text("UPDATE inventario SET da_movimentare = True WHERE id = :id"), {"id": rid})
+                    conn.execute(
+                        text(
+                            "UPDATE inventario SET da_movimentare = True WHERE id = :id"
+                        ),
+                        {"id": rid},
+                    )
                     conn.commit()
 
     return redirect(url_for("search") + "?" + query_string)
@@ -540,10 +583,15 @@ def upload_excel():
 
             if count_senza_responsabile > 0:
                 # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
-                dettagli = [f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in senza_responsabile.iterrows()]
+                dettagli = [
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in senza_responsabile.iterrows()
+                ]
                 inventari = "<br>".join(dettagli)
                 flash(
-                    Markup(f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"),
+                    Markup(
+                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
+                    ),
                     "warning",
                 )
 
@@ -666,7 +714,12 @@ def search():
         )
 
     return render_template(
-        "search.html", records=records, request_args=request.args, fields=fields, query_string=query_string, boolean_fields=BOOLEAN_FIELDS
+        "search.html",
+        records=records,
+        request_args=request.args,
+        fields=fields,
+        query_string=query_string,
+        boolean_fields=BOOLEAN_FIELDS,
     )
 
 
@@ -713,8 +766,12 @@ def delete_record(record_id, query_string: str = ""):
     delete record
     """
     with engine.connect() as conn:
-        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
-        sql = text("UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id")
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
+        sql = text(
+            "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
+        )
         conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
         conn.commit()
 
@@ -755,7 +812,9 @@ def view_qrcode(record_id: int):
 @check_login
 def storico(record_id):
     with engine.connect() as conn:
-        sql = text("SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC")
+        sql = text(
+            "SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC"
+        )
         audits = conn.execute(sql, {"id": record_id}).fetchall()
 
     return render_template("storico.html", audits=audits, record_id=record_id)
@@ -786,6 +845,27 @@ def storico_utente(email: str = ""):
             flash(f"Utente {email} non trovato", "danger")
 
     return render_template("storico_utente.html", audit_records=audits, username=email)
+
+
+@app.route(APP_ROOT + "/storico_utenti", methods=["GET"])
+@check_login
+@check_admin
+def storico_utenti():
+    """
+    returns list of active users
+    """
+    with engine.connect() as conn:
+        sql = text(
+            (
+                "SELECT INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                "MAX(executed_at) AS last_operation, "
+                "COUNT(*) AS num_operations from inventario_audit "
+                "WHERE executed_by like '%@%' group by executed_by "
+            )
+        )
+        audits = conn.execute(sql).fetchall()
+
+    return render_template("attivita_utenti.html", audit_records=audits)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
@@ -921,7 +1001,9 @@ def etichetta(record_id):
                 align="L",
             )
         if record_dict["note"]:
-            pdf.multi_cell(200, h, txt=f"Note: {record_dict['note']}", ln=True, align="L")
+            pdf.multi_cell(
+                200, h, txt=f"Note: {record_dict['note']}", ln=True, align="L"
+            )
 
         # pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
 
@@ -959,7 +1041,11 @@ def mappe():
 def aggiungi_user():
     if request.method == "GET":
         with engine.connect() as conn:
-            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+            users = conn.execute(
+                text(
+                    "SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email"
+                )
+            ).fetchall()
 
         return render_template("aggiungi_user.html", users=users)
 
@@ -979,12 +1065,16 @@ def aggiungi_user():
 def delete_user(email: str):
     with engine.connect() as conn:
         # check if email in DB
-        n_users = conn.execute(text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}).fetchone()[0]
+        n_users = conn.execute(
+            text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}
+        ).fetchone()[0]
         if not n_users:
             flash(f"Utente {email} non trovato", "danger")
 
             # users list
-            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+            users = conn.execute(
+                text("SELECT email FROM users ORDER by email")
+            ).fetchall()
 
             return render_template("aggiungi_user.html", users=users)
 
