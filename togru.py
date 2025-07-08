@@ -887,6 +887,7 @@ def attivita_utente(email: str):
                 "SELECT descrizione_bene, operation_type, record_id, executed_at "
                 "FROM inventario_audit LEFT JOIN inventario ON inventario_audit.record_id = inventario.id "
                 "WHERE executed_by = :email "
+                "ORDER BY executed_at DESC"
             )
         )
         attivita = conn.execute(sql, {"email": email}).fetchall()
