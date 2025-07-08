@@ -16,7 +16,7 @@
 
 <br><br>
 
-<h1 class="title">Attività utenti</u></h1>
+<h1 class="title">Attività utente {{ email }}</u></h1>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
@@ -30,21 +30,20 @@
 
 
 
-{% if audit_records %}
+{% if attivita %}
 <table class="table is-fullwidth is-striped is-hoverable">
 <thead>
 <tr>
-<th>Utente</th>
-<th>Numero operazioni</th>
-<th>Ultima operazione</th>
+<th>Tipo operazione</th>
+<th>Data</th>
 </tr>
 </thead>
 <tbody>
-{% for record in audit_records %}
+{% for record in attivita %}
 <tr>
-<td><a href="{{ url_for('attivita_utente', email=record.email) }}">{{ record.user }}</a></td>
-<td>{{ record.num_operations }}</td>
-<td>{{ record.last_operation }}</td>
+<td>{{ record.operation_type }}</td>
+<td>{{ record.record_id }}</td>
+<td>{{ record.executed_at }}</td>
 </tr>
 {% endfor %}
 </tbody>

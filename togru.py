@@ -862,7 +862,8 @@ def attivita_utenti():
     with engine.connect() as conn:
         sql = text(
             (
-                "SELECT INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                "SELECT executed_by AS email,"
+                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
                 "MAX(executed_at) AS last_operation, "
                 "COUNT(*) AS num_operations from inventario_audit "
                 "WHERE executed_by like '%@%' group by executed_by "
@@ -871,6 +872,20 @@ def attivita_utenti():
         audits = conn.execute(sql).fetchall()
 
     return render_template("attivita_utenti.html", audit_records=audits)
+
+
+@app.route(APP_ROOT + "/attivita_utente/<email>", methods=["GET"])
+@check_login
+@check_admin
+def attivita_utente(email: str):
+    """
+    returns user activity
+    """
+    with engine.connect() as conn:
+        sql = text(("SELECT operation_type, record_id, executed_at FROM inventario_audit WHERE executed_by = :email "))
+        attivita = conn.execute(sql, {"email": email}).fetchall()
+
+    return render_template("attivita_utente.html", attivita=attivita)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
