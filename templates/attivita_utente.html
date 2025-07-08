@@ -42,7 +42,7 @@
 {% for record in attivita %}
 <tr>
 <td>{{ record.operation_type }}</td>
-<td>{{ record.record_id }}</td>
+<td><a href="{{ url_for('view', record_id=record.record_id) }}">{{ record.record_id }}</a></td>
 <td>{{ record.executed_at }}</td>
 </tr>
 {% endfor %}
