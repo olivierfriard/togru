@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS inventario_audit (
 );
 
 
-
+-- ALTER TABLE inventario_audit DROP COLUMN table_name;
 
 CREATE OR REPLACE FUNCTION log_inventario_changes()
 RETURNS TRIGGER AS $$
@@ -24,9 +24,9 @@ BEGIN
     -- Log INSERT
     IF (TG_OP = 'INSERT') THEN
         INSERT INTO inventario_audit (
-            operation_type, table_name, record_id, new_data, executed_by
+            operation_type, record_id, new_data, executed_by
         ) VALUES (
-            'INSERT', TG_TABLE_NAME, NEW.id, to_jsonb(NEW), username
+            'INSERT', NEW.id, to_jsonb(NEW), username
         );
         RETURN NEW;
     END IF;
@@ -34,9 +34,9 @@ BEGIN
     -- Log UPDATE
     IF (TG_OP = 'UPDATE') THEN
         INSERT INTO inventario_audit (
-            operation_type, table_name, record_id, old_data, new_data, executed_by
+            operation_type, record_id, old_data, new_data, executed_by
         ) VALUES (
-            'UPDATE', TG_TABLE_NAME, NEW.id, to_jsonb(OLD), to_jsonb(NEW), username
+            'UPDATE', NEW.id, to_jsonb(OLD), to_jsonb(NEW), username
         );
         RETURN NEW;
     END IF;
@@ -44,9 +44,9 @@ BEGIN
     -- Log DELETE
     IF (TG_OP = 'DELETE') THEN
         INSERT INTO inventario_audit (
-            operation_type, table_name, record_id, old_data, executed_by
+            operation_type, record_id, old_data, executed_by
         ) VALUES (
-            'DELETE', TG_TABLE_NAME, OLD.id, to_jsonb(OLD), username
+            'DELETE', OLD.id, to_jsonb(OLD), username
         );
         RETURN OLD;
     END IF;

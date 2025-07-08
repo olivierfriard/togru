@@ -14,13 +14,6 @@
 <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
 <a href="javascript:history.back()" class="button is-link">Indietro</a>
-<!--
-{% if query_string %}
-<a class="button is-link" href="/togru/search?{{ query_string }}">Torna alla ricerca</a>
-{%endif%}
-
-<a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a>
--->
 
 <a class="button is-warning" href="{{ url_for('modifica', record_id=record['id'], query_string=query_string) }}">Modifica</a>
 
@@ -36,15 +29,24 @@
 <br>
 <h1 class="title">{{ record['descrizione_bene'] }}</h1>
 
+id: {{ record.id }}<br><br>
 
 <table class="table is-striped is-hoverable is-fullwidth">
 <tbody>
-    {% for key, value in record.items() %}
-    <tr>
-        <th>{{ key.replace('_', ' ').capitalize() }}</th>
-        <td>{{ value }}</td>
-    </tr>
-    {% endfor %}
+{% for key, value in record.items()  if key != 'id' %}
+<tr>
+<th>{{ key.replace('_', ' ').capitalize() }}</th>
+<td>
+{% if key == 'responsabile_laboratorio' %}
+<a href="/togru/search?responsabile_laboratorio={{ value }}">{{ value }}</a>
+{% elif key == 'codice_sipi_torino' %}
+<a href="/togru/search?codice_sipi_torino={{ value }}">{{ value }}</a>
+{% else %}
+{{ value }}
+{% endif %}
+</td>
+</tr>
+{% endfor %}
     
 </tbody>
 </table>

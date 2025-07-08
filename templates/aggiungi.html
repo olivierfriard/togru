@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Aggiungi Bene</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+<meta charset="UTF-8">
+<title>Aggiungi Bene</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
 </head>
 <body>
 
 <section class="section">
-    <div class="container">
+<div class="container">
 
-        <a class="button is-link" href="{{ url_for('index') }}">Home</a>
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
-        <br><br>
+<br><br>
 
-        <h2 class="title is-4">Aggiungi Nuovo Bene</h2>
+<h2 class="title is-4">Aggiungi Nuovo Bene</h2>
 
-        <form action="{{ url_for('aggiungi') }}" method="POST" onsubmit="return controllaMovimentazione();">
+<form action="{{ url_for('aggiungi') }}" method="POST" onsubmit="return controllaSubmit();">
 
 
 <!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
@@ -25,19 +25,39 @@
         <div class="field">
             <label class="label">Descrizione bene</label>
             <div class="control">
-                <input class="input" type="text" name="descrizione_bene" placeholder="Descrizione bene">
+                <input class="input" type="text" name="descrizione_bene" placeholder="Descrizione bene" required>
             </div>
         </div>
     </div>
-    <div class="column is-half">
-        <div class="field">
-            <label class="label">Responsabile laboratorio</label>
-            <div class="control">
-                <input class="input" type="text" name="responsabile_laboratorio" placeholder="Responsabile laboratorio">
+ 
+<div class="column is-half">
+<div class="field">
+        <label class="label">Responsabile laboratorio</label>
+        <div class="control">
+            <div class="select">
+            <select id="responsabile_select" name="responsabile_laboratorio" onchange="toggleAltro()">
+                <option value="">Seleziona un responsabile</option>
+                {% for responsabile in responsabili %}
+                <option value="{{ responsabile.responsabile_laboratorio }}">{{ responsabile.responsabile_laboratorio }}</option>
+                {% endfor %}
+                <option value="altro">Altro...</option>
+            </select>
+
             </div>
         </div>
+</div>
+
+
+<div class="field" id="altro_responsabile_field" style="display: none;">
+    <label class="label">Nuovo responsabile</label>
+    <div class="control">
+        <input class="input" type="text" id="nuovo_responsabile_input" name="nuovo_responsabile_laboratorio" placeholder="Inserisci nome responsabile">
     </div>
 </div>
+
+</div>
+
+</div><!--columns-->
 
             <div class="columns is-multiline">
                 {% for field in [
@@ -49,8 +69,9 @@
                     "da_movimentare",
                     "trasporto_in_autonomia",
                     "da_disinventariare",
-                    'rosso_fase_alimentazione_privilegiata', 'valore_convenzionale', 'esercizio_bene_migrato',
-                     'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
+                    'rosso_fase_alimentazione_privilegiata',
+                    'valore_convenzionale', 'esercizio_bene_migrato',
+                    'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
                     'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 'peso', 'dimensioni',
                     'ditta_costruttrice_fornitrice'
                 ] %}
@@ -62,9 +83,8 @@
                             {% if field in boolean_fields %}
 
 <select class="input" name="{{ field }}">
-    <option value="false">NO</option>
-    <option value="true">SI</option>
-   
+<option value="false">NO</option>
+<option value="true">SI</option>
 </select>
 
                             {% else %}
@@ -77,25 +97,27 @@
                 {% endfor %}
             </div>
 
-            <div class="field">
-                <label class="label">Note</label>
-                <div class="control">
-                    <textarea class="textarea" name="note" placeholder="Note"></textarea>
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <button class="button is-primary" type="submit">Aggiungi</button>
-                </div>
-            </div>
-        </form>
-
+    <div class="field">
+        <label class="label">Note</label>
+        <div class="control">
+            <textarea class="textarea" name="note" placeholder="Note"></textarea>
+        </div>
     </div>
+
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary" type="submit">Aggiungi</button>
+        </div>
+    </div>
+</form>
+
+</div>
 </section>
 
 <script>
-function controllaMovimentazione() {
+function controllaSubmit() {
+  
+
     const daMovimentare = document.querySelector('select[name="da_movimentare"]').value;
     const trasportoInAutonomia = document.querySelector('select[name="trasporto_in_autonomia"]').value;
 
@@ -103,8 +125,34 @@ function controllaMovimentazione() {
         alert('Se "Trasporto in autonomia" è impostato a SI, anche "Da movimentare" deve essere impostato a SI.');
         return false; // blocca la submit
     }
+
+    const select = document.getElementById('responsabile_select');
+    const nuovoResponsabile = document.getElementById('nuovo_responsabile_input').value.trim();
+
+    // Se nessun responsabile selezionato
+    if (select.value === '') {
+      event.preventDefault();
+      alert("Seleziona un responsabile laboratorio.");
+      return false;
+    }
+
+    // Se selezionato 'altro' ma campo vuoto
+    if (select.value === 'altro' && nuovoResponsabile === '') {
+      event.preventDefault();
+      alert("Inserisci il nome del nuovo responsabile.");
+      return false;
+    }
+
     return true; // permette la submit
 }
+
+
+function toggleAltro() {
+      const select = document.getElementById('responsabile_select');
+      const altroField = document.getElementById('altro_responsabile_field');
+      altroField.style.display = (select.value === 'altro') ? 'block' : 'none';
+    }
+
 </script>
 
 

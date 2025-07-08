@@ -114,7 +114,8 @@ def check_admin(f):
             if "email" not in session:
                 return redirect(url_for("index"))
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"),
+                {"email": session["email"]},
             )
             if not result.fetchone()[0]:
                 return redirect(url_for("index"))
@@ -148,9 +149,15 @@ def callback():
     userinfo = response.json()
 
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"), {"email": userinfo["email"]}).fetchone()[0]
+        result = conn.execute(
+            text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"),
+            {"email": userinfo["email"]},
+        ).fetchone()[0]
         if not result:
-            flash(f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere", "danger")
+            flash(
+                f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere",
+                "danger",
+            )
             return redirect(url_for("index"))
 
     session["name"] = userinfo["name"]
@@ -181,7 +188,8 @@ def index():
         admin = False
         if "email" in session:
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"), {"email": session["email"]}
+                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"),
+                {"email": session["email"]},
             )
             if result.fetchone()[0]:
                 admin = True
@@ -218,7 +226,8 @@ def view(record_id: int, query_string: str = ""):
                 "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
                 "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                 "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
-                "rosso_fase_alimentazione_privilegiata, valore_convenzionale,"
+                "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
+                "valore_convenzionale,"
                 "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                 "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                 "ditta_costruttrice_fornitrice, note "
@@ -239,27 +248,40 @@ def view(record_id: int, query_string: str = ""):
 @app.route(APP_ROOT + "/aggiungi", methods=["GET", "POST"])
 @check_login
 def aggiungi():
+    """
+    aggiungi bene all'inventario
+    """
     if request.method == "GET":
-        return render_template("aggiungi.html", boolean_fields=BOOLEAN_FIELDS)
+        with engine.connect() as conn:
+            responsabili = conn.execute(
+                text("SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio")
+            ).fetchall()
+
+        return render_template("aggiungi.html", responsabili=responsabili, boolean_fields=BOOLEAN_FIELDS)
 
     if request.method == "POST":
         data = dict(request.form)
 
+        # modify values for boolean fields
         for field in BOOLEAN_FIELDS:
             value = request.form.get(field)
             data[field] = value == "true"
+
+        # check for new responsabile
+        if data["responsabile_laboratorio"] == "altro":
+            data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
 
         query = text("""
             INSERT INTO inventario (
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
-                microscopia,catena_del_freddo,alta_specialistica,da_movimentare,trasporto_in_autonomia,da_disinventariare,
+                microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
                 rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note
             ) VALUES (
-                 :num_inventario, :num_inventario_ateneo, :data_carico,
+                :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
                 :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
@@ -281,6 +303,9 @@ def aggiungi():
 @app.route(APP_ROOT + "/modifica/<int:record_id>/<query_string>")
 @check_login
 def modifica(record_id, query_string: str = ""):
+    """
+    modifica un bene
+    """
     with engine.connect() as conn:
         result = conn.execute(
             text(
@@ -294,7 +319,8 @@ def modifica(record_id, query_string: str = ""):
                     "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
                     "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                     "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
-                    "rosso_fase_alimentazione_privilegiata, valore_convenzionale,"
+                    "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
+                    "valore_convenzionale,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                     "ditta_costruttrice_fornitrice, note "
@@ -306,7 +332,17 @@ def modifica(record_id, query_string: str = ""):
         )
         record = result.fetchone()
 
-    return render_template("modifica.html", record=record, query_string=query_string, boolean_fields=BOOLEAN_FIELDS)
+        responsabili = conn.execute(
+            text("SELECT DISTINCT responsabile_laboratorio FROM inventario where deleted IS NULL ORDER BY responsabile_laboratorio")
+        ).fetchall()
+
+    return render_template(
+        "modifica.html",
+        record=record,
+        query_string=query_string,
+        responsabili=responsabili,
+        boolean_fields=BOOLEAN_FIELDS,
+    )
 
 
 # Modifica record - salvataggio
@@ -319,13 +355,18 @@ def salva_modifiche(record_id):
         value = request.form.get(field)
         data[field] = value == "true"
 
+    # check for new responsabile
+    if data["responsabile_laboratorio"] == "altro":
+        data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
+
     query = text(
         (
             "UPDATE inventario SET "
+            "    descrizione_bene = :descrizione_bene, "
+            "    responsabile_laboratorio = :responsabile_laboratorio, "
             "    num_inventario = :num_inventario, "
             "    num_inventario_ateneo = :num_inventario_ateneo, "
             "    data_carico = :data_carico, "
-            "    descrizione_bene = :descrizione_bene, "
             "    codice_sipi_torino = :codice_sipi_torino, "
             "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
             "    destinazione = :destinazione, "
@@ -338,7 +379,6 @@ def salva_modifiche(record_id):
             "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
             "    valore_convenzionale = :valore_convenzionale, "
             # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
-            "    responsabile_laboratorio = :responsabile_laboratorio, "
             "    denominazione_fornitore = :denominazione_fornitore, "
             "    anno_fabbricazione = :anno_fabbricazione, "
             "    numero_seriale = :numero_seriale, "
@@ -377,7 +417,10 @@ def modifica_multipla():
         "da_movimentare",
         "trasporto_in_autonomia",
     ) and nuovo_valore.upper() not in ("SI", "NO"):
-        flash(Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"), "danger")
+        flash(
+            Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"),
+            "danger",
+        )
         return redirect(url_for("search") + "?" + query_string)
 
     if (
@@ -413,7 +456,12 @@ def modifica_multipla():
                 # check trasporto autonomia
                 """
                 if campo == "trasporto_in_autonomia" and nuovo_valore:
-                    conn.execute(text("UPDATE inventario SET da_movimentare = True WHERE id = :id"), {"id": rid})
+                    conn.execute(
+                        text(
+                            "UPDATE inventario SET da_movimentare = True WHERE id = :id"
+                        ),
+                        {"id": rid},
+                    )
                     conn.commit()
                 """
 
@@ -605,6 +653,8 @@ def search():
         params = {}
 
         for field in fields:
+            print(f"{field=}")
+
             if field in BOOLEAN_FIELDS:
                 if not request.args.get(field, ""):
                     continue
@@ -627,14 +677,15 @@ def search():
                             query += f" AND ({subquery})"
                             continue
 
-                    # add senza Codice SIPI Torino
-                    if field == "codice_sipi_torino" and value == "SENZA":
-                        query += f" AND ({field} = '' OR {field} IS NULL)"
-                        continue
-                    # add senza Codice SIPI Grugliasco
-                    if field == "codice_sipi_grugliasco" and value == "SENZA":
-                        query += f" AND ({field} = '' OR {field} IS NULL)"
-                        continue
+                    if value == "SENZA":
+                        # add senza Codice SIPI Torino
+                        if field == "codice_sipi_torino":
+                            query += f" AND ({field} = '' OR {field} IS NULL)"
+                            continue
+                        # add senza Codice SIPI Grugliasco
+                        if field == "codice_sipi_grugliasco":
+                            query += f" AND ({field} = '' OR {field} IS NULL)"
+                            continue
 
                     # Per testo, ricerca con ILIKE e wildcard %
                     query += f" AND {field} ILIKE :{field}"
@@ -666,7 +717,12 @@ def search():
         )
 
     return render_template(
-        "search.html", records=records, request_args=request.args, fields=fields, query_string=query_string, boolean_fields=BOOLEAN_FIELDS
+        "search.html",
+        records=records,
+        request_args=request.args,
+        fields=fields,
+        query_string=query_string,
+        boolean_fields=BOOLEAN_FIELDS,
     )
 
 
@@ -701,6 +757,14 @@ def search_sipi_torino():
     return render_template(
         "search_sipi_torino.html",
         sipi_list=sipi_list,
+    )
+
+
+@app.route(APP_ROOT + "/search_struttura")
+@check_login
+def search_struttura():
+    return render_template(
+        "search_struttura.html",
     )
 
 
@@ -786,6 +850,27 @@ def storico_utente(email: str = ""):
             flash(f"Utente {email} non trovato", "danger")
 
     return render_template("storico_utente.html", audit_records=audits, username=email)
+
+
+@app.route(APP_ROOT + "/attivita_utenti", methods=["GET"])
+@check_login
+@check_admin
+def attivita_utenti():
+    """
+    returns list of active users
+    """
+    with engine.connect() as conn:
+        sql = text(
+            (
+                "SELECT INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                "MAX(executed_at) AS last_operation, "
+                "COUNT(*) AS num_operations from inventario_audit "
+                "WHERE executed_by like '%@%' group by executed_by "
+            )
+        )
+        audits = conn.execute(sql).fetchall()
+
+    return render_template("attivita_utenti.html", audit_records=audits)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
@@ -959,7 +1044,9 @@ def mappe():
 def aggiungi_user():
     if request.method == "GET":
         with engine.connect() as conn:
-            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+            users = conn.execute(
+                text("SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email")
+            ).fetchall()
 
         return render_template("aggiungi_user.html", users=users)
 
