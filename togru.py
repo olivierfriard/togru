@@ -482,7 +482,6 @@ def upload_excel():
             df.columns = df.columns.str.strip()
 
             excel_to_db_fields = {
-                "Descrizione Inventario": "descrizione_inventario",
                 "Numero inventario": "num_inventario",
                 "Num inventario Ateneo": "num_inventario_ateneo",
                 "Data carico": "data_carico",
@@ -497,7 +496,6 @@ def upload_excel():
                 "Denominazione Fornitore": "denominazione_fornitore",
                 "Anno fabbricazione": "anno_fabbricazione",
                 "Numero seriale": "numero_seriale",
-                "Categoria inventariale": "categoria_inventoriale",
                 "Catalogazione del materiale/strumentazione": "catalogazione_materiale_strumentazione",
                 "Peso": "peso",
                 "Dimensioni (Altezza e larghezza/lunghezza espressi in cm)": "dimensioni",
@@ -509,9 +507,6 @@ def upload_excel():
                 if col.startswith("Peso"):
                     df.rename(columns={col: "Peso"}, inplace=True)
                     break  # Se vuoi rinominare solo la prima colonna che matcha
-
-            df.rename(columns=excel_to_db_fields, inplace=True)
-            df.fillna("", inplace=True)
 
             """
             # Trasforma num_inventario in intero dove possibile
@@ -546,14 +541,22 @@ def upload_excel():
                 return redirect(request.url)
             """
 
-            expected_cols = list(excel_to_db_fields.values())
+            print(df.columns)
+
+            expected_cols = list(excel_to_db_fields.keys())
             missing_cols = [c for c in expected_cols if c not in df.columns]
             if missing_cols:
-                flash(f"Mancano colonne nel file Excel: {missing_cols}", "danger")
+                flash(Markup(f"Mancano colonne nel file Excel:<br><b> {'<br>'.join(missing_cols)}</b>"), "danger")
                 return redirect(request.url)
+
+            # rename columns
+            df.rename(columns=excel_to_db_fields, inplace=True)
+            df.fillna("", inplace=True)
 
             # record senza responsabile
             senza_responsabile = df[df["responsabile_laboratorio"] == ""]
+
+            #
 
             with engine.connect() as conn:
                 conn.execute(
@@ -563,18 +566,18 @@ def upload_excel():
                 for _, row in df.iterrows():
                     sql = text("""
                     INSERT INTO inventario (
-                        descrizione_inventario, num_inventario, num_inventario_ateneo, data_carico,
+                         num_inventario, num_inventario_ateneo, data_carico,
                         descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
                         rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
                         responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
-                        categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
+                        catalogazione_materiale_strumentazione, peso, dimensioni,
                         ditta_costruttrice_fornitrice, note
                     ) VALUES (
-                        :descrizione_inventario, :num_inventario, :num_inventario_ateneo, :data_carico,
+                         :num_inventario, :num_inventario_ateneo, :data_carico,
                         :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                         :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
                         :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
-                        :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
+                        :catalogazione_materiale_strumentazione, :peso, :dimensioni,
                         :ditta_costruttrice_fornitrice, :note
                     )
                     """)
