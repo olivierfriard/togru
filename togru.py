@@ -390,19 +390,17 @@ def modifica_multipla():
             "codice_sipi_grugliasco",
             "da_movimentare",
             "trasporto_in_autonomia",
+            "catena_del_freddo",
             "destinazione",
             "note",
         )
     ):
-        if campo in ("da_movimentare", "trasporto_in_autonomia"):
+        # set boolean values
+        if campo in ("da_movimentare", "trasporto_in_autonomia", "catena_del_freddo"):
             nuovo_valore = nuovo_valore.upper() == "SI"
 
         with engine.connect() as conn:
             for rid in record_ids:
-                print(f"{rid=}")
-                print(f"{campo=}")
-                print(f"{nuovo_valore=}")
-
                 query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
 
                 conn.execute(
@@ -413,9 +411,11 @@ def modifica_multipla():
                 conn.commit()
 
                 # check trasporto autonomia
+                """
                 if campo == "trasporto_in_autonomia" and nuovo_valore:
                     conn.execute(text("UPDATE inventario SET da_movimentare = True WHERE id = :id"), {"id": rid})
                     conn.commit()
+                """
 
     return redirect(url_for("search") + "?" + query_string)
 
@@ -676,7 +676,7 @@ def search_resp():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                """( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"""
+                "( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"
             )
         )
         resp = result.fetchall()
