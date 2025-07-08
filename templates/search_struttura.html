@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Ricerca Inventario per responsabile</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+<div class="container">
+
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<br><br>
+
+<h1 class="title">Filtra per struttura</h1>
+
+
+<form method="get" action="/togru/search">
+  <div class="field">
+    <label class="label">Struttura</label>
+    <div class="control">
+      <div class="select">
+        <select name="codice_sipi_torino"  onchange="this.form.submit()">
+         
+          <option value="014_">Via dell'Accademia Albertina 13</option>
+          <option value="034_">Ortobotanico</option>
+          <option value="050_">Via Quarello</option>
+          
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="control">
+    <button type="submit" class="button is-link">Filtra</button>
+  </div>
+</form>
+
+
+</div>
+</section>
+</body>
+</html>
