@@ -28,19 +28,24 @@
 {% endif %}
 {% endwith %}
 
-
+<a href="{{ url_for('storico_utente', email=email) }}">Storico completo</a>
+<br>
+<br>
 
 {% if attivita %}
 <table class="table is-fullwidth is-striped is-hoverable">
 <thead>
 <tr>
+<th>Bene</th>
 <th>Tipo operazione</th>
+<th>Record id</th>
 <th>Data</th>
 </tr>
 </thead>
 <tbody>
 {% for record in attivita %}
 <tr>
+<td>{{ record.descrizione_bene }}</td>
 <td>{{ record.operation_type }}</td>
 <td><a href="{{ url_for('view', record_id=record.record_id) }}">{{ record.record_id }}</a></td>
 <td>{{ record.executed_at }}</td>

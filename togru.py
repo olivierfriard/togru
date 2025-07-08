@@ -882,10 +882,16 @@ def attivita_utente(email: str):
     returns user activity
     """
     with engine.connect() as conn:
-        sql = text(("SELECT operation_type, record_id, executed_at FROM inventario_audit WHERE executed_by = :email "))
+        sql = text(
+            (
+                "SELECT descrizione_bene, operation_type, record_id, executed_at "
+                "FROM inventario_audit LEFT JOIN inventario ON inventario_audit.record_id = inventario.id "
+                "WHERE executed_by = :email "
+            )
+        )
         attivita = conn.execute(sql, {"email": email}).fetchall()
 
-    return render_template("attivita_utente.html", attivita=attivita)
+    return render_template("attivita_utente.html", attivita=attivita, email=email)
 
 
 @app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
