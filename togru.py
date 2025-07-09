@@ -1017,8 +1017,8 @@ def etichetta(record_id: str = ""):
 
     finally:
         # Delete temp files
-        if os.path.exists(temp_typst_path):
-            os.remove(temp_typst_path)
+        # if os.path.exists(temp_typst_path):
+        #    os.remove(temp_typst_path)
         pass
 
 
