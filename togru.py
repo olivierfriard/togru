@@ -927,30 +927,30 @@ margin: (top: 1cm, bottom: 1cm, x:1cm)
 
         out += f"""#block(breakable: false)[
         
-#text(size: 12pt)[*{record["descrizione_bene"] if record["descrizione_bene"] else " "}*]
+#text(size: 12pt)[*`{record["descrizione_bene"].replace("`", "'") if record["descrizione_bene"] else " "}`*]
 
 #grid(
 columns: (14cm, 5cm),
 
 [
-Responsabile lab: *{record["responsabile_laboratorio"] if record["responsabile_laboratorio"] else " "}*
+Responsabile lab: *`{record["responsabile_laboratorio"] if record["responsabile_laboratorio"] else " "}`*
 
-Num inv: *{record["num_inventario"] if record["num_inventario"] else " "}*
+`Num inv:` *`{record["num_inventario"] if record["num_inventario"] else " "}`*
 
 #grid(
 columns: (7cm, 7cm),
 
-[SIPI TO: *{record["codice_sipi_torino"] if record["codice_sipi_torino"] else "-"}*],
-[SIPI GRU: *{record["codice_sipi_grugliasco"] if record["codice_sipi_grugliasco"] else "-"}*],
+[`SIPI TO:` *`{record["codice_sipi_torino"] if record["codice_sipi_torino"] else "-"}`*],
+[`SIPI GRU:` *`{record["codice_sipi_grugliasco"] if record["codice_sipi_grugliasco"] else "-"}`*],
 )
 
-{"DA MOVIMENTARE" if record["da_movimentare"] else "STRUMENTO/BENE DA NON MOVIMENTARE/DISMETTERE"}
+`{"DA MOVIMENTARE" if record["da_movimentare"] else "STRUMENTO/BENE DA NON MOVIMENTARE/DISMETTERE"}`
 
-{"DA DISINVENTARIARE" if record["da_disinventariare"] else ""}
+`{"DA DISINVENTARIARE" if record["da_disinventariare"] else ""}`
 
-{"TRASPORTO IN AUTONOMIA" if record["trasporto_in_autonomia"] else ""}
+`{"TRASPORTO IN AUTONOMIA" if record["trasporto_in_autonomia"] else ""}`
 
-{record["destinazione"]}
+`{record["destinazione"]}`
 
 ],
 
@@ -1020,9 +1020,12 @@ def etichetta(record_id: str = ""):
 
     finally:
         # Delete temp files
-        # if os.path.exists(temp_typst_path):
-        #    os.remove(temp_typst_path)
-        pass
+        if Path(temp_typst_path).exists():
+            Path(temp_typst_path).unlink()
+        if Path(temp_pdf_path).exists():
+            Path(temp_pdf_path).unlink()
+        for file_path in Path("/tmp").glob("qrcode_*.png"):
+            file_path.unlink()
 
 
 @app.route(APP_ROOT + "/mappe", methods=["GET"])
