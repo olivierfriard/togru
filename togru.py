@@ -8,7 +8,8 @@ from flask import (
     send_file,
     session,
 )
-from fpdf import FPDF
+
+# from fpdf import FPDF
 from functools import wraps
 from io import BytesIO
 from markupsafe import Markup
@@ -19,6 +20,7 @@ import json
 import os
 import qrcode
 from datetime import datetime
+from pathlib import Path
 
 APP_ROOT = "/togru"
 
@@ -656,8 +658,6 @@ def search():
         params = {}
 
         for field in fields:
-            print(f"{field=}")
-
             if field in BOOLEAN_FIELDS:
                 if not request.args.get(field, ""):
                     continue
@@ -695,8 +695,6 @@ def search():
                     params[field] = f"%{value}%"
 
         query += " ORDER BY id DESC"
-
-        print(f"{query=}")
 
         sql = text(query)
         with engine.connect() as conn:
@@ -886,163 +884,142 @@ def attivita_utente(email: str):
     return render_template("attivita_utente.html", attivita=attivita, email=email)
 
 
-@app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
-@check_login
-def etichetta(record_id):
-    """
-    Stampa etichetta da incollare sul bene
-    """
-    with engine.connect() as conn:
-        sql = text("SELECT * FROM inventario WHERE id = :id")
-        result = conn.execute(sql, {"id": record_id}).fetchone()
-        if not result:
-            return f"Bene con ID {record_id} non trovato", 404
-
-        record_dict = dict(result._mapping)
-
+def create_qrcode(record_id) -> str:
     # Create QR code
     qr_data = f"http://penelope.unito.it/togru/view_qrcode/{record_id}"
     qr = qrcode.QRCode(box_size=10, border=4)
     qr.add_data(qr_data)
     qr.make(fit=True)
-
     img_qr = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-
-    # Save QR code in a BytesIO buffer
-    qr_buffer = BytesIO()
-    img_qr.save(qr_buffer, format="PNG")
-    qr_buffer.seek(0)
-
     # Save QR in a temporary file
-    temp_qr_path = f"temp_{record_id}.png"
+    temp_qr_path = f"/tmp/qrcode_{record_id}.png"
     img_qr.save(temp_qr_path)
 
+    return temp_qr_path
+
+
+def label(record_list: list) -> str:
+    """
+    create typst label for records
+    """
+    with engine.connect() as conn:
+        ids = ",".join([str(x) for x in record_list])
+        sql = text(f"SELECT * FROM inventario WHERE id in ({ids})")
+        records = conn.execute(sql).mappings().all()
+        if not records:
+            return f"Error in record list {', '.join(record_list)}", 404
+
+        label_header = """#set page(
+margin: (top: 1cm, bottom: 1cm, x:1cm)
+)
+
+#set text(
+  font: "Libertinus Serif",
+  size: 11pt,
+)
+"""
+
+    out = label_header
+
+    for record in records:
+        temp_qr_path = create_qrcode(record["id"])
+
+        out += f"""#block(breakable: false)[
+        
+#text(size: 12pt)[*{record["descrizione_bene"] if record["descrizione_bene"] else " "}*]
+
+#grid(
+columns: (14cm, 5cm),
+
+[
+Responsabile lab: *{record["responsabile_laboratorio"] if record["responsabile_laboratorio"] else " "}*
+
+Num inv: *{record["num_inventario"] if record["num_inventario"] else " "}*
+
+#grid(
+columns: (7cm, 7cm),
+
+[SIPI TO: *{record["codice_sipi_torino"] if record["codice_sipi_torino"] else "-"}*],
+[SIPI GRU: *{record["codice_sipi_grugliasco"] if record["codice_sipi_grugliasco"] else "-"}*],
+)
+
+{"DA MOVIMENTARE" if record["da_movimentare"] else "STRUMENTO/BENE DA NON MOVIMENTARE/DISMETTERE"}
+
+{"DA DISINVENTARIARE" if record["da_disinventariare"] else ""}
+
+{"TRASPORTO IN AUTONOMIA" if record["trasporto_in_autonomia"] else ""}
+
+{record["destinazione"]}
+
+],
+
+[
+
+#grid( columns: (2.5cm, 2.5cm),
+[
+#rect(
+  width: 2.3cm,
+  height: 2.3cm,
+  fill: {"green" if record["da_movimentare"] else "red"},
+  stroke: 0.4cm+white,
+)
+],
+[
+#image("{Path(temp_qr_path).name}", height: 2.5cm)
+]
+)
+]
+
+)
+
+#line(length: 100%)
+
+]
+
+    """
+
+    return out
+
+
+@app.route(APP_ROOT + "/etichetta", methods=["POST"])
+@app.route(APP_ROOT + "/etichetta/<int:record_id>", methods=["GET"])
+@check_login
+def etichetta(record_id: str = ""):
+    """
+    Stampa etichetta da incollare sul bene
+    require typst (https://github.com/typst/typst)
+    """
+
+    record_ids = request.form.getlist("record_ids")
+
+    if not record_ids:
+        record_list = [record_id]
+    else:
+        record_list = record_ids
+
+    typst_content = label(record_list)
+
     try:
-        font_size = 10
-        # Créer le PDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=font_size)
-        h = font_size * 0.7
-        pdf.multi_cell(
-            0,
-            h,
-            txt=f"{record_dict['descrizione_bene']}",
-            ln=True,
-            align="L",
-        )
-        pdf.cell(
-            200,
-            h,
-            txt=f"Responsabile laboratorio: {record_dict['responsabile_laboratorio']}",
-            ln=True,
-            align="L",
-        )
-        pdf.cell(
-            200,
-            h,
-            txt=f"Num. inv: {record_dict['num_inventario']}",
-            ln=True,
-            align="L",
-        )
-        pdf.cell(
-            200,
-            h,
-            txt=f"SIPI TORINO: {record_dict['codice_sipi_torino']}  SIPI GRUGLIASCO: {record_dict['codice_sipi_grugliasco']}",
-            ln=True,
-            align="L",
-        )
+        temp_typst_path = f"/tmp/label_{record_id}.typst"
+        with open(temp_typst_path, "w") as f_out:
+            f_out.write(typst_content)
 
-        if record_dict["da_movimentare"]:
-            pdf.cell(
-                200,
-                h,
-                txt="DA MOVIMENTARE",
-                ln=True,
-                align="L",
-            )
-        else:
-            pdf.cell(
-                200,
-                h,
-                txt="strumento/bene da non movimentare/dismettere",
-                ln=True,
-                align="L",
-            )
+        temp_pdf_path = f"/tmp/label_{record_id}.pdf"
+        os.system(f"typst compile {temp_typst_path} {temp_pdf_path}")
 
-        if record_dict["trasporto_in_autonomia"]:
-            pdf.cell(
-                200,
-                h,
-                txt="TRASPORTO IN AUTONOMIA",
-                ln=True,
-                align="L",
-            )
-        else:
-            pdf.cell(
-                200,
-                h,
-                txt=" ",
-                ln=True,
-                align="L",
-            )
-
-        if record_dict["da_disinventariare"]:
-            pdf.cell(
-                200,
-                h,
-                txt="DA DISINVENTARIARE",
-                ln=True,
-                align="L",
-            )
-        else:
-            pdf.cell(
-                200,
-                h,
-                txt=" ",
-                ln=True,
-                align="L",
-            )
-
-        if record_dict["da_movimentare"]:
-            pdf.set_fill_color(0, 255, 0)
-        else:
-            pdf.set_fill_color(255, 0, 0)
-        pdf.rect(130, 25, 30, 30, "F")
-
-        if record_dict["destinazione"]:
-            pdf.multi_cell(
-                200,
-                h,
-                txt=f"Destinazione: {record_dict['destinazione']}",
-                ln=True,
-                align="L",
-            )
-        if record_dict["note"]:
-            pdf.multi_cell(200, h, txt=f"Note: {record_dict['note']}", ln=True, align="L")
-
-        # pdf.cell(200, h, txt=f"TO-GRU id: {record_dict['id']}", ln=True, align="L")
-
-        # QR code image
-        pdf.image(temp_qr_path, x=160, y=20, w=38)
-
-        # Save PDF in memory buffer
-        pdf_buffer = BytesIO()
-        pdf.output(pdf_buffer)
-        pdf_buffer.seek(0)
-
-        # Retourner le fichier au navigateur
+        # send file to client
         return send_file(
-            pdf_buffer,
+            temp_pdf_path,
             mimetype="application/pdf",
             as_attachment=False,
-            download_name=f"document_{record_id}.pdf",
+            download_name=f"etichetta_{record_id}.pdf",
         )
 
     finally:
-        # Supprimer le fichier QR temporaire
-        if os.path.exists(temp_qr_path):
-            os.remove(temp_qr_path)
+        # Delete temp files
+        if os.path.exists(temp_typst_path):
+            os.remove(temp_typst_path)
+        pass
 
 
 @app.route(APP_ROOT + "/mappe", methods=["GET"])

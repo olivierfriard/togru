@@ -14,7 +14,6 @@
 
 <a class="button is-link" href="{{ url_for('search_sipi_torino') }}">Filtra per codice SIPI Torino</a>
 
-
 <br><br>
 
 <h1 class="title">Ricerca Inventario</h1>
@@ -71,22 +70,31 @@
 </div>
 {% endif %}
 
+
 <div class="control">
     <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
 </div>
 </div>
 </form>
 
-<hr />
+
 
 {% if records %}
+
+
+{# etichette mulitple #}
+<br>
+<form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
+<button class="button is-info" type="submit">Stampa etichette</button>
+</form>
+
+<hr />
 
 <div class="mb-5">
 <button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
 </div>
 
 <div id="form_modifica_multipla_wrapper" style="display: none;">
-
 
 <!-- Form per aggiornamento multiplo di un campo -->
 <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
@@ -123,7 +131,7 @@
 <div class="field-body">
 <div class="field">
 <div class="control">
-<input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore..." required />
+<input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore... SI/NO per i campi booleani" required />
 </div>
 </div>
 </div>
@@ -134,6 +142,10 @@
 </div>
 </form>
 </div><!-- per nascondere -->
+
+
+
+
 
 <div class="mb-5">
 <b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
@@ -165,6 +177,34 @@ document.getElementById('form_modifica_multipla').addEventListener('submit', fun
         alert('Seleziona almeno un record da aggiornare.');
     }
 });
+
+
+document.getElementById('form_etichette_multiple').addEventListener('submit', function(e) {
+    const selected = document.querySelectorAll('input[name="record_ids"]:checked');
+    if (selected.length === 0) {
+        e.preventDefault();
+        alert('Seleziona almeno un record.');
+    }
+
+
+const form = this;
+
+    // Remove any previously cloned checkboxes
+    form.querySelectorAll('input[name="record_ids"]').forEach(el => el.remove());
+
+    // Clone selected checkboxes into form_etichette_multiple
+    selected.forEach(function(checkbox) {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'record_ids';
+        hiddenInput.value = checkbox.value;
+        form.appendChild(hiddenInput);
+    });
+
+
+
+});
+
 
 </script>
 
