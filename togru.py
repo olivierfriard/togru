@@ -21,6 +21,7 @@ import os
 import qrcode
 from datetime import datetime
 from pathlib import Path
+import subprocess
 
 APP_ROOT = "/togru"
 
@@ -1074,6 +1075,13 @@ def delete_user(email: str):
         users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
 
         return render_template("aggiungi_user.html", users=users)
+
+
+@app.route(APP_ROOT + "/test")
+def test():
+    subprocess.run(["typst", "compile", "/tmp/1.typst"])
+
+    return "test"
 
 
 if __name__ == "__main__":
