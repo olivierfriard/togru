@@ -796,19 +796,7 @@ def delete_record(record_id, query_string: str = ""):
 @app.route(APP_ROOT + "/view_qrcode/<int:record_id>")
 def view_qrcode(record_id: int):
     with engine.connect() as conn:
-        sql = text(
-            (
-                "SELECT id, descrizione_bene, responsabile_laborato "
-                "num_inventario, num_inventario_ateneo, data_car "
-                "codice_sipi_torino, codice_sipi_grugliasco, destinazi "
-                "rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migr "
-                "denominazione_fornitore, anno_fabbricazione, numero_seri "
-                "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensi "
-                "ditta_costruttrice_fornitrice, n "
-                "FROM inventa "
-                "WHERE id = :id "
-            )
-        )
+        sql = text(("SELECT * FROM inventario WHERE id = :id "))
         result = conn.execute(sql, {"id": record_id}).fetchone()
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
