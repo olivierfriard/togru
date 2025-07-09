@@ -1006,7 +1006,9 @@ def etichetta(record_id: str = ""):
             f_out.write(typst_content)
 
         temp_pdf_path = f"/tmp/label_{record_id}.pdf"
-        os.system(f"typst compile {temp_typst_path} {temp_pdf_path}")
+
+        subprocess.run(["/usr/bin/typst", "compile", temp_typst_path, temp_pdf_path])
+        # os.system(f"typst compile {temp_typst_path} {temp_pdf_path}")
 
         # send file to client
         return send_file(
