@@ -1079,7 +1079,7 @@ def delete_user(email: str):
 
 @app.route(APP_ROOT + "/test")
 def test():
-    subprocess.run(["typst", "compile", "/tmp/1.typst"])
+    subprocess.run(["/usr/bin/typst", "compile", "/tmp/1.typst"])
 
     return "test"
 
