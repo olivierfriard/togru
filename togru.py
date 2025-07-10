@@ -447,12 +447,13 @@ def modifica_multipla():
             "da_movimentare",
             "trasporto_in_autonomia",
             "catena_del_freddo",
+            "didattica",
             "destinazione",
             "note",
         )
     ):
         # set boolean values
-        if campo in ("da_movimentare", "trasporto_in_autonomia", "catena_del_freddo"):
+        if campo in ("da_movimentare", "trasporto_in_autonomia", "catena_del_freddo", "didattica"):
             nuovo_valore = nuovo_valore.upper() == "SI"
 
         with engine.connect() as conn:
@@ -465,18 +466,6 @@ def modifica_multipla():
                 )
                 conn.execute(query, {"id": rid, "nuovo_valore": nuovo_valore})
                 conn.commit()
-
-                # check trasporto autonomia
-                """
-                if campo == "trasporto_in_autonomia" and nuovo_valore:
-                    conn.execute(
-                        text(
-                            "UPDATE inventario SET da_movimentare = True WHERE id = :id"
-                        ),
-                        {"id": rid},
-                    )
-                    conn.commit()
-                """
 
     return redirect(url_for("search") + "?" + query_string)
 
