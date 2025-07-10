@@ -1,3 +1,7 @@
+"""
+Servizio To-Gru (inventario per traslocco)
+"""
+
 from flask import (
     Flask,
     request,
@@ -64,6 +68,7 @@ BOOLEAN_FIELDS = [
     "trasporto_in_autonomia",
     "da_disinventariare",
     "rosso_fase_alimentazione_privilegiata",
+    "didattica",
 ]
 
 # Creazione tabella
@@ -81,6 +86,7 @@ with engine.connect() as conn:
             codice_sipi_grugliasco TEXT,
             destinazione TEXT,
             rosso_fase_alimentazione_privilegiata TEXT,
+            didattica boolean default false,
             valore_convenzionale TEXT,
             esercizio_bene_migrato TEXT,
             responsabile_laboratorio TEXT,
@@ -230,6 +236,7 @@ def view(record_id: int, query_string: str = ""):
                 "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                 "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
                 "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
+                "CASE WHEN didattica THEN 'SI' ELSE 'NO' END AS didattica,"
                 "valore_convenzionale,"
                 "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                 "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
@@ -279,7 +286,8 @@ def aggiungi():
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
                 microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
-                rosso_fase_alimentazione_privilegiata, valore_convenzionale, esercizio_bene_migrato,
+                rosso_fase_alimentazione_privilegiata, 
+                didattica, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note
@@ -287,7 +295,7 @@ def aggiungi():
                 :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
-                :rosso_fase_alimentazione_privilegiata, :valore_convenzionale, :esercizio_bene_migrato,
+                :rosso_fase_alimentazione_privilegiata, :didattica, :valore_convenzionale, :esercizio_bene_migrato,
                 :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
                 :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
                 :ditta_costruttrice_fornitrice, :note
@@ -323,6 +331,7 @@ def modifica(record_id, query_string: str = ""):
                     "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                     "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
                     "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
+                    "CASE WHEN didattica THEN 'SI' ELSE 'NO' END AS didattica,"
                     "valore_convenzionale,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
@@ -336,7 +345,7 @@ def modifica(record_id, query_string: str = ""):
         record = result.fetchone()
 
         responsabili = conn.execute(
-            text("SELECT DISTINCT responsabile_laboratorio FROM inventario where deleted IS NULL ORDER BY responsabile_laboratorio")
+            text("SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio")
         ).fetchall()
 
     return render_template(
@@ -380,6 +389,7 @@ def salva_modifiche(record_id):
             "    trasporto_in_autonomia = :trasporto_in_autonomia, "
             "    da_disinventariare = :da_disinventariare, "
             "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
+            "    didattica = :didattica, "
             "    valore_convenzionale = :valore_convenzionale, "
             # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
             "    denominazione_fornitore = :denominazione_fornitore, "
@@ -632,6 +642,7 @@ def search():
         "trasporto_in_autonomia",
         "da_disinventariare",
         "rosso_fase_alimentazione_privilegiata",
+        "didattica",
         # "valore_convenzionale",
         # "esercizio_bene_migrato",
         "denominazione_fornitore",
