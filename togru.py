@@ -885,6 +885,7 @@ def attivita_utente(email: str):
     return render_template("attivita_utente.html", attivita=attivita, email=email)
 
 
+"""
 def create_qrcode(record_id) -> str:
     # Create QR code
     qr_data = f"http://penelope.unito.it/togru/view_qrcode/{record_id}"
@@ -897,6 +898,7 @@ def create_qrcode(record_id) -> str:
     img_qr.save(temp_qr_path)
 
     return temp_qr_path
+"""
 
 
 def label(record_list: list) -> str:
@@ -910,7 +912,9 @@ def label(record_list: list) -> str:
         if not records:
             return f"Error in record list {', '.join(record_list)}", 404
 
-        label_header = """#set page(
+        label_header = """#import "@preview/cades:0.3.0": qr-code
+        
+#set page(
 margin: (top: 1cm, bottom: 1cm, x:1cm)
 )
 
@@ -923,7 +927,7 @@ margin: (top: 1cm, bottom: 1cm, x:1cm)
     out = label_header
 
     for record in records:
-        temp_qr_path = create_qrcode(record["id"])
+        """temp_qr_path = create_qrcode(record["id"])"""
 
         out += f"""#block(breakable: false)[
         
@@ -966,7 +970,7 @@ columns: (7cm, 7cm),
 )
 ],
 [
-#image("{Path(temp_qr_path).name}", height: 2.5cm)
+#qr-code("https://penelope.unito.it/togru/view_qrcode/{record["id"]}", width: 2.3cm)
 ]
 )
 ]
@@ -976,7 +980,6 @@ columns: (7cm, 7cm),
 #line(length: 100%)
 
 ]
-
     """
 
     return out
@@ -1008,7 +1011,6 @@ def etichetta(record_id: str = ""):
         temp_pdf_path = f"/tmp/label_{record_id}.pdf"
 
         subprocess.run(["/usr/bin/typst", "compile", temp_typst_path, temp_pdf_path])
-        # os.system(f"typst compile {temp_typst_path} {temp_pdf_path}")
 
         # send file to client
         return send_file(
@@ -1024,8 +1026,6 @@ def etichetta(record_id: str = ""):
             Path(temp_typst_path).unlink()
         if Path(temp_pdf_path).exists():
             Path(temp_pdf_path).unlink()
-        for file_path in Path("/tmp").glob("qrcode_*.png"):
-            file_path.unlink()
 
 
 @app.route(APP_ROOT + "/mappe", methods=["GET"])
