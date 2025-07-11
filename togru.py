@@ -266,6 +266,8 @@ def view(record_id: int, query_string: str = ""):
 
         record_dict = dict(result._mapping)
 
+        record_dict["note"] = Markup(record_dict["note"].replace("\r", "<br>"))
+
         # check for images
         img_list = [
             x.name for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
