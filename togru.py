@@ -13,7 +13,6 @@ from flask import (
     session,
 )
 
-# from fpdf import FPDF
 from functools import wraps
 from io import BytesIO
 from markupsafe import Markup
@@ -22,19 +21,19 @@ from sqlalchemy import create_engine, text
 import pandas as pd
 import json
 import os
-import qrcode
 from datetime import datetime
 from pathlib import Path
 import subprocess
+from werkzeug.utils import secure_filename
 
 APP_ROOT = "/togru"
 
 app = Flask(__name__, static_url_path="/togru/static")
 app.secret_key = "sldjhalsdasd2435"  # needed for flash messages
 
+
 DATABASE_URL = "postgresql://togru_user@localhost:5432/togru"
 engine = create_engine(DATABASE_URL)
-# SESSION_PERMANENT = False
 
 # Carico le credenziali dal JSON
 try:
@@ -55,6 +54,8 @@ try:
     # solo per DEV
     if "127.0.0.1" in redirect_uri:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    app.config["UPLOAD_FOLDER"] = "static/images"
+
 
 except Exception:
     raise
@@ -123,7 +124,9 @@ def check_admin(f):
             if "email" not in session:
                 return redirect(url_for("index"))
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"),
+                text(
+                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
+                ),
                 {"email": session["email"]},
             )
             if not result.fetchone()[0]:
@@ -148,8 +151,12 @@ def login():
 @app.route(APP_ROOT + "/callback")
 def callback():
     """Callback dopo il login Google"""
-    google = OAuth2Session(client_id, state=session["oauth_state"], redirect_uri=redirect_uri)
-    token = google.fetch_token(token_url, client_secret=client_secret, authorization_response=request.url)
+    google = OAuth2Session(
+        client_id, state=session["oauth_state"], redirect_uri=redirect_uri
+    )
+    token = google.fetch_token(
+        token_url, client_secret=client_secret, authorization_response=request.url
+    )
 
     session["oauth_token"] = token
 
@@ -191,13 +198,17 @@ def logout():
 @app.route(APP_ROOT + "/")
 def index():
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL"))
+        result = conn.execute(
+            text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL")
+        )
         n = result.fetchone()[0]
 
         admin = False
         if "email" in session:
             result = conn.execute(
-                text("SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"),
+                text(
+                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
+                ),
                 {"email": session["email"]},
             )
             if result.fetchone()[0]:
@@ -210,7 +221,11 @@ def index():
 @app.route(APP_ROOT + "/tutti")
 def tutti():
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "))
+        result = conn.execute(
+            text(
+                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "
+            )
+        )
         records = result.fetchall()
     return render_template("tutti_record.html", records=records, query_string="tutti")
 
@@ -249,9 +264,16 @@ def view(record_id: int, query_string: str = ""):
         if not result:
             return f"Bene con ID {record_id} non trovato", 404
 
-        record_dict = dict(result._mapping)  # ✅ questo funziona sicuro
+        record_dict = dict(result._mapping)
 
-    return render_template("view.html", record=record_dict, query_string=query_string)
+        # check for images
+        img_list = [
+            x.name for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
+        ]
+
+    return render_template(
+        "view.html", record=record_dict, query_string=query_string, img_list=img_list
+    )
 
 
 # Aggiungi record
@@ -264,10 +286,14 @@ def aggiungi():
     if request.method == "GET":
         with engine.connect() as conn:
             responsabili = conn.execute(
-                text("SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio")
+                text(
+                    "SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio"
+                )
             ).fetchall()
 
-        return render_template("aggiungi.html", responsabili=responsabili, boolean_fields=BOOLEAN_FIELDS)
+        return render_template(
+            "aggiungi.html", responsabili=responsabili, boolean_fields=BOOLEAN_FIELDS
+        )
 
     if request.method == "POST":
         data = dict(request.form)
@@ -300,11 +326,27 @@ def aggiungi():
                 :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
                 :ditta_costruttrice_fornitrice, :note
             )
+            RETURNING id
         """)
         with engine.connect() as conn:
-            conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
-            conn.execute(query, data)
+            conn.execute(
+                text("SET LOCAL application_name = :user"), {"user": session["email"]}
+            )
+            new_id = conn.execute(query, data).fetchone()[0]
             conn.commit()
+
+            #
+            foto = request.files.get("foto")
+            if foto and foto.filename != "":
+                # filename = secure_filename(foto.filename)
+                # (Path(app.config["UPLOAD_FOLDER"]).glob(f'{new_id}_*.*')
+                # if (Path(app.config["UPLOAD_FOLDER"]) / Path(str(new_id))).is_file():
+
+                foto.save(
+                    Path(app.config["UPLOAD_FOLDER"])
+                    / Path(str(new_id) + "_1").with_suffix(Path(foto.filename).suffix)
+                )
+
         return redirect(url_for("index"))
 
 
@@ -345,14 +387,22 @@ def modifica(record_id, query_string: str = ""):
         record = result.fetchone()
 
         responsabili = conn.execute(
-            text("SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio")
+            text(
+                "SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio"
+            )
         ).fetchall()
+
+        # check for images
+        img_list = [
+            x.name for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
+        ]
 
     return render_template(
         "modifica.html",
         record=record,
         query_string=query_string,
         responsabili=responsabili,
+        img_list=img_list,
         boolean_fields=BOOLEAN_FIELDS,
     )
 
@@ -405,9 +455,32 @@ def salva_modifiche(record_id):
         )
     )
     with engine.connect() as conn:
-        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
         conn.execute(query, {**data, "id": record_id})
         conn.commit()
+
+    foto = request.files.get("foto")
+    if foto and foto.filename != "":
+        # filename = secure_filename(foto.filename)
+        img_list = [
+            x.stem
+            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
+        ]
+        if not img_list:
+            foto.save(
+                Path(app.config["UPLOAD_FOLDER"])
+                / Path(str(record_id) + "_1").with_suffix(Path(foto.filename).suffix)
+            )
+        else:
+            img_id = max([int(x.split("_")[1]) for x in img_list]) + 1
+            foto.save(
+                Path(app.config["UPLOAD_FOLDER"])
+                / Path(str(record_id) + f"_{img_id}").with_suffix(
+                    Path(foto.filename).suffix
+                )
+            )
 
     query_string = request.form.get("query_string", "")
     if query_string == "tutti":
@@ -416,6 +489,28 @@ def salva_modifiche(record_id):
         return redirect(APP_ROOT + f"/search?{query_string}")
     else:
         return redirect(url_for("index"))
+
+
+@app.route(APP_ROOT + "/delete_foto/<img_id>")
+@check_login
+def delete_foto(img_id: str):
+    """
+    cancella foto
+    """
+    record_id = img_id.split("_")[0]
+    if (Path(app.config["UPLOAD_FOLDER"]) / img_id).exists():
+        (Path(app.config["UPLOAD_FOLDER"]) / img_id).unlink()
+        # record
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    f"INSERT INTO inventario_audit (operation_type, record_id, executed_by) VALUES ('DELETED FOTO {img_id}', :record_id, :executed_by)"
+                ),
+                {"record_id": record_id, "executed_by": session["email"]},
+            )
+            conn.commit()
+
+    return redirect(f"/togru/modifica/{record_id}")
 
 
 @app.route(APP_ROOT + "/modifica_multipla", methods=["POST"])
@@ -431,7 +526,9 @@ def modifica_multipla():
         "trasporto_in_autonomia",
     ) and nuovo_valore.upper() not in ("SI", "NO"):
         flash(
-            Markup(f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"),
+            Markup(
+                f"Il valore per il campo <b>{campo.replace('_', ' ')}</b> deve essere <b>SI</b> o <b>NO</b>"
+            ),
             "danger",
         )
         return redirect(url_for("search") + "?" + query_string)
@@ -453,12 +550,19 @@ def modifica_multipla():
         )
     ):
         # set boolean values
-        if campo in ("da_movimentare", "trasporto_in_autonomia", "catena_del_freddo", "didattica"):
+        if campo in (
+            "da_movimentare",
+            "trasporto_in_autonomia",
+            "catena_del_freddo",
+            "didattica",
+        ):
             nuovo_valore = nuovo_valore.upper() == "SI"
 
         with engine.connect() as conn:
             for rid in record_ids:
-                query = text(f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id")
+                query = text(
+                    f"UPDATE inventario SET {campo} = :nuovo_valore WHERE id = :id"
+                )
 
                 conn.execute(
                     text("SET LOCAL application_name = :user"),
@@ -548,7 +652,12 @@ def upload_excel():
             expected_cols = list(excel_to_db_fields.keys())
             missing_cols = [c for c in expected_cols if c not in df.columns]
             if missing_cols:
-                flash(Markup(f"Mancano colonne nel file Excel:<br><b> {'<br>'.join(missing_cols)}</b>"), "danger")
+                flash(
+                    Markup(
+                        f"Mancano colonne nel file Excel:<br><b> {'<br>'.join(missing_cols)}</b>"
+                    ),
+                    "danger",
+                )
                 return redirect(request.url)
 
             # rename columns
@@ -593,10 +702,15 @@ def upload_excel():
 
             if count_senza_responsabile > 0:
                 # Prepariamo una lista di stringhe tipo "num_inventario (descrizione_bene)"
-                dettagli = [f"{row['descrizione_bene']} (inv: {row['num_inventario']})" for _, row in senza_responsabile.iterrows()]
+                dettagli = [
+                    f"{row['descrizione_bene']} (inv: {row['num_inventario']})"
+                    for _, row in senza_responsabile.iterrows()
+                ]
                 inventari = "<br>".join(dettagli)
                 flash(
-                    Markup(f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"),
+                    Markup(
+                        f"<b>{count_senza_responsabile} beni senza responsabile di laboratorio</b>:<br>{inventari}"
+                    ),
                     "warning",
                 )
 
@@ -779,8 +893,12 @@ def delete_record(record_id, query_string: str = ""):
     delete record
     """
     with engine.connect() as conn:
-        conn.execute(text("SET LOCAL application_name = :user"), {"user": session["email"]})
-        sql = text("UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id")
+        conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
+        sql = text(
+            "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
+        )
         conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
         conn.commit()
 
@@ -809,7 +927,9 @@ def view_qrcode(record_id: int):
 @check_login
 def storico(record_id):
     with engine.connect() as conn:
-        sql = text("SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC")
+        sql = text(
+            "SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC"
+        )
         audits = conn.execute(sql, {"id": record_id}).fetchall()
 
     return render_template("storico.html", audits=audits, record_id=record_id)
@@ -1041,7 +1161,9 @@ def aggiungi_user():
     if request.method == "GET":
         with engine.connect() as conn:
             users = conn.execute(
-                text("SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email")
+                text(
+                    "SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email"
+                )
             ).fetchall()
 
         return render_template("aggiungi_user.html", users=users)
@@ -1062,12 +1184,16 @@ def aggiungi_user():
 def delete_user(email: str):
     with engine.connect() as conn:
         # check if email in DB
-        n_users = conn.execute(text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}).fetchone()[0]
+        n_users = conn.execute(
+            text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}
+        ).fetchone()[0]
         if not n_users:
             flash(f"Utente {email} non trovato", "danger")
 
             # users list
-            users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
+            users = conn.execute(
+                text("SELECT email FROM users ORDER by email")
+            ).fetchall()
 
             return render_template("aggiungi_user.html", users=users)
 

@@ -16,7 +16,7 @@
 
 <h2 class="title is-4">Aggiungi Nuovo Bene</h2>
 
-<form action="{{ url_for('aggiungi') }}" method="POST" onsubmit="return controllaSubmit();">
+<form action="{{ url_for('aggiungi') }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
 
 
 <!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
@@ -104,6 +104,14 @@
             <textarea class="textarea" name="note" placeholder="Note"></textarea>
         </div>
     </div>
+
+    <div class="field">
+        <label class="label">Carica fotografia</label>
+        <div class="control">
+            <input class="input" type="file" name="foto" accept="image/*">
+        </div>
+    </div>
+    
 
     <div class="field">
         <div class="control">

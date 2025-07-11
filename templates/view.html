@@ -51,6 +51,17 @@ id: {{ record.id }}<br><br>
 </tbody>
 </table>
 
+{% if img_list %}
+<h2 class="title">Documentazione fotografica</h2>
+{% for img in img_list %}
+
+<a href="/togru/static/images/{{ img }}"><img src="/togru/static/images/{{ img }}" width="200px"></a>
+
+{% endfor %}
+
+{% endif %}
+
+
 </div>
 </section>
 

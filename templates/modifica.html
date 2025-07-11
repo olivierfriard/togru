@@ -25,7 +25,7 @@
 <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
 
 
-<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST" onsubmit="return controllaSubmit();">
+<form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
 
 <input type="hidden" name="query_string" value="{{ query_string }}">
 
@@ -111,13 +111,40 @@
             </div>
 
             <div class="field">
+                <label class="label">Carica fotografia</label>
+                <div class="control">
+                    <input class="input" type="file" name="foto" accept="image/*">
+                </div>
+            </div>
+
+
+            <div class="field">
                 <div class="control">
                     <button class="button is-primary" type="submit">Salva modifiche</button>
                 </div>
             </div>
+        
+        
+        
         </form>
 
-    </div>
+{% if img_list %}
+<br><br>
+<h1 class="title is-5">Documentazione fotografica</h1>
+
+{% for img in img_list %}
+
+<a href="/togru/static/images/{{ img }}"><img src="/togru/static/images/{{ img }}" width="200px"></a>
+<a href="{{ url_for('delete_foto', img_id=img)}}" onclick="return confirm('Sei sicuro di voler cancellare questa foto?')"> ❌</a>
+<br><br>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+</div>
 </section>
 
 <script>
