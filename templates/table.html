@@ -55,7 +55,8 @@
 <td>{{ r.codice_sipi_torino }}</td>
 <td>{{ r.codice_sipi_grugliasco }}</td>
 <td>{{ r.destinazione }}</td>
-<td>{{ r.note }}</td>
+{# <td>{{ r.note }}</td> #}
+<td>{{ r.note.replace('\r', '<br>') | safe }}</td>
 <td>
 <a class="button is-small is-info" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
 <a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>

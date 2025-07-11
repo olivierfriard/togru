@@ -769,7 +769,7 @@ def search():
     if not has_filter:
         # Nessun filtro: non eseguire query, ritorna lista vuota o messaggio
         records = []
-        keys = fields  # se vuoi colonne vuote per tabella nel template
+        keys = fields
     else:
         query = "SELECT * FROM inventario WHERE deleted IS NULL "
         params = {}
