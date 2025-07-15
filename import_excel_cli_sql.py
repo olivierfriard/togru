@@ -16,7 +16,7 @@ excel_to_db_fields = {
     "Codice Sipi Torino": "codice_sipi_torino",
     "Codice Sipi Grugliasco": "codice_sipi_grugliasco",
     "Destinazione (colori legenda)": "destinazione",
-    "Rosso fase_alimentazione privilegiata": "rosso_fase_alimentazione_privilegiata",
+    #"Rosso fase_alimentazione privilegiata": "rosso_fase_alimentazione_privilegiata",
     "Valore convenzionale": "valore_convenzionale",
     "Esercizio bene migrato": "esercizio_bene_migrato",
     "Responsabile di Laboratorio": "responsabile_laboratorio",
