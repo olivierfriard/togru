@@ -37,10 +37,11 @@
             <div class="select">
             <select id="responsabile_select" name="responsabile_laboratorio" onchange="toggleAltro()">
                 <option value="">Seleziona un responsabile</option>
+                <option value="altro">Aggiungi un/a nuova/o responsabile</option>
                 {% for responsabile in responsabili %}
                 <option value="{{ responsabile.responsabile_laboratorio }}">{{ responsabile.responsabile_laboratorio }}</option>
                 {% endfor %}
-                <option value="altro">Altro...</option>
+                
             </select>
 
             </div>
@@ -49,9 +50,9 @@
 
 
 <div class="field" id="altro_responsabile_field" style="display: none;">
-    <label class="label">Nuovo responsabile</label>
+    <label class="label">Nuova/o responsabile</label>
     <div class="control">
-        <input class="input" type="text" id="nuovo_responsabile_input" name="nuovo_responsabile_laboratorio" placeholder="Inserisci nome responsabile">
+        <input class="input" type="text" id="nuovo_responsabile_input" name="nuovo_responsabile_laboratorio" placeholder="Inserisci 'COGNOME Nome' della nuova/del nuovo responsabile">
     </div>
 </div>
 
