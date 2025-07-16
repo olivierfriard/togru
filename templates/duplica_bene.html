@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Ricerca Inventario per responsabile</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+<body>
+<section class="section">
+<div class="container">
+
+<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+<br><br>
+
+<h1 class="title">Duplicazione bene</h1>
+<br>
+<div class="subtitle is-4">{{ record['descrizione_bene']}}</div>
+
+<div class="subtitle is-4">Responsabile: <b>{{ record['responsabile_laboratorio']}}</b></div><br>
+
+<form method="POST" action="{{ url_for('duplica', record_id=record_id, query_string=query_string) }}">
+  <div class="field">
+    <label class="label">Numero di copie da creare</label>
+    <div class="control">
+       <input class="input" type="number" name="numero_copie" min="1" max="50" step="1" placeholder="Inserisci un numero" value="1">
+      </div>
+    </div>
+
+  <div class="control">
+    <button type="submit" class="button is-link">Duplica bene</button>
+  </div>
+</form>
+
+
+</div>
+</section>
+</body>
+</html>

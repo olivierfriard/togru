@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulaire SIPI avec Miniature et Image Map</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+    }
+
+    .thumbnail {
+      width: 400px; /* Miniature */
+      border: 2px solid #ccc;
+      cursor: pointer;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .overlay img {
+      /*max-width: 95%;
+      max-height: 95%;*/
+      border: 3px solid #fff;
+    }
+
+    .overlay:target {
+      display: flex;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 30px;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Formulaire SIPI</h2>
+  
+  <form id="sipiForm">
+    <label for="sipi_gru">Code SIPI Grugliasco :</label>
+    <input type="text" id="sipi_gru" name="sipi_gru" readonly>
+
+    <label for="sipi_to">Code SIPI Torino :</label>
+    <input type="text" id="sipi_to" name="sipi_to" readonly>
+
+    <p>Cliquez sur une zone de l’image miniature :</p>
+
+    <!-- Miniature avec image map -->
+    <a href="#imgFull">
+      <img src="0.png" usemap="#sipiMap_gru" alt="Grugliasco P0 miniature" class="thumbnail">
+    </a>
+
+    <!-- Image Map -->
+    <map name="sipiMap_gru">
+      <area alt="2060" title="2060" href="javascript:void(0)" coords="1747,293,1679,172" shape="rect" onclick="setSIPI_gru('2060')">
+      <area alt="2061" title="2061" href="javascript:void(0)" coords="1761,168,1824,289" shape="rect" onclick="setSIPI_gru('2061')">
+      <area alt="2062" title="2062" href="javascript:void(0)" coords="1840,168,1914,291" shape="rect" onclick="setSIPI_gru('2062')">
+      <area alt="2063" title="2063" href="javascript:void(0)" coords="1928,170,1996,285" shape="rect" onclick="setSIPI_gru('2063')">
+      <area alt="2064" title="2064" href="javascript:void(0)" coords="2013,170,2084,287" shape="rect" onclick="setSIPI_gru('2064')">
+      <area alt="2065" title="2065" href="javascript:void(0)" coords="2097,166,2165,287" shape="rect" onclick="setSIPI_gru('2065')">
+      <area alt="2066" title="2066" href="javascript:void(0)" coords="2178,166,2238,293" shape="rect" onclick="setSIPI_gru('2066')">
+      <area alt="2067" title="2067" href="javascript:void(0)" coords="2255,170,2301,296" shape="rect" onclick="setSIPI_gru('2067')">
+      <area alt="2068" title="2068" href="javascript:void(0)" coords="2317,1230,2343,1314" shape="rect" onclick="setSIPI_gru('2068')">
+      <area alt="2080" title="2080" href="javascript:void(0)" coords="1677,349,1721,411" shape="rect" onclick="setSIPI_gru('2080')">
+      <area alt="2079" title="2079" href="javascript:void(0)" coords="1734,349,1819,404" shape="rect" onclick="setSIPI_gru('2079')">
+      <area alt="2078" title="2078" href="javascript:void(0)" coords="1833,349,1910,409" shape="rect" onclick="setSIPI_gru('2078')">
+      <area alt="2077" title="2077" href="javascript:void(0)" coords="1924,347,1981,409" shape="rect" onclick="setSIPI_gru('2077')">
+      <area alt="2076" title="2076" href="javascript:void(0)" coords="1996,347,2053,405" shape="rect" onclick="setSIPI_gru('2076')">
+      <area alt="2075" title="2075" href="javascript:void(0)" coords="2064,347,2122,411" shape="rect" onclick="setSIPI_gru('2075')">
+      <area alt="2074" title="2074" href="javascript:void(0)" coords="2135,347,2192,413" shape="rect" onclick="setSIPI_gru('2074')">
+      <area alt="2073" title="2073" href="javascript:void(0)" coords="2201,347,2254,413" shape="rect" onclick="setSIPI_gru('2073')">
+      <area alt="2072" title="2072" href="javascript:void(0)" coords="2269,354,2309,413" shape="rect" onclick="setSIPI_gru('2072')">
+      <area alt="2071" title="2071" href="javascript:void(0)" coords="2320,352,2392,411" shape="rect" onclick="setSIPI_gru('2071')">
+    </map>
+  </form>
+
+  <!-- Overlay con immagine a dimensione piena -->
+  <div id="imgFull" class="overlay">
+    <a href="#" class="close-btn">&times;</a>
+    <img src="0.png"  usemap="#sipiMap_gru" alt="Grugliasco P0 full size">
+  </div>
+
+  <script>
+    function setSIPI_gru(code) {
+      document.getElementById("sipi_gru").value = code;
+    }
+  </script>
+
+</body>
+</html>
