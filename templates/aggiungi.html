@@ -37,7 +37,7 @@
             <div class="select">
             <select id="responsabile_select" name="responsabile_laboratorio" onchange="toggleAltro()">
                 <option value="">Seleziona un responsabile</option>
-                <option value="altro">Aggiungi un/a nuova/o responsabile</option>
+                <option value="altro">Aggiungi un/a nuovo/a responsabile</option>
                 {% for responsabile in responsabili %}
                 <option value="{{ responsabile.responsabile_laboratorio }}">{{ responsabile.responsabile_laboratorio }}</option>
                 {% endfor %}
