@@ -88,7 +88,7 @@
 {# etichette multiple #}
 <br>
 <form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
-<a href="{{ url_for('aggiungi') }}" class="button is-info">Aggiungi bene</a>
+<a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
 <button class="button is-info" type="submit">Stampa etichette</button>
 </form>
 

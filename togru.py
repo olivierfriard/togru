@@ -262,8 +262,10 @@ def view(record_id: int, query_string: str = ""):
 
 # Aggiungi record
 @app.route(APP_ROOT + "/aggiungi", methods=["GET", "POST"])
+@app.route(APP_ROOT + "/aggiungi/", methods=["GET", "POST"])
+@app.route(APP_ROOT + "/aggiungi/<query_string>", methods=["GET", "POST"])
 @check_login
-def aggiungi():
+def aggiungi(query_string: str = ""):
     """
     aggiungi bene all'inventario
     """
@@ -273,7 +275,18 @@ def aggiungi():
                 text("SELECT DISTINCT responsabile_laboratorio FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio")
             ).fetchall()
 
-        return render_template("aggiungi.html", responsabili=responsabili, boolean_fields=BOOLEAN_FIELDS)
+        search_responsabile = "None"
+        if query_string:
+            search_responsabile = query_string.split("=")[1].replace("+", " ")
+            print(f"{search_responsabile=}")
+
+        return render_template(
+            "aggiungi.html",
+            responsabili=responsabili,
+            boolean_fields=BOOLEAN_FIELDS,
+            query_string=query_string,
+            search_responsabile=search_responsabile,
+        )
 
     if request.method == "POST":
         data = dict(request.form)
@@ -313,16 +326,15 @@ def aggiungi():
             new_id = conn.execute(query, data).fetchone()[0]
             conn.commit()
 
-            #
+            # foto
             foto = request.files.get("foto")
             if foto and foto.filename != "":
-                # filename = secure_filename(foto.filename)
-                # (Path(app.config["UPLOAD_FOLDER"]).glob(f'{new_id}_*.*')
-                # if (Path(app.config["UPLOAD_FOLDER"]) / Path(str(new_id))).is_file():
-
                 foto.save(Path(app.config["UPLOAD_FOLDER"]) / Path(str(new_id) + "_1").with_suffix(Path(foto.filename).suffix))
 
-        return redirect(url_for("index"))
+        if query_string:
+            return redirect(APP_ROOT + f"/search?{query_string}")
+        else:
+            return redirect(url_for("index"))
 
 
 # Modifica record - form

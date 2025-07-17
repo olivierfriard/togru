@@ -12,16 +12,15 @@
 
 <a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
-<a class="button is-link" href="{{ url_for('mappe') }}">Mappe</a>
+<a class="button is-link" href="{{ url_for('mappe') }}">Mappe con codici SIPI</a>
 
 <br><br>
 
 <h2 class="title is-4">Aggiungi Nuovo Bene</h2>
 
-<form action="{{ url_for('aggiungi') }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
+<form action="{{ url_for('aggiungi', query_string=query_string) }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
 
 
-<!-- Riga con Descrizione Bene e Responsabile Laboratorio -->
 <div class="columns">
     <div class="column is-half">
         <div class="field">
@@ -31,7 +30,7 @@
             </div>
         </div>
     </div>
- 
+
 <div class="column is-half">
 <div class="field">
         <label class="label">Responsabile laboratorio</label>
@@ -41,7 +40,7 @@
                 <option value="">Seleziona un responsabile</option>
                 <option value="altro">Aggiungi un/a nuovo/a responsabile</option>
                 {% for responsabile in responsabili %}
-                <option value="{{ responsabile.responsabile_laboratorio }}">{{ responsabile.responsabile_laboratorio }}</option>
+                <option value="{{ responsabile.responsabile_laboratorio }}" {% if responsabile.responsabile_laboratorio == search_responsabile %}SELECTED{% endif %}>{{ responsabile.responsabile_laboratorio }}</option>
                 {% endfor %}
             </select>
 
@@ -86,8 +85,8 @@
 
 <select class="input" name="{{ field }}">
 {% if field == 'da_movimentare' %}
-<option value="false">SI</option>
-<option value="true">NO</option>
+<option value="true">SI</option>
+<option value="false">NO</option>
 {% else %}
 <option value="false">NO</option>
 <option value="true">SI</option>
@@ -97,6 +96,15 @@
                             {% else %}
                             
                             <input class="input" type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').capitalize() }}">
+                            {% if field in ('codice_sipi_torino') %}
+                            <a class="button is-link is-small" href="/togru/static/mappe_torino.html">Mappe con codici SIPI</a>
+                            {% endif %}
+
+                            {% if field in ('codice_sipi_grugliasco') %}
+                            <a class="button is-link is-small" href="/togru/static/mappe_grugliasco.html">Mappe con codici SIPI</a>
+                            {% endif %}
+
+
                             {% endif %}
                         </div>
                     </div>

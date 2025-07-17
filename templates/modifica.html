@@ -95,6 +95,17 @@
 
                             {% else %}
                             <input class="input" type="text" name="{{ field }}" value="{{ record[field] }}">
+
+ {% if field in ('codice_sipi_torino') %}
+                            <a class="button is-link is-small" href="/togru/static/mappe_torino.html">Mappe con codici SIPI</a>
+                            {% endif %}
+
+                            {% if field in ('codice_sipi_grugliasco') %}
+                            <a class="button is-link is-small" href="/togru/static/mappe_grugliasco.html">Mappe con codici SIPI</a>
+                            {% endif %}
+
+
+
                             {% endif %}
 
                         </div>
