@@ -73,10 +73,12 @@
 
 
 <div class="control">
-    <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
+<a href="{{ url_for('search') }}" class="button is-light">Reset</a>
 </div>
 </div>
 </form>
+
+
 
 
 
@@ -86,6 +88,7 @@
 {# etichette multiple #}
 <br>
 <form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
+<a href="{{ url_for('aggiungi') }}" class="button is-info">Aggiungi bene</a>
 <button class="button is-info" type="submit">Stampa etichette</button>
 </form>
 

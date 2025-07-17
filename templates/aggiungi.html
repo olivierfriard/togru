@@ -54,7 +54,6 @@
         <input class="input" type="text" id="nuovo_responsabile_input" name="nuovo_responsabile_laboratorio" placeholder="Inserisci 'COGNOME Nome' della nuova/del nuovo responsabile">
     </div>
 </div>
-
 </div>
 
 </div><!--columns-->
@@ -84,8 +83,13 @@
                             {% if field in boolean_fields %}
 
 <select class="input" name="{{ field }}">
+{% if field == 'da_movimentare' %}
+<option value="false">SI</option>
+<option value="true">NO</option>
+{% else %}
 <option value="false">NO</option>
 <option value="true">SI</option>
+{% endif %}
 </select>
 
                             {% else %}
