@@ -1,0 +1,55 @@
+<!-- Header con Navbar -->
+<nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="{{ url_for('index') }}">
+        <h3 class="title is-3">TO-GRU</h3>
+    </a>
+
+    <!-- Burger per mobile -->
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNavbar">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div id="mainNavbar" class="navbar-menu">
+    <div class="navbar-start">
+      <a class="navbar-item" href="{{ url_for('aggiungi') }}">Aggiungi nuovo bene</a>
+      <a class="navbar-item" href="{{ url_for('search') }}">Cerca</a>
+
+
+      <!-- Dropdown -->
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">Filtra</a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="{{ url_for('search_resp') }}">per responsabile / referente</a>
+          <a class="navbar-item" href="{{ url_for('search_sipi_torino') }}" >per codici SIPI Torino</a>
+          <a class="navbar-item" href="{{ url_for('search_struttura') }}" >per struttura</a>
+          <!--<hr class="navbar-divider">
+          <a class="navbar-item">Supporto</a>-->
+        </div>
+      </div>
+
+      <a class="navbar-item" href="{{ url_for('mappe') }}">Planimetrie con codici SIPI</a>
+
+      <a class="navbar-item" href="{{ url_for('tutti') }}">Visualizza tutti beni</a><br>
+
+    </div>
+
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+            {% if session['email'] %}
+            {%if session['admin'] %}<a class="button  is-small is-danger" href="{{ url_for('aggiungi_user') }}">Admin</a>{%endif%}
+            <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a>
+
+            {% else %}
+          <a class="button button is-link" href="{{ url_for('login') }}">Accedi con Google Unito</a>
+
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
