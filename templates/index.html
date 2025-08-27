@@ -7,13 +7,9 @@
  <!--<link rel="stylesheet" href="/togru/static/style.css">-->
 </head>
 <body>
-    <section class="section">
-      {% include "menu.html" %}
-        <div class="container">
-
-
-
-
+<section class="section">
+{% include "menu.html" %}
+<div class="container">
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}

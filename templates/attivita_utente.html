@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8" />
-    <title>Storico modifiche utente</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
-    <style>
-        .removed { color: #b30000; }
-        .added   { color: #007700; }
-    </style>
+<meta charset="UTF-8" />
+<title>Storico modifiche utente</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+<style>
+    .removed { color: #b30000; }
+    .added   { color: #007700; }
+</style>
 </head>
 <body>
 <section class="section">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+{% include "menu.html" %}
+
 
 <br><br>
 
