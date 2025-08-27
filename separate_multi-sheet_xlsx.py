@@ -1,3 +1,9 @@
+"""
+extract all sheets from an XLSX file and save them in a directory
+
+All spaces in sheet name are replaced by underscroe (_)
+"""
+
 import openpyxl
 from openpyxl import Workbook
 import os
@@ -5,7 +11,7 @@ import sys
 
 # Nome del file di partenza
 file_input = sys.argv[1]
-output_folder = "single_sheets"
+output_folder = sys.argv[2]
 
 # Crea la cartella di output se non esiste
 if not os.path.exists(output_folder):
@@ -29,7 +35,7 @@ for sheet_name in wb.sheetnames:
             new_ws[cell.coordinate].value = cell.value
 
     # Salva il nuovo file
-    output_file = os.path.join(output_folder, f"{sheet_name}.xlsx")
+    output_file = os.path.join(output_folder, f"{sheet_name.replace(' ', '_')}.xlsx")
     new_wb.save(output_file)
 
 print(f"Salvati {len(wb.sheetnames)} file in '{output_folder}'")

@@ -1,5 +1,8 @@
 """
 Load content of an XLSX file and create SQL queries to load data into togru PostgreSQL DB
+
+Add numero strumenti value before "Descrizione bene"
+
 """
 
 import pandas as pd
@@ -13,13 +16,14 @@ excel_to_db_fields = {
     "Num inventario Ateneo": "num_inventario_ateneo",
     "Data carico": "data_carico",
     "Descrizione bene": "descrizione_bene",
+    "Numero strumenti": "numero_strumenti",
     "Codice Sipi Torino": "codice_sipi_torino",
     "Codice Sipi Grugliasco": "codice_sipi_grugliasco",
     "Destinazione (colori legenda)": "destinazione",
     # "Rosso fase_alimentazione privilegiata": "rosso_fase_alimentazione_privilegiata",
     "Valore convenzionale": "valore_convenzionale",
     "Esercizio bene migrato": "esercizio_bene_migrato",
-    "Responsabile di Laboratorio": "responsabile_laboratorio",
+    "Referente di Laboratorio": "responsabile_laboratorio",
     "Denominazione Fornitore": "denominazione_fornitore",
     "Anno fabbricazione": "anno_fabbricazione",
     "Numero seriale": "numero_seriale",
@@ -42,6 +46,7 @@ def upload_excel_generate_sql(file_path):
         df.columns = df.columns.str.strip()
         df.fillna("", inplace=True)
 
+        # convert all values in str
         for col in df.columns:
             df[col] = df[col].astype(str)
 
@@ -55,18 +60,25 @@ def upload_excel_generate_sql(file_path):
 
         # Controllo colonne mancanti
         expected_cols = list(excel_to_db_fields.values())
+
         missing_cols = [c for c in expected_cols if c not in df.columns]
+
         if missing_cols:
             print(f"❌ Mancano colonne nel file Excel: {missing_cols}", file=sys.stderr)
             return
 
         # Generazione stringhe SQL
+        db_columns = expected_cols[:]
+        db_columns.remove("numero_strumenti")
         for _, row in df.iterrows():
             values = []
-            for col in expected_cols:
+            for col in db_columns:
                 val = row[col].replace("'", "''")  # escape apici singoli
-                values.append(f"'{val}'")
-            sql = f"""INSERT INTO inventario (    {", ".join(expected_cols)}) VALUES (    {", ".join(values)});"""
+                if col == "descrizione_bene" and row["numero_strumenti"] != "1":
+                    values.append(f"'Numero {row['numero_strumenti']} {val}'")
+                else:
+                    values.append(f"'{val}'")
+            sql = f"""INSERT INTO inventario ( {", ".join(db_columns)}) VALUES (  {", ".join(values)});"""
             print(sql)
 
         print("✅ SQL generato con successo!", file=sys.stderr)
