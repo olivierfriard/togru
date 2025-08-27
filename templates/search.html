@@ -8,16 +8,13 @@
 <body>
 <section class="section">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+{% include "menu.html" %}
 
 
-<a class="button is-link" href="{{ url_for('search_resp') }}">Filtra per responsabile</a>
-
-<a class="button is-link" href="{{ url_for('search_sipi_torino') }}">Filtra per codice SIPI Torino</a>
 
 <br><br>
 
-<h1 class="title">Ricerca Inventario</h1>
+<h1 class="title is-4">Ricerca nell'inventario</h1>
 
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -159,7 +156,9 @@
 {% include "table.html" %}
 </div>
 {% else %}
-<p>Nessun risultato trovato.</p>
+<br><br>
+    <h1 class="title is-5">Nessun risultato trovato</h1>
+
 {% endif %}
 </section>
 

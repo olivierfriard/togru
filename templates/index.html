@@ -8,9 +8,11 @@
 </head>
 <body>
     <section class="section">
+      {% include "menu.html" %}
         <div class="container">
 
-        <h3 class="title is-3">TO-GRU</h3>
+
+
 
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -25,30 +27,7 @@
 
 {% if session['email'] %}
 <br>
-<h4 class="subtitle is-4">Ciao {{ session['name'] }} <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a>
-{%if admin %}<a class="button  is-small is-danger" href="{{ url_for('aggiungi_user') }}">Admin</a>{%endif%}
-</h4>
-
-<a class="button is-link" href="{{ url_for('tutti') }}">Visualizza tutti beni</a><br>
-<br>
-
-<a class="button is-link" href="{{ url_for('search') }}">Cerca</a>
-
-<a class="button is-link" href="{{ url_for('search_resp') }}">Filtra per responsabile</a>
-
-<a class="button is-link" href="{{ url_for('search_sipi_torino') }}">Filtra per codice SIPI Torino</a>
-
-<a class="button is-link" href="{{ url_for('search_struttura') }}">Filtra per struttura</a>
-
-<br><br>
-
-
-<a class="button is-link" href="{{ url_for('aggiungi') }}">Aggiungi nuovo bene</a>
-
-{#<a class="button is-link" href="{{ url_for('upload_excel') }}">Carica file Excel</a>#}
-<br><br>
-
-<a class="button is-link" href="{{ url_for('mappe') }}">Planimetrie con codici SIPI</a>
+<h4 class="subtitle is-4">Ciao {{ session['name'] }}</h4>
 
 <br><br>
 
@@ -61,8 +40,7 @@
 
 <p class="subtitle is-5">Numero totale beni: <b>{{ n_records }}</b></p>
 
-{% else %}
-<a class="button button is-link" href="{{ url_for('login') }}">Accedi con Google Unito</a>
+
 {% endif %}
 
 </div>

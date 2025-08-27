@@ -8,9 +8,9 @@
 </head>
 <body>
   <section class="section">
+    {% include "menu.html" %}
     <div class="container">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
 <br><br>
 
@@ -26,7 +26,7 @@
 {% endwith %}
 
 
-<h1 class="title">Abilita un nuovo utente</h1>
+<h1 class="title is-4">Abilita un nuovo utente</h1>
 
 <form action="{{ url_for('aggiungi_user') }}" method="POST">
 <div class="field">
@@ -47,7 +47,7 @@
 </form>
 
 <br><br>
-<h2 class="title">Utenti abilitati</h2>
+<h2 class="title is-4">Utenti abilitati</h2>
 
 {%for user in users%}
 {{ user.name }} <a href="{{ url_for('delete_user', email=user.email)}}" onclick="return confirm('Sei sicuro di voler cancellare questo utente?')"> ❌</a><br>

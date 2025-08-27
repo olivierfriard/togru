@@ -7,15 +7,31 @@
 </head>
 <body>
 <section class="section">
-<div class="container">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+
+
+  {% include "menu.html" %}
+
+  <div class="container">
+
+
 
 <br><br>
 
-<h1 class="title">Filtra per struttura</h1>
+<h1 class="title is-4">Filtra per struttura</h1>
 
 
+<div class='content'>
+<ul>
+  <li><a href="/togru/search?codice_sipi_torino=014_">Via dell'Accademia Albertina 13</a></li>
+  <li><a href="/togru/search?codice_sipi_torino=034_">Ortobotanico - Viale Mattioli</a></li>
+  <li><a href="/togru/search?codice_sipi_torino=050_">Centro della innovazione - via Quarello</a></li>
+  <li><a href="/togru/search?codice_sipi_torino=009_">Palazzo Campana</a></li>
+</ul>
+</div>
+
+
+{#
 <form method="get" action="/togru/search">
   <div class="field">
     <label class="label">Struttura</label>
@@ -36,7 +52,7 @@
     <button type="submit" class="button is-link">Filtra</button>
   </div>
 </form>
-
+#}
 
 </div>
 </section>

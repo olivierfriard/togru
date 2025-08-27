@@ -7,9 +7,10 @@
 </head>
 <body>
 <section class="section">
-    <div class="container">
+{% include "menu.html" %}
+<div class="container">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+<br><br>
 
 <form method="post" action="{{ url_for('delete_record', record_id=record.id, query_string='view') }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
 <button class="button is-danger" type="submit">Elimina</button>

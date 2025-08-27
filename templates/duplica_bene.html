@@ -7,13 +7,12 @@
 </head>
 <body>
 <section class="section">
+  {% include "menu.html" %}
 <div class="container">
-
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
 
 <br><br>
 
-<h1 class="title">Duplicazione bene</h1>
+<h1 class="title is-4">Duplicazione bene</h1>
 <br>
 <div class="subtitle is-4">{{ record['descrizione_bene']}}</div>
 

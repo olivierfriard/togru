@@ -12,11 +12,11 @@
 <body>
 <section class="section">
 
-<a class="button is-link" href="{{ url_for('index') }}">Home</a>
+  {% include "menu.html" %}
 
 <br><br>
 
-<h1 class="title">Attività utenti</u></h1>
+<h1 class="title is-4">Attività utenti</u></h1>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
