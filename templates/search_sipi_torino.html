@@ -16,12 +16,11 @@
 
 <h1 class="title is-4">Filtra per codice SIPI Torino</h1>
 
-<div class='content'>
+<div class="content">
 <ul>
+<li><a href="/togru/search?codice_sipi_torino=SENZA">SENZA</a></li>
 
-  <li><a href="/togru/search?codice_sipi_torino=SENZA">SENZA</a></li>
-
-  {% for r in sipi_list %}
+{% for r in sipi_list %}
 <li><a href="/togru/search?codice_sipi_torino={{r.codice_sipi_torino}}">{{ r.codice_sipi_torino }}</a></li>
 {% endfor %}
 </ul>

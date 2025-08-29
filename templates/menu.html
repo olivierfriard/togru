@@ -41,7 +41,11 @@
       <div class="navbar-item">
         <div class="buttons">
             {% if session['email'] %}
-            {%if session['admin'] %}<a class="button  is-small is-danger" href="{{ url_for('aggiungi_user') }}">Admin</a>{%endif%}
+
+            {%if session['email'] == 'olivier.friard@unito.it' %}<a class="button  is-small" href="{{ url_for('attivita_utenti') }}">Attività</a>{%endif%}
+
+            {%if session['admin'] %}<a class="button is-small is-danger" href="{{ url_for('aggiungi_user') }}">Admin</a>{%endif%}
+
             <a class="button is-small is-link" href="{{ url_for('logout') }}">Logout</a>
 
             {% else %}
