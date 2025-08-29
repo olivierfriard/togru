@@ -18,14 +18,19 @@
 <h1 class="title is-4">Filtra per Responsabile Laboratorio</h1>
 
 
+<div class="content">
 <ul>
 
-  {% for r in resp %}
-  <li><a href="/togru/search?responsabile_laboratorio={{ r.responsabile_laboratorio }}">{{ r.responsabile_laboratorio }}</a></li>
-  {% endfor %}
+<li><a href="/togru/search?responsabile_laboratorio=SENZA">Senza responsabile</a></li>
+<br>
 
+{% for r in resp %}
+<li><a href="/togru/search?responsabile_laboratorio={{ r.responsabile_laboratorio }}">{{ r.responsabile_laboratorio }}</a></li>
+{% endfor %}
 </ul>
+</div>
 
+{#
 <form method="get" action="/togru/search">
   <div class="field">
     <label class="label">Responsabile Laboratorio</label>
@@ -45,7 +50,7 @@
     <button type="submit" class="button is-link">Filtra</button>
   </div>
 </form>
-
+#}
 
 </div>
 </section>
