@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>To-Gru</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
- <!--<link rel="stylesheet" href="/togru/static/style.css">-->
 </head>
 <body>
 <section class="section">
@@ -25,19 +24,50 @@
 <br>
 <h4 class="subtitle is-4">Ciao {{ session['name'] }}</h4>
 
-<br><br>
 
+
+
+
+
+<div class="block">
+<p class="subtitle is-5">Numero totale dei beni inseriti nel database: <b>{{ n_records }}</b></p>
+<p class="subtitle is-5">Numero totale dei beni senza responsabile: <a href="{{ url_for("search", responsabile_laboratorio='SENZA')}}"><b>{{ n_beni_senza_responsabile }}</b></a></p>
+</div>
+
+<div class="block">
 <a class="button is-link" href="https://pad.cisti.org/p/dbios_togru">Spazio di discussione</a>
+</div>
 
+<div class="block">
+Storico del servizio
+<pre>
 
+2025-09-26: risolto problema di visualizzazione per responsabili contenenti il carattere slash (/) 
 
+2025-09-15: aggiunto id TOGRU alle etichette (come identificatore univoco)
 
-<br><br>
+2025-07-16: aggiunto possibilità di creare copie di un bene
 
-<p class="subtitle is-5">Numero totale beni: <b>{{ n_records }}</b></p>
+2025-07-11: aggiunto possibilità di aggiungere una o più fotografie
+
+2025-07-10: aggiunte mappe Grugliasco
+
+2025-07-09: aggiunta opzione per stampa di etichette multiple
+
+2025-07-08: aggiunta funzione per filtrare per struttura
+                aggiunta Modifica multipla per "Catena del freddo"
+
+2025-06-09: aggiunto una sezione mappe (con codici SIPI)
+
+</pre>
+</div>
+  
 
 
 {% endif %}
+
+
+
 
 </div>
 </section>

@@ -224,12 +224,20 @@ def logout():
 @app.route(APP_ROOT + "/")
 def index():
     with engine.connect() as conn:
-        result = conn.execute(
+        n_beni = conn.execute(
             text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL")
-        )
-        n = result.fetchone()[0]
+        ).scalar()
+        n_beni_senza_responsabile = conn.execute(
+            text(
+                "SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
+            )
+        ).scalar()
 
-    return render_template("index.html", n_records=n)
+    return render_template(
+        "index.html",
+        n_records=n_beni,
+        n_beni_senza_responsabile=n_beni_senza_responsabile,
+    )
 
 
 # Visualizza record
@@ -1347,12 +1355,22 @@ def delete_user(email: str):
         return render_template("aggiungi_user.html", users=users)
 
 
+@app.route(APP_ROOT + "/version")
+def version():
+    """
+    display version of service
+    """
+
+    return f"(c) Olivier Friard 2025<br>v. {__version__}"
+
+
+"""
 @app.route(APP_ROOT + "/test")
 def test():
     subprocess.run(["/usr/bin/typst", "compile", "/tmp/1.typst"])
 
     return "test"
-
+"""
 
 if __name__ == "__main__":
     app.run(debug=True)
