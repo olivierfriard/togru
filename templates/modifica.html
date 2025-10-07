@@ -187,11 +187,13 @@ function controllaSubmit() {
     const nuovoResponsabile = document.getElementById('nuovo_responsabile_input').value.trim();
 
     // Se nessun responsabile selezionato
+    /*
     if (select.value === '') {
       event.preventDefault();
       alert("Seleziona un responsabile laboratorio.");
       return false;
     }
+      */
 
     // Se selezionato 'altro' ma campo vuoto
     if (select.value === 'altro' && nuovoResponsabile === '') {
