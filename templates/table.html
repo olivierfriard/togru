@@ -28,7 +28,7 @@
 <tr>
 <th><input type="checkbox" id="select_all" /></th>
 {% for field in columns %}
-{% if field not in ['da_movimentare', 'catena_del_freddo', 'trasporto_in_autonomia', 'microscopia', 'alta_specialistica', 'peso_numeric'] %}
+{% if field not in ['da_movimentare', 'catena_del_freddo', 'trasporto_in_autonomia', 'microscopia', 'alta_specialistica', 'peso_numeric', 'dimensioni_ok'] %}
 <th>{{ field.replace('_', ' ') }}</th>
 {% if field in ['Responsabile Laboratorio / Ufficio', 'ID'] %}<th></th>{%endif%}
 {% endif %}
