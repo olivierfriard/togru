@@ -27,9 +27,11 @@
 <thead>
 <tr>
 <th><input type="checkbox" id="select_all" /></th>
-<th>ID</th>
-{% for field in [ 'descrizione_bene', 'responsabile_laboratorio', '','codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'note'] %}
-<th>{{ field.replace('_', ' ').capitalize() }}</th>
+{% for field in columns %}
+{% if field not in ['da_movimentare', 'catena_del_freddo', 'trasporto_in_autonomia', 'microscopia', 'alta_specialistica', 'peso_numeric'] %}
+<th>{{ field.replace('_', ' ') }}</th>
+{% if field in ['Responsabile Laboratorio / Ufficio', 'ID'] %}<th></th>{%endif%}
+{% endif %}
 {% endfor %}
 <th>Azioni</th>
 </tr>
@@ -37,10 +39,15 @@
 <tbody>
 {% for r in records %}
 <tr>
-<td><input type="checkbox" name="record_ids" value="{{ r.id }}" form="form_modifica_multipla"></td>
-<td>{{ r.id }}</td>
-<td>{{ r.descrizione_bene }}</td>
-<td>{{ r.responsabile_laboratorio }}</td>
+<td><input type="checkbox" name="record_ids" value="{{ r['ID'] }}" form="form_modifica_multipla"></td>
+<td> {{ r['ID'] }}</td>
+<td>{% if not r.peso_numeric or not r.dimensioni_ok %}
+  <span class="emoji" title="Verificare il peso e/o le dimensioni">⚠️</span>
+  
+  {%endif%}</td>
+<td>{{ r['Quantità'] }}</td>
+<td>{{ r['Descrizione bene'] }}</td>
+<td>{{ r['Responsabile Laboratorio / Ufficio'] }}</td>
 <td>{% if r.da_movimentare is true %}
 <span class="emoji" title="Da movimentare">🟩</span>
 {% elif r.da_movimentare is false %}
@@ -52,24 +59,24 @@
 {% if r.alta_specialistica is true %}<span class="emoji" title="Alta specialistica">⚙️</span>{% endif %}
 </td>
 </td>
-<td>{{ r.codice_sipi_torino }}</td>
-<td>{{ r.codice_sipi_grugliasco }}</td>
-<td>{{ r.destinazione }}</td>
-{# <td>{{ r.note }}</td> #}
-<td>{{ r.note.replace('\r', '<br>') | safe }}</td>
+<td>{{ r['Codice SIPI Torino'] }}</td>
+<td>{{ r['Codice SIPI Grugliasco'] }}</td>
+<td>{{ r.Destinazione }}</td>
+{# <td>{{ r['Note'] }}</td> #}
+<td>{{ r['Note'].replace('\r', '<br>') | safe }}</td>
 <td>
-<a class="button is-small is-info" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
-<a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
-<a class="button is-small is-warning" href="{{ url_for('duplica', record_id=r.id, query_string=query_string) }}">Duplica</a>
-<form method="post" action="{{ url_for('delete_record', record_id=r.id, query_string=query_string) }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
+<a class="button is-small is-info" href="{{ url_for('view', record_id=r['ID'], query_string=query_string) }}">dettagli</a>
+<a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r['ID'], query_string=query_string) }}">Modifica</a>
+<a class="button is-small is-warning" href="{{ url_for('duplica', record_id=r['ID'], query_string=query_string) }}">Duplica</a>
+<form method="post" action="{{ url_for('delete_record', record_id=r['ID'], query_string=query_string) }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
 <button class="button is-small is-danger" type="submit">Elimina</button>
 </form>
 
-<a class="button is-small" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
+<a class="button is-small" href="{{ url_for('etichetta', record_id=r['ID']) }}">Etichetta</a>
 
 </td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
-</div>
+</div>{# table-container #}

@@ -20,7 +20,20 @@
 <form action="{{ url_for('aggiungi', query_string=query_string) }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
 
 
+
+
 <div class="columns">
+
+    <div class="column is-one-quarter">
+        <div class="field">
+            <label class="label">Quantità</label>
+            <div class="control">
+                <input class="input" type="number" name="quantita"  required value="1">
+            </div>
+        </div>
+    </div>
+
+
     <div class="column is-half">
         <div class="field">
             <label class="label">Descrizione bene</label>
@@ -77,7 +90,14 @@
                 ] %}
                 <div class="column is-one-quarter">
                     <div class="field">
-                        <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }} {% if 'data' in field %}(DD/MM/AAAA){%endif%}</label>
+                        <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }} {% if 'data' in field %}(DD/MM/AAAA){%endif%}
+
+                            {% if field == 'peso' %} (in Kg senza unità){% endif %}
+                            {% if field == 'dimensioni' %} (in cm rispettando Lxlxh){% endif %}
+                            
+
+
+                        </label>
                         <div class="control">
 
                             {% if field in boolean_fields %}

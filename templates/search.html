@@ -62,11 +62,7 @@
     <button class="button is-primary" type="submit">Cerca</button>
 </div>
 
-{% if records %}
-<div class="control">
-    <button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
-</div>
-{% endif %}
+
 
 
 <div class="control">
@@ -78,15 +74,27 @@
 
 
 
-
 {% if records %}
-
 
 {# etichette multiple #}
 <br>
 <form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
-<a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
-<button class="button is-info" type="submit">Stampa etichette</button>
+
+
+
+
+<div class="control">
+    <a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
+    {% if records %}
+    <button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
+    <button class="button is-info" type="submit">Stampa etichette</button>
+    <!--<a href="" class="button is-info" type="submit">Check</a>-->
+    {% endif %}
+</div>
+
+
+
+
 </form>
 
 <hr />
@@ -152,9 +160,9 @@
 <div class="mb-5">
 <b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
 </div>
-<div class="table-container">
+
 {% include "table.html" %}
-</div>
+
 {% else %}
 <br><br>
     <h1 class="title is-5">Nessun risultato trovato</h1>
