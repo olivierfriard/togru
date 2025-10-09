@@ -24,7 +24,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 import subprocess
-from werkzeug.utils import secure_filename
+# from werkzeug.utils import secure_filename
 
 __version__ = "2025-09-26 09:46"
 
@@ -243,14 +243,35 @@ def index():
 # Visualizza record
 @app.route(APP_ROOT + "/tutti")
 def tutti():
+    """
+    visualizza tutti i beni dell'inventario
+    """
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "SELECT * FROM inventario WHERE deleted IS NULL ORDER BY responsabile_laboratorio, descrizione_bene "
+                'SELECT id AS "ID", '
+                'quantita as "Quantità", '
+                'descrizione_bene AS "Descrizione bene", '
+                'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
+                "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
+                'codice_sipi_torino AS "Codice SIPI Torino", '
+                'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
+                'destinazione AS "Destinazione", '
+                'note AS "Note", '
+                "(peso = '' OR peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_numeric, "
+                "(dimensioni = '' OR dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_ok "
+                "FROM inventario WHERE deleted IS NULL "
+                "ORDER BY responsabile_laboratorio, descrizione_bene, id "
             )
         )
         records = result.fetchall()
-    return render_template("tutti_record.html", records=records, query_string="tutti")
+
+    return render_template(
+        "tutti_record.html",
+        records=records,
+        query_string="tutti",
+        columns=result.keys(),
+    )
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
@@ -264,11 +285,14 @@ def view(record_id: int, query_string: str = ""):
     with engine.connect() as conn:
         sql = text(
             (
-                "SELECT id, descrizione_bene, responsabile_laboratorio, "
-                "num_inventario, num_inventario_ateneo, data_carico,"
-                "codice_sipi_torino, codice_sipi_grugliasco, destinazione,"
+                """SELECT id AS "ID", descrizione_bene AS "Descrizione bene", """
+                """quantita AS "Quantità", """
+                """responsabile_laboratorio AS "Responsabile del laboratorio/ufficio", """
+                """num_inventario AS "Numero di inventario", num_inventario_ateneo, data_carico,"""
+                """codice_sipi_torino AS "Codice SIPI Torino", codice_sipi_grugliasco AS "Codice SIPI Grugliasco", """
+                "destinazione AS Destinazione,"
                 "CASE WHEN microscopia THEN 'SI' ELSE 'NO' END AS microscopia,"
-                "CASE WHEN catena_del_freddo THEN 'SI' ELSE 'NO' END AS catena_del_freddo,"
+                """CASE WHEN catena_del_freddo THEN 'SI' ELSE 'NO' END AS "Rispettare la catena del freddo","""
                 "CASE WHEN alta_specialistica THEN 'SI' ELSE 'NO' END AS alta_specialistica,                    "
                 "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
                 "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
@@ -345,6 +369,7 @@ def aggiungi(query_string: str = ""):
 
         query = text("""
             INSERT INTO inventario (
+            quantita,
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
                 microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
@@ -354,7 +379,7 @@ def aggiungi(query_string: str = ""):
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note
             ) VALUES (
-                :num_inventario, :num_inventario_ateneo, :data_carico,
+                :quantita, :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
                 :rosso_fase_alimentazione_privilegiata, :didattica, :valore_convenzionale, :esercizio_bene_migrato,
@@ -398,7 +423,7 @@ def modifica(record_id, query_string: str = ""):
         result = conn.execute(
             text(
                 (
-                    "SELECT id, descrizione_bene, responsabile_laboratorio, "
+                    "SELECT id, quantita, descrizione_bene, responsabile_laboratorio, "
                     "num_inventario, num_inventario_ateneo, data_carico,"
                     "codice_sipi_torino, codice_sipi_grugliasco, destinazione,"
                     "CASE WHEN microscopia THEN 'SI' ELSE 'NO' END AS microscopia,"
@@ -459,6 +484,7 @@ def salva_modifiche(record_id):
     query = text(
         (
             "UPDATE inventario SET "
+            "    quantita = :quantita, "
             "    descrizione_bene = :descrizione_bene, "
             "    responsabile_laboratorio = :responsabile_laboratorio, "
             "    num_inventario = :num_inventario, "
@@ -909,7 +935,20 @@ def search():
         records = []
         keys = fields
     else:
-        query = "SELECT * FROM inventario WHERE deleted IS NULL "
+        query = (
+            'SELECT id AS "ID", '
+            'quantita as "Quantità", '
+            'descrizione_bene AS "Descrizione bene", '
+            'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
+            "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
+            'codice_sipi_torino AS "Codice SIPI Torino", '
+            'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
+            'destinazione AS "Destinazione", '
+            'note AS "Note", '
+            "(peso = '' OR peso ~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_numeric, "
+            "(dimensioni = '' OR dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_ok "
+            "FROM inventario WHERE deleted IS NULL "
+        )
         params = {}
 
         for field in fields:
@@ -979,6 +1018,7 @@ def search():
         fields=fields,
         query_string=query_string,
         boolean_fields=BOOLEAN_FIELDS,
+        columns=keys,
     )
 
 

@@ -46,55 +46,10 @@
     }
 </style>
 
-<div class="table-container">
-<table class="table is-striped is-fullwidth is-hoverable">
-<thead>
-<tr>
-    <th>ID</th>
-    {% for field in [ 'descrizione_bene', 'responsabile_laboratorio',  '', 'codice_sipi_torino', 'codice_sipi_grugliasco','destinazione', 'note'] %}
-    <th>{{ field.replace('_', ' ').capitalize() }}</th>
-    {% endfor %}
-    <th>Azioni</th>
-</tr>
-</thead>
-<tbody>
-{% for r in records %}
-<tr>
-<td>{{ r.id }}</td>
-<td>{{ r.descrizione_bene }}</td>
-<td>{{ r.responsabile_laboratorio }}</td>
 
-<td>{% if r.da_movimentare is true %}
-<span class="emoji" title="Da movimentare">🟩</span>
-{% elif r.da_movimentare is false %}
-<span class="emoji" title="Strumento/bene da non movimentare/dismettere">🟥</span>
-{% endif %}
-{% if r.catena_del_freddo is true %}<span class="emoji" title="Rispettare la catena del freddo">❄️</span>{% endif %}
-{% if r.trasporto_in_autonomia is true %}<span class="emoji" title="Trasporto in autonomia">🚗</span>{% endif %}
-{% if r.microscopia is true %}<span class="emoji" title="Microscopia">🔬</span>{% endif %}
-{% if r.alta_specialistica is true %}<span class="emoji" title="Alta specialistica">⚙️</span>{% endif %}
-</td>  
-<td>{{ r.codice_sipi_torino }}</td>
-<td>{{ r.codice_sipi_grugliasco }}</td>
-<td>{{ r.destinazione }}</td>
-<td>{{ r.note }}</td>
-<td>
-<a class="button is-small is-info" href="{{ url_for('view', record_id=r.id, query_string=query_string) }}">dettagli</a>
-<a class="button is-small is-warning" href="{{ url_for('modifica', record_id=r.id, query_string=query_string) }}">Modifica</a>
+  {% include "table.html" %}
 
 
-<form method="post" action="{{ url_for('delete_record', record_id=r.id, query_string='view') }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
-<button class="button is-small is-danger" type="submit">Elimina</button>
-</form>
-
-<a class="button is-small" href="{{ url_for('etichetta', record_id=r.id) }}">Etichetta</a>
-
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div><!-- table-container -->
 
 </section>
 

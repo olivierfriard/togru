@@ -32,6 +32,16 @@
 
 <div class="columns">
 
+    <div class="column is-one-quarter">
+        <div class="field">
+            <label class="label">Quantità</label>
+            <div class="control">
+                <input class="input" type="number" name="quantita" value="{{ record['quantita'] }}" required>
+            </div>
+        </div>
+    </div>
+    
+
 <div class="column is-half">
     <div class="field">
         <label class="label">Descrizione bene</label>
@@ -84,7 +94,11 @@
                 ] %}
                 <div class="column is-one-quarter">
                     <div class="field">
-                        <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}</label>
+                        <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}
+{% if field == 'peso' %} (in Kg senza unità per un elemento){% endif %}
+{% if field == 'dimensioni' %} (in cm per un elemento<br>formato Lxlxh){% endif %}
+
+                        </label>
                         <div class="control">
 
                             {% if field in boolean_fields %}
@@ -173,11 +187,13 @@ function controllaSubmit() {
     const nuovoResponsabile = document.getElementById('nuovo_responsabile_input').value.trim();
 
     // Se nessun responsabile selezionato
+    /*
     if (select.value === '') {
       event.preventDefault();
       alert("Seleziona un responsabile laboratorio.");
       return false;
     }
+      */
 
     // Se selezionato 'altro' ma campo vuoto
     if (select.value === 'altro' && nuovoResponsabile === '') {
