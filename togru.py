@@ -258,8 +258,8 @@ def tutti():
                 'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
                 'destinazione AS "Destinazione", '
                 'note AS "Note", '
-                "(peso = '' OR peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_numeric, "
-                "(dimensioni = '' OR dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_ok "
+                "(da_movimentare = true AND trasporto_in_autonomia = false AND peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_numeric, " # 
+                "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_ok "
                 "FROM inventario WHERE deleted IS NULL "
                 "ORDER BY responsabile_laboratorio, descrizione_bene, id "
             )
