@@ -92,8 +92,8 @@
                     <div class="field">
                         <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }} {% if 'data' in field %}(DD/MM/AAAA){%endif%}
 
-                            {% if field == 'peso' %} (in Kg senza unità per un elemento){% endif %}
-                            {% if field == 'dimensioni' %} (in cm per un elemento<br>formato Lxlxh){% endif %}
+                            {% if field == 'peso' %} <small>(in Kg senza unità per un elemento)</small>{% endif %}
+                            {% if field == 'dimensioni' %} <small>(in cm arrotondati<br>per un elemento<br>formato Lxlxh)</small>{% endif %}
                             
 
 

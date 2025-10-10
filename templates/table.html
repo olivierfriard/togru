@@ -28,7 +28,7 @@
 <tr>
 <th><input type="checkbox" id="select_all" /></th>
 {% for field in columns %}
-{% if field not in ['da_movimentare', 'catena_del_freddo', 'trasporto_in_autonomia', 'microscopia', 'alta_specialistica', 'peso_numeric', 'dimensioni_ok'] %}
+{% if field not in ['da_movimentare', 'catena_del_freddo', 'trasporto_in_autonomia', 'microscopia', 'alta_specialistica', 'peso_non_conforme', 'dimensioni_non_conforme'] %}
 <th>{{ field.replace('_', ' ') }}</th>
 {% if field in ['Responsabile Laboratorio / Ufficio', 'ID'] %}<th></th>{%endif%}
 {% endif %}
@@ -41,8 +41,15 @@
 <tr>
 <td><input type="checkbox" name="record_ids" value="{{ r['ID'] }}" form="form_modifica_multipla"></td>
 <td> {{ r['ID'] }}</td>
-<td>{% if not r.peso_numeric or not r.dimensioni_ok %}
-  <span class="emoji" title="Verificare il peso e/o le dimensioni">⚠️</span>
+<td>{% if r.peso_non_conforme or r.dimensioni_non_conforme %}
+
+{% if r.peso_non_conforme and not r.dimensioni_non_conforme %}
+<span class="emoji" title="Verificare il peso (deve essere espresso in Kg senza unità e avere il punto come separatore decimale)">⚠️</span>
+{% elif r.dimensioni_non_conforme and not r.peso_non_conforme %}
+<span class="emoji" title="Verificare le dimensioni (LxlxH in centimetri arrotondati)">⚠️</span>
+{%else%}
+<span class="emoji" title="Verificare il peso e le dimensioni">⚠️</span>
+{%endif%}
   
   {%endif%}</td>
 <td>{{ r['Quantità'] }}</td>
