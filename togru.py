@@ -999,6 +999,8 @@ def search():
     # Se viene richiesta esportazione Excel e ci sono risultati
     if request.args.get("export", "").lower() == "xlsx" and records:
         df = pd.DataFrame(records, columns=keys)
+        df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
+        df = df.replace({True: "SI", False: "NO"})
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             df.to_excel(writer, index=False, sheet_name="Risultati")
