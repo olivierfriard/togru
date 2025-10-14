@@ -1022,7 +1022,7 @@ def search():
         # numero beni da fare movimentare con peso e/o dimensioni non conformi
         sql_non_conforme = text(query_non_conforme)
         with engine.connect() as conn:
-            n_beni_non_conformi = conn.execute(sql_non_conforme, params).scalar()
+            n_beni_non_conformi: int = conn.execute(sql_non_conforme, params).scalar()
 
         sql = text(query)
         with engine.connect() as conn:
@@ -1065,14 +1065,30 @@ def search_resp():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio from inventario WHERE responsabile_laboratorio != '') ORDER by LOWER(responsabile_laboratorio)"
+                (
+                    # "( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio FROM inventario WHERE responsabile_laboratorio != '') "
+                    # "ORDER by LOWER(responsabile_laboratorio)"
+                    "SELECT "
+                    "   responsabile_laboratorio, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND da_movimentare = TRUE "
+                    "          AND trasporto_in_autonomia = FALSE "
+                    "          AND ( "
+                    "              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario "
+                    "WHERE responsabile_laboratorio <> '' "
+                    "GROUP BY responsabile_laboratorio "
+                    "ORDER BY responsabile_laboratorio "
+                )
             )
         )
-        resp = result.fetchall()
-
     return render_template(
         "search_responsabile.html",
-        resp=resp,
+        resp=result.fetchall(),
     )
 
 
