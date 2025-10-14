@@ -946,7 +946,7 @@ def search():
         records = []
         keys = fields
     else:
-        query = (
+        query: str = (
             'SELECT id AS "ID", '
             'quantita as "Quantità", '
             'descrizione_bene AS "Descrizione bene", '
@@ -960,7 +960,13 @@ def search():
             "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
             "FROM inventario WHERE deleted IS NULL "
         )
-        params = {}
+        params: dict[str, str] = {}
+
+        query_non_conforme: str = (
+            "SELECT count(*) FROM inventario WHERE deleted IS NULL "
+            r"AND ((da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') "
+            r"OR (da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')) "
+        )
 
         for field in fields:
             if field in BOOLEAN_FIELDS:
@@ -968,6 +974,7 @@ def search():
                     continue
                 value = request.args.get(field, "") == "true"
                 query += f" AND {field} IS {value}"
+                query_non_conforme += f" AND {field} IS {value}"
             else:
                 value = request.args.get(field, "").strip()
                 if value:
@@ -975,6 +982,9 @@ def search():
                     if field == "responsabile_laboratorio":
                         if value == "SENZA":
                             query += f" AND ({field} = '' OR {field} IS NULL)"
+                            query_non_conforme += (
+                                f" AND ({field} = '' OR {field} IS NULL)"
+                            )
                             continue
                         if "," in value:
                             subquery = ""
@@ -983,23 +993,36 @@ def search():
                                     subquery += " OR "
                                 subquery += f"{field} ILIKE '%{resp}%' "
                             query += f" AND ({subquery})"
+                            query_non_conforme += f" AND ({subquery})"
                             continue
 
                     if value == "SENZA":
                         # add senza Codice SIPI Torino
                         if field == "codice_sipi_torino":
                             query += f" AND ({field} = '' OR {field} IS NULL)"
+                            query_non_conforme += (
+                                f" AND ({field} = '' OR {field} IS NULL)"
+                            )
                             continue
                         # add senza Codice SIPI Grugliasco
                         if field == "codice_sipi_grugliasco":
                             query += f" AND ({field} = '' OR {field} IS NULL)"
+                            query_non_conforme += (
+                                f" AND ({field} = '' OR {field} IS NULL)"
+                            )
                             continue
 
                     # Per testo, ricerca con ILIKE e wildcard %
                     query += f" AND {field} ILIKE :{field}"
+                    query_non_conforme += f" AND {field} ILIKE :{field}"
                     params[field] = f"%{value}%"
 
         query += " ORDER BY descrizione_bene ASC"
+
+        # numero beni da fare movimentare con peso e/o dimensioni non conformi
+        sql_non_conforme = text(query_non_conforme)
+        with engine.connect() as conn:
+            n_beni_non_conformi = conn.execute(sql_non_conforme, params).scalar()
 
         sql = text(query)
         with engine.connect() as conn:
@@ -1032,6 +1055,7 @@ def search():
         query_string=query_string,
         boolean_fields=BOOLEAN_FIELDS,
         columns=keys,
+        n_beni_non_conformi=n_beni_non_conformi,
     )
 
 
@@ -1081,18 +1105,20 @@ def search_struttura():
 @app.route(APP_ROOT + "/delete/<int:record_id>/", methods=["POST"])
 @app.route(APP_ROOT + "/delete/<int:record_id>/<path:query_string>", methods=["POST"])
 @check_login
-def delete_record(record_id, query_string: str = ""):
+def delete_record(record_id: int, query_string: str = ""):
     """
     delete record
     """
     with engine.connect() as conn:
-        conn.execute(
+        _ = conn.execute(
             text("SET LOCAL application_name = :user"), {"user": session["email"]}
         )
         sql = text(
             "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
         )
-        conn.execute(sql, {"deleted_time": datetime.utcnow(), "record_id": record_id})
+        _ = conn.execute(
+            sql, {"deleted_time": datetime.utcnow(), "record_id": record_id}
+        )
         conn.commit()
 
     flash(f"Record {record_id} eliminato", "success")
@@ -1118,7 +1144,7 @@ def view_qrcode(record_id: int):
 
 @app.route(APP_ROOT + "/storico/<int:record_id>", methods=["GET"])
 @check_login
-def storico(record_id):
+def storico(record_id: int):
     with engine.connect() as conn:
         sql = text(
             "SELECT * FROM inventario_audit WHERE record_id = :id ORDER BY executed_at DESC"

@@ -44,9 +44,9 @@
 
 
 {% else %}
-    <input class="input is-small" 
+    <input class="input is-small"
                 type="text"
-                name="{{ field }}" 
+                name="{{ field }}"
                 value="{{ request_args.get(field, '') }}"
                 placeholder="Cerca {{ field.replace('_', ' ') }}" >
 {% endif %}
@@ -86,7 +86,7 @@
 <div class="control">
     <a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
     {% if records %}
-  
+
     <button class="button is-info" type="submit">Stampa etichette</button>
     {% endif %}
 </div>
@@ -156,6 +156,14 @@
 <div class="mb-5">
 <b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
 </div>
+
+
+{% if n_beni_non_conformi %}
+<div class="notification is-warning">
+⚠️ <b>{{ n_beni_non_conformi }}</b> beni da fare movimentare con peso e/o dimensioni non conformi
+</div>
+{% endif %}
+
 
 {% include "table.html" %}
 
