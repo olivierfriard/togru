@@ -78,7 +78,7 @@ BOOLEAN_FIELDS = [
 
 # Creazione tabella
 with engine.connect() as conn:
-    conn.execute(
+    _ = conn.execute(
         text("""
         CREATE TABLE IF NOT EXISTS inventario (
             id SERIAL PRIMARY KEY,
@@ -131,18 +131,6 @@ def check_admin(f):
                 return f(*args, **kwargs)
             else:
                 return redirect(url_for("index"))
-            """
-            result = conn.execute(
-                text(
-                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
-                ),
-                {"email": session["email"]},
-            )
-            if not result.fetchone()[0]:
-                return redirect(url_for("index"))
-            else:
-                return f(*args, **kwargs)
-            """
 
     return decorated_function
 
@@ -396,7 +384,7 @@ def aggiungi(query_string: str = ""):
                  num_inventario, num_inventario_ateneo, data_carico,
                 descrizione_bene, codice_sipi_torino, codice_sipi_grugliasco, destinazione,
                 microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
-                rosso_fase_alimentazione_privilegiata, 
+                rosso_fase_alimentazione_privilegiata,
                 didattica, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
@@ -968,7 +956,7 @@ def search():
             'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
             'destinazione AS "Destinazione", '
             'note AS "Note", '
-            "(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
+            r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
             "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
             "FROM inventario WHERE deleted IS NULL "
         )
@@ -1333,15 +1321,11 @@ def etichetta(record_id: str = ""):
 
     typst_content = label(record_list)
     if "Error in record list" in typst_content:
-        flash(f"Un errore è avvenuto", "danger")
+        flash("Un errore è avvenuto", "danger")
         return redirect(request.referrer)
 
-<<<<<<< HEAD
-    temp_typst_path: str="" 
-    temp_pdf_path: str="" 
-=======
     if len(record_list) > 50:
-        flash(f"Troppi beni selezionati per la stampa (<50)", "danger")
+        flash("Troppi beni selezionati per la stampa (<50)", "danger")
         return redirect(request.referrer)
 
     if not record_id:
@@ -1349,15 +1333,17 @@ def etichetta(record_id: str = ""):
 
     temp_typst_path: str = ""
     temp_pdf_path: str = ""
->>>>>>> 5615d76ee1bab0a0089e92e24863d7d92da69a41
+
     try:
         temp_typst_path = f"/tmp/label_{record_id}.typst"
         with open(temp_typst_path, "w") as f_out:
-            f_out.write(typst_content)
+            _ = f_out.write(typst_content)
 
         temp_pdf_path = f"/tmp/label_{record_id}.pdf"
 
-        subprocess.run(["/usr/bin/typst", "compile", temp_typst_path, temp_pdf_path])
+        _ = subprocess.run(
+            ["/usr/bin/typst", "compile", temp_typst_path, temp_pdf_path]
+        )
 
         # send file to client
         return send_file(
@@ -1381,7 +1367,7 @@ def mappe():
     return render_template("mappe.html")
 
 
-@app.route(APP_ROOT + "/aggiungi_user", methods=["GET", "POST"])
+@app.route(f"{APP_ROOT}/aggiungi_user", methods=["GET", "POST"])
 @check_login
 @check_admin
 def aggiungi_user():
@@ -1399,7 +1385,7 @@ def aggiungi_user():
         email = request.form.get("email")
         with engine.connect() as conn:
             sql = text("INSERT INTO users (email, admin) VALUES (:email, :admin)")
-            conn.execute(sql, {"email": email, "admin": False})
+            _ = conn.execute(sql, {"email": email, "admin": False})
             conn.commit()
         flash("Utente aggiunto", "success")
         return render_template("aggiungi_user.html")
@@ -1413,7 +1399,7 @@ def delete_user(email: str):
         # check if email in DB
         n_users = conn.execute(
             text("SELECT COUNT(*) FROM users WHERE email = :email"), {"email": email}
-        ).fetchone()[0]
+        ).scalar()
         if not n_users:
             flash(f"Utente {email} non trovato", "danger")
 
@@ -1425,7 +1411,9 @@ def delete_user(email: str):
             return render_template("aggiungi_user.html", users=users)
 
         # delete user
-        conn.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
+        _ = conn.execute(
+            text("DELETE FROM users WHERE email = :email"), {"email": email}
+        )
         conn.commit()
         flash(f"Utente {email} cancellato", "success")
 
