@@ -24,6 +24,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 import subprocess
+import uuid
+from typing import LiteralString, Literal
 # from werkzeug.utils import secure_filename
 
 __version__ = "2025-09-26 09:46"
@@ -242,36 +244,57 @@ def index():
 
 # Visualizza record
 @app.route(APP_ROOT + "/tutti")
-def tutti():
+@app.route(APP_ROOT + "/tutti/<mode>")
+def tutti(mode: str = ""):
     """
     visualizza tutti i beni dell'inventario
     """
     with engine.connect() as conn:
-        result = conn.execute(
+        results = conn.execute(
             text(
-                'SELECT id AS "ID", '
-                'quantita as "Quantità", '
-                'descrizione_bene AS "Descrizione bene", '
-                'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
-                "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
-                'codice_sipi_torino AS "Codice SIPI Torino", '
-                'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
-                'destinazione AS "Destinazione", '
-                'note AS "Note", '
-                "(da_movimentare = true AND trasporto_in_autonomia = false AND peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_numeric, " # 
-                "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_ok "
-                "FROM inventario WHERE deleted IS NULL "
-                "ORDER BY responsabile_laboratorio, descrizione_bene, id "
+                (
+                    'SELECT id AS "ID", '
+                    'quantita as "Quantità", '
+                    'descrizione_bene AS "Descrizione bene", '
+                    'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
+                    "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
+                    'codice_sipi_torino AS "Codice SIPI Torino", '
+                    'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
+                    'destinazione AS "Destinazione", '
+                    'note AS "Note", '
+                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                    "FROM inventario WHERE deleted IS NULL "
+                    "ORDER BY responsabile_laboratorio, descrizione_bene, id "
+                )
             )
         )
-        records = result.fetchall()
+        records = results.fetchall()
 
-    return render_template(
-        "tutti_record.html",
-        records=records,
-        query_string="tutti",
-        columns=result.keys(),
-    )
+        columns = results.keys()
+
+    if mode == "spreadsheet":
+        df = pd.DataFrame(records, columns=columns)
+        df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
+        df = df.replace({True: "SI", False: "NO"})
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Risultati")
+        output.seek(0)
+
+        return send_file(
+            output,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="togru_tutti_beni.xlsx",
+        )
+    else:
+        return render_template(
+            "tutti_record.html",
+            records=records,
+            query_string="tutti",
+            columns=columns,
+        )
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
@@ -999,6 +1022,8 @@ def search():
     # Se viene richiesta esportazione Excel e ci sono risultati
     if request.args.get("export", "").lower() == "xlsx" and records:
         df = pd.DataFrame(records, columns=keys)
+        df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
+        df = df.replace({True: "SI", False: "NO"})
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             df.to_excel(writer, index=False, sheet_name="Risultati")
@@ -1195,7 +1220,7 @@ def label(record_list: list) -> str:
         sql = text(f"SELECT * FROM inventario WHERE id in ({ids})")
         records = conn.execute(sql).mappings().all()
         if not records:
-            return f"Error in record list {', '.join(record_list)}", 404
+            return f"Error in record list {', '.join(record_list)}"
 
         label_header = (
             '#import "@preview/cades:0.3.0": qr-code\n'
@@ -1307,9 +1332,24 @@ def etichetta(record_id: str = ""):
         record_list = record_ids
 
     typst_content = label(record_list)
+    if "Error in record list" in typst_content:
+        flash(f"Un errore è avvenuto", "danger")
+        return redirect(request.referrer)
 
+<<<<<<< HEAD
     temp_typst_path: str="" 
     temp_pdf_path: str="" 
+=======
+    if len(record_list) > 50:
+        flash(f"Troppi beni selezionati per la stampa (<50)", "danger")
+        return redirect(request.referrer)
+
+    if not record_id:
+        record_id = str(uuid.uuid4())
+
+    temp_typst_path: str = ""
+    temp_pdf_path: str = ""
+>>>>>>> 5615d76ee1bab0a0089e92e24863d7d92da69a41
     try:
         temp_typst_path = f"/tmp/label_{record_id}.typst"
         with open(temp_typst_path, "w") as f_out:

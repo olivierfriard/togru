@@ -23,6 +23,8 @@
 
 <p class="subtitle is-5 mt-5">Numero totale beni: <b>{{ records|length }}</b></p>
 
+<a href="{{ url_for('tutti', mode='spreadsheet') }}" class="button  is-primary">Esporta in XLSX</a>
+
 <style>
 .table-container {
   max-height: 80vh; /* oppure 100vh meno eventuali header/footer */
@@ -46,10 +48,7 @@
     }
 </style>
 
-
-  {% include "table.html" %}
-
-
+{% include "table.html" %}
 
 </section>
 

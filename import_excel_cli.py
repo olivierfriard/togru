@@ -95,7 +95,9 @@ def upload_excel(file_path, user_email="cli_uploader"):
         print("✅ File caricato e dati inseriti con successo!")
 
         if not senza_responsabile.empty:
-            print(f"⚠️ {len(senza_responsabile)} beni senza responsabile di laboratorio:")
+            print(
+                f"⚠️ {len(senza_responsabile)} beni senza responsabile di laboratorio:"
+            )
             for _, row in senza_responsabile.iterrows():
                 print(f"- {row['descrizione_bene']} (inv: {row['num_inventario']})")
 
