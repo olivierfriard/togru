@@ -1308,6 +1308,8 @@ def etichetta(record_id: str = ""):
 
     typst_content = label(record_list)
 
+    temp_typst_path: str="" 
+    temp_pdf_path: str="" 
     try:
         temp_typst_path = f"/tmp/label_{record_id}.typst"
         with open(temp_typst_path, "w") as f_out:
