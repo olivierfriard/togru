@@ -936,6 +936,8 @@ def search():
         "note",
     ]
 
+    n_beni_non_conformi: int=0
+
     query_string = request.query_string.decode("utf-8")
 
     # Controlla se almeno un parametro di ricerca è presente e non vuoto
