@@ -34,33 +34,11 @@
                                 >{{ r.responsabile_laboratorio }}</a
                             >
 
-                            {# {% if r.invalid_items_count %} ⚠️ {% endif %} #}
+                            {% if r.invalid_items_count %} ⚠️ {% endif %}
                         </li>
                         {% endfor %}
                     </ul>
                 </div>
-
-                {#<!--
-<form method="get" action="/togru/search">
-  <div class="field">
-    <label class="label">Responsabile Laboratorio</label>
-    <div class="control">
-      <div class="select">
-        <select name="responsabile_laboratorio"  onchange="this.form.submit()">
-          <option value="SENZA">Senza responsabile</option>
-          {% for r in resp %}
-          <option value="{{ r.responsabile_laboratorio }}">{{ r.responsabile_laboratorio }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <div class="control">
-    <button type="submit" class="button is-link">Filtra</button>
-  </div>
-</form>
--->#}
             </div>
         </section>
     </body>

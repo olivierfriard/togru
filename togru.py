@@ -936,7 +936,7 @@ def search():
         "note",
     ]
 
-    n_beni_non_conformi: int=0
+    n_beni_non_conformi: int = 0
 
     query_string = request.query_string.decode("utf-8")
 
@@ -1068,8 +1068,6 @@ def search_resp():
         result = conn.execute(
             text(
                 (
-                    # "( SELECT DISTINCT ON (LOWER(responsabile_laboratorio)) responsabile_laboratorio FROM inventario WHERE responsabile_laboratorio != '') "
-                    # "ORDER by LOWER(responsabile_laboratorio)"
                     "SELECT "
                     "   responsabile_laboratorio, "
                     "    COUNT(*) FILTER ( "
@@ -1077,7 +1075,7 @@ def search_resp():
                     "          AND da_movimentare = TRUE "
                     "          AND trasporto_in_autonomia = FALSE "
                     "          AND ( "
-                    "              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
                     "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
                     "          ) "
                     "    ) AS invalid_items_count "
@@ -1094,20 +1092,36 @@ def search_resp():
     )
 
 
+# book2
 @app.route(APP_ROOT + "/search_sipi_torino")
 @check_login
 def search_sipi_torino():
     with engine.connect() as conn:
         result = conn.execute(
             text(
-                "( SELECT DISTINCT codice_sipi_torino FROM inventario WHERE codice_sipi_torino != '' AND deleted IS NULL) ORDER BY codice_sipi_torino"
+                (
+                    "SELECT codice_sipi_torino, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND da_movimentare = TRUE "
+                    "          AND trasporto_in_autonomia = FALSE "
+                    "          AND ( "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario "
+                    "WHERE codice_sipi_torino != '' "
+                    "AND deleted IS NULL "
+                    "GROUP BY codice_sipi_torino "
+                    "ORDER BY codice_sipi_torino "
+                )
             )
         )
-        sipi_list = result.fetchall()
 
     return render_template(
         "search_sipi_torino.html",
-        sipi_list=sipi_list,
+        sipi_list=result.fetchall(),
     )
 
 
