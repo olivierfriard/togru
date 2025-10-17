@@ -62,6 +62,7 @@
                     <tbody>
                         {% for key, value in record.items() if key not in
                         ('peso_non_conforme', 'dimensioni_non_conforme') %}
+
                         <tr>
                             <th>{{ key.replace('_', ' ') }}</th>
                             <td>
@@ -75,7 +76,11 @@
                                     href="/togru/search?codice_sipi_torino={{ value }}"
                                     >{{ value }}</a
                                 >
-                                {% else %} {{ value }} {% endif %}
+                                {% else %} {% if key == 'peso' and
+                                record.peso_non_conforme%}⚠️{% endif %} {% if
+                                key == 'dimensioni' and
+                                record.dimensioni_non_conforme%}⚠️{% endif %} {{
+                                value}} {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
