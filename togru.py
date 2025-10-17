@@ -252,6 +252,113 @@ def callback():
     return redirect(url_for("index"))
 
 
+# Modifica record - form
+@app.route(f"{APP_ROOT}/duplica/<int:record_id>", methods=["GET", "POST"])
+@app.route(APP_ROOT + "/duplica/<int:record_id>/", methods=["GET", "POST"])
+@app.route(
+    APP_ROOT + "/duplica/<int:record_id>/<path:query_string>", methods=["GET", "POST"]
+)
+@check_login
+def duplica(record_id: int, query_string: str = ""):
+    """
+    duplica un bene
+    """
+    if request.method == "GET":
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(
+                    (
+                        "SELECT id, descrizione_bene, responsabile_laboratorio FROM inventario WHERE id = :id"
+                    )
+                ),
+                {"id": record_id},
+            )
+            record = result.fetchone()
+
+        return render_template(
+            "duplica_bene.html",
+            record_id=record_id,
+            record=record,
+            query_string=query_string,
+        )
+
+    if request.method == "POST":
+        copy_number = int(request.form.get("numero_copie"))
+        with engine.connect() as conn:
+            for i in range(1, copy_number + 1):
+                sql = text(
+                    (
+                        "INSERT INTO inventario ( "
+                        "  num_inventario, "
+                        "  num_inventario_ateneo, "
+                        "  data_carico, "
+                        "  descrizione_bene, "
+                        "  codice_sipi_torino, "
+                        "  codice_sipi_grugliasco, "
+                        "  destinazione, "
+                        "  rosso_fase_alimentazione_privilegiata, "
+                        "  valore_convenzionale, "
+                        "  esercizio_bene_migrato, "
+                        "  responsabile_laboratorio, "
+                        "  denominazione_fornitore, "
+                        "  anno_fabbricazione, "
+                        "  numero_seriale, "
+                        "  categoria_inventoriale, "
+                        "  catalogazione_materiale_strumentazione, "
+                        "  peso, "
+                        "  dimensioni, "
+                        "  ditta_costruttrice_fornitrice, "
+                        "  note, "
+                        "  deleted, "
+                        "  microscopia, "
+                        "  catena_del_freddo, "
+                        "  alta_specialistica, "
+                        "  da_movimentare, "
+                        "  trasporto_in_autonomia, "
+                        "  da_disinventariare, "
+                        "  didattica "
+                        ") "
+                        "SELECT "
+                        "  num_inventario, "
+                        "  num_inventario_ateneo, "
+                        "  data_carico, "
+                        f"  CONCAT(descrizione_bene, ' #', {i + 1}) , "
+                        "  codice_sipi_torino, "
+                        "  codice_sipi_grugliasco, "
+                        "  destinazione, "
+                        "  rosso_fase_alimentazione_privilegiata, "
+                        "  valore_convenzionale, "
+                        "  esercizio_bene_migrato, "
+                        "  responsabile_laboratorio, "
+                        "  denominazione_fornitore, "
+                        "  anno_fabbricazione, "
+                        "  numero_seriale, "
+                        "  categoria_inventoriale, "
+                        "  catalogazione_materiale_strumentazione, "
+                        "  peso, "
+                        "  dimensioni, "
+                        "  ditta_costruttrice_fornitrice, "
+                        "  note, "
+                        "  deleted, "
+                        "  microscopia, "
+                        "  catena_del_freddo, "
+                        "  alta_specialistica, "
+                        "  da_movimentare, "
+                        "  trasporto_in_autonomia, "
+                        "  da_disinventariare, "
+                        "  didattica "
+                        "FROM inventario "
+                        "WHERE id = :record_id "
+                    )
+                )
+                _ = conn.execute(sql, {"record_id": record_id})
+                conn.commit()
+
+        flash("Bene duplicato con successo!", "success")
+
+        return redirect(url_for("search") + "?" + query_string)
+
+
 @app.route(APP_ROOT + "/login")
 def login():
     """
@@ -283,11 +390,57 @@ def logout():
 def index():
     with engine.connect() as conn:
         n_beni = conn.execute(
-            text("SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL")
+            text("SELECT COUNT(*) FROM inventario WHERE deleted IS NULL")
         ).scalar()
+
+        n_beni_da_movimentare = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND not trasporto_in_autonomia"
+            )
+        ).scalar()
+
+        n_beni_non_conforme = conn.execute(
+            text(
+                (
+                    "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND not trasporto_in_autonomia "
+                    r"AND (peso !~ '^-?[0-9]+(\.[0-9]+)?$' OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')"
+                )
+            )
+        ).scalar()
+
+        n_beni_da_movimentare_in_autonomia = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND trasporto_in_autonomia"
+            )
+        ).scalar()
+
+        alta_specialistica = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND alta_specialistica"
+            )
+        ).scalar()
+
+        microscopia = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia"
+            )
+        ).scalar()
+
+        microscopia_non_alta = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia AND not alta_specialistica"
+            )
+        ).scalar()
+
+        catena_freddo = conn.execute(
+            text(
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND catena_del_freddo"
+            )
+        ).scalar()
+
         n_beni_senza_responsabile = conn.execute(
             text(
-                "SELECT COUNT(*) AS n FROM inventario WHERE deleted IS NULL AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
             )
         ).scalar()
 
@@ -295,6 +448,13 @@ def index():
         "index.html",
         n_records=n_beni,
         n_beni_senza_responsabile=n_beni_senza_responsabile,
+        n_beni_da_movimentare=n_beni_da_movimentare,
+        n_beni_da_movimentare_in_autonomia=n_beni_da_movimentare_in_autonomia,
+        n_beni_non_conforme=n_beni_non_conforme,
+        alta_specialistica=alta_specialistica,
+        microscopia=microscopia,
+        microscopia_non_alta=microscopia_non_alta,
+        catena_freddo=catena_freddo,
     )
 
 
@@ -637,111 +797,6 @@ def salva_modifiche(record_id):
         return redirect(url_for("index"))
 
 
-# Modifica record - form
-@app.route(APP_ROOT + "/duplica/<int:record_id>", methods=["GET", "POST"])
-@app.route(APP_ROOT + "/duplica/<int:record_id>/", methods=["GET", "POST"])
-@app.route(
-    APP_ROOT + "/duplica/<int:record_id>/<path:query_string>", methods=["GET", "POST"]
-)
-@check_login
-def duplica(record_id, query_string: str = ""):
-    """
-    duplica un bene
-    """
-    if request.method == "GET":
-        with engine.connect() as conn:
-            result = conn.execute(
-                text(
-                    (
-                        "SELECT id, descrizione_bene, responsabile_laboratorio FROM inventario WHERE id = :id"
-                    )
-                ),
-                {"id": record_id},
-            )
-            record = result.fetchone()
-
-        return render_template(
-            "duplica_bene.html",
-            record_id=record_id,
-            record=record,
-            query_string=query_string,
-        )
-
-    if request.method == "POST":
-        copy_number = int(request.form.get("numero_copie"))
-        with engine.connect() as conn:
-            for i in range(1, copy_number + 1):
-                sql = text(
-                    "INSERT INTO inventario ( "
-                    "  num_inventario, "
-                    "  num_inventario_ateneo, "
-                    "  data_carico, "
-                    "  descrizione_bene, "
-                    "  codice_sipi_torino, "
-                    "  codice_sipi_grugliasco, "
-                    "  destinazione, "
-                    "  rosso_fase_alimentazione_privilegiata, "
-                    "  valore_convenzionale, "
-                    "  esercizio_bene_migrato, "
-                    "  responsabile_laboratorio, "
-                    "  denominazione_fornitore, "
-                    "  anno_fabbricazione, "
-                    "  numero_seriale, "
-                    "  categoria_inventoriale, "
-                    "  catalogazione_materiale_strumentazione, "
-                    "  peso, "
-                    "  dimensioni, "
-                    "  ditta_costruttrice_fornitrice, "
-                    "  note, "
-                    "  deleted, "
-                    "  microscopia, "
-                    "  catena_del_freddo, "
-                    "  alta_specialistica, "
-                    "  da_movimentare, "
-                    "  trasporto_in_autonomia, "
-                    "  da_disinventariare, "
-                    "  didattica "
-                    ") "
-                    "SELECT "
-                    "  num_inventario, "
-                    "  num_inventario_ateneo, "
-                    "  data_carico, "
-                    f"  CONCAT(descrizione_bene, ' #', {i + 1}) , "
-                    "  codice_sipi_torino, "
-                    "  codice_sipi_grugliasco, "
-                    "  destinazione, "
-                    "  rosso_fase_alimentazione_privilegiata, "
-                    "  valore_convenzionale, "
-                    "  esercizio_bene_migrato, "
-                    "  responsabile_laboratorio, "
-                    "  denominazione_fornitore, "
-                    "  anno_fabbricazione, "
-                    "  numero_seriale, "
-                    "  categoria_inventoriale, "
-                    "  catalogazione_materiale_strumentazione, "
-                    "  peso, "
-                    "  dimensioni, "
-                    "  ditta_costruttrice_fornitrice, "
-                    "  note, "
-                    "  deleted, "
-                    "  microscopia, "
-                    "  catena_del_freddo, "
-                    "  alta_specialistica, "
-                    "  da_movimentare, "
-                    "  trasporto_in_autonomia, "
-                    "  da_disinventariare, "
-                    "  didattica "
-                    "FROM inventario "
-                    "WHERE id = :record_id "
-                )
-                conn.execute(sql, {"record_id": record_id})
-                conn.commit()
-
-        flash("Bene duplicato con successo!", "success")
-
-        return redirect(url_for("search") + "?" + query_string)
-
-
 @app.route(APP_ROOT + "/delete_foto/<img_id>")
 @check_login
 def delete_foto(img_id: str):
@@ -825,6 +880,7 @@ def modifica_multipla():
     return redirect(url_for("search") + "?" + query_string)
 
 
+'''
 @app.route(APP_ROOT + "/upload_excel", methods=["GET", "POST"])
 @check_login
 def upload_excel():
@@ -973,6 +1029,7 @@ def upload_excel():
             return redirect(request.url)
 
     return render_template("upload_excel.html")
+'''
 
 
 @app.route(APP_ROOT + "/search", methods=["GET"])

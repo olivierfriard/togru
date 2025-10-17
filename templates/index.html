@@ -30,10 +30,19 @@
 
 
 <div class="block">
-<p class="subtitle is-5">Numero totale dei beni inseriti nel database: <b>{{ n_records }}</b></p>
-<p class="subtitle is-5">Numero totale dei beni senza responsabile: <a href="{{ url_for("search", responsabile_laboratorio='SENZA')}}"><b>{{ n_beni_senza_responsabile }}</b></a></p>
+<p class="subtitle is-5">Beni / strumenti inseriti nel database: <b>{{ n_records }}</b></p>
+<p class="subtitle is-5">Beni / strumenti senza responsabile: <a href="{{ url_for("search", responsabile_laboratorio='SENZA')}}"><b>{{ n_beni_senza_responsabile }}</b></a></p>
+<p class="subtitle is-4">Beni / strumenti da movimentare</p>
+<p class="subtitle is-5">Da fare movimentare: <b>{{ n_beni_da_movimentare }}</b>
+(⚠️ peso e/o dimensioni non conforme: <b>{{ n_beni_non_conforme }}</b>)
+</p>
+<p class="subtitle is-5">Trasporto in autonomia: <b>{{ n_beni_da_movimentare_in_autonomia}}</b>
+<p class="subtitle is-5">Alta specislistica: <b>{{ alta_specialistica}}</b>
+<p class="subtitle is-5">Microscopia: <b><a href="/togru/search?microscopia=true&da_movimentare=true">{{ microscopia}}</a></b>  (non alta specialistica <b>{{ microscopia_non_alta}}</b>)
+<p class="subtitle is-5">Catena del freddo da rispettare: <b><a href="/togru/search?catena_del_freddo=true&da_movimentare=true">{{ catena_freddo}}</a></b>
+</p>
 </div>
-
+<br><br>
 <div class="block">
 <a class="button is-link" href="https://pad.cisti.org/p/dbios_togru">Spazio di discussione</a>
 </div>
@@ -47,7 +56,7 @@ Storico del servizio
             Le dimensioni devono essere espresse in centimetri arrotondati seguendo il formato HxlxH (senza separatori decimale, senza spazi)
 
 
-2025-09-26: risolto problema di visualizzazione per responsabili contenenti il carattere slash (/) 
+2025-09-26: risolto problema di visualizzazione per responsabili contenenti il carattere slash (/)
 
 2025-09-15: aggiunto id TOGRU alle etichette (come identificatore univoco)
 
@@ -66,7 +75,7 @@ Storico del servizio
 
 </pre>
 </div>
-  
+
 
 
 {% endif %}
@@ -104,4 +113,3 @@ toggleButton.addEventListener('click', () => {
 -->
 </body>
 </html>
-
