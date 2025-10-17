@@ -471,7 +471,7 @@ def aggiungi(query_string: str = ""):
             RETURNING id
         """)
         with engine.connect() as conn:
-            conn.execute(
+            _ = conn.execute(
                 text("SET LOCAL application_name = :user"), {"user": session["email"]}
             )
             new_id = conn.execute(query, data).fetchone()[0]
@@ -496,7 +496,7 @@ def aggiungi(query_string: str = ""):
 @app.route(APP_ROOT + "/modifica/<int:record_id>/")
 @app.route(APP_ROOT + "/modifica/<int:record_id>/<path:query_string>")
 @check_login
-def modifica(record_id, query_string: str = ""):
+def modifica(record_id: int, query_string: str = ""):
     """
     modifica un bene
     """
@@ -527,7 +527,7 @@ def modifica(record_id, query_string: str = ""):
             ),
             {"id": record_id},
         )
-        record = result.fetchone()
+        record = result.mappings().fetchone()
 
         responsabili = conn.execute(
             text(
@@ -547,6 +547,8 @@ def modifica(record_id, query_string: str = ""):
         responsabili=responsabili,
         img_list=img_list,
         boolean_fields=BOOLEAN_FIELDS,
+        peso_non_conforme=record["peso_non_conforme"],
+        dimensioni_non_conforme=record["dimensioni_non_conforme"],
     )
 
 

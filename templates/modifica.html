@@ -101,8 +101,16 @@
                 <div class="column is-one-quarter">
                     <div class="field">
                         <label class="label" style="white-space: nowrap;">{{ field.replace('_',' ').capitalize() }}
-{% if field == 'peso' %} <small>(in Kg senza unità per un elemento)</small>{% endif %}
-{% if field == 'dimensioni' %} <small>(in cm arrotondati<br>per un elemento formato Lxlxh)</small>{% endif %}
+{% if field == 'peso' %}
+
+{%if peso_non_conforme%}⚠️{%endif%}
+
+<small>(in Kg senza unità per un elemento)</small>{% endif %}
+{% if field == 'dimensioni' %}
+
+
+{%if dimensioni_non_conforme%}⚠️{%endif%}
+<small>(in cm arrotondati<br>per un elemento formato Lxlxh)</small>{% endif %}
 
                         </label>
                         <div class="control">
