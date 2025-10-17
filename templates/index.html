@@ -37,8 +37,9 @@
 (⚠️ peso e/o dimensioni non conforme: <b>{{ n_beni_non_conforme }}</b>)
 </p>
 <p class="subtitle is-5">Trasporto in autonomia: <b>{{ n_beni_da_movimentare_in_autonomia}}</b>
-<p class="subtitle is-5">Alta specislistica: <b>{{ alta_specialistica}}</b>
-<p class="subtitle is-5">Microscopia: <b><a href="/togru/search?microscopia=true&da_movimentare=true">{{ microscopia}}</a></b>  (non alta specialistica <b>{{ microscopia_non_alta}}</b>)
+<p class="subtitle is-5">Alta specislistica: <b><a href="/togru/search?alta_specialistica=true&da_movimentare=true">{{ alta_specialistica}}</a></b>
+<p class="subtitle is-5">Microscopia: <b><a href="/togru/search?microscopia=true&da_movimentare=true">{{ microscopia}}</a></b>
+    (non alta specialistica <b><a href="/togru/search?microscopia=true&da_movimentare=true&alta_specialistica=false">{{ microscopia_non_alta}}</a></b>)
 <p class="subtitle is-5">Catena del freddo da rispettare: <b><a href="/togru/search?catena_del_freddo=true&da_movimentare=true">{{ catena_freddo}}</a></b>
 </p>
 </div>
