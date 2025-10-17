@@ -1,68 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-<meta charset="UTF-8">
-<title>Visualizza Bene (ID: {{ record.id }})</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
-</head>
-<body>
-<section class="section">
-{% include "menu.html" %}
-<div class="container">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Visualizza Bene (ID: {{ record.id }})</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+        />
+    </head>
+    <body>
+        <section class="section">
+            {% include "menu.html" %}
+            <div class="container">
+                <br /><br />
 
-<br><br>
+                <div class="field is-grouped">
+                    <a href="javascript:history.back()" class="button is-link"
+                        >Indietro</a
+                    >
 
-<div class="field is-grouped">
+                    <a
+                        class="button is-warning"
+                        href="{{ url_for('modifica', record_id=record.ID, query_string=query_string) }}"
+                        >Modifica</a
+                    >
 
-<a href="javascript:history.back()" class="button is-link">Indietro</a>
+                    <form
+                        method="post"
+                        action="{{ url_for('delete_record', record_id=record.ID, query_string='view') }}"
+                        style="display: inline"
+                        onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');"
+                    >
+                        <button class="button is-danger" type="submit">
+                            Elimina
+                        </button>
+                    </form>
 
-<a class="button is-warning" href="{{ url_for('modifica', record_id=record.ID, query_string=query_string) }}">Modifica</a>
+                    <a
+                        class="button is-link"
+                        href="{{ url_for('etichetta', record_id=record.ID) }}"
+                        >Stampa etichetta</a
+                    >
 
-<form method="post" action="{{ url_for('delete_record', record_id=record.ID, query_string='view') }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
-<button class="button is-danger" type="submit">Elimina</button>
-</form>
+                    <a
+                        class="button is-link"
+                        href="{{ url_for('storico', record_id=record.ID) }}"
+                        >Storico bene</a
+                    >
+                </div>
+                <br />
+                <h1 class="title">{{ record['Descrizione bene'] }}</h1>
 
-<a class="button is-link" href="{{ url_for('etichetta', record_id=record.ID) }}">Stampa etichetta</a>
+                {% if record.peso_non_conforme or record.dimensioni_non_conforme
+                %}
+                <div class="notification is-warning">
+                    ⚠️ peso e/o dimensioni non conforme
+                </div>
+                {%endif%}
 
-<a class="button is-link" href="{{ url_for('storico', record_id=record.ID) }}">Storico bene</a>
+                <table class="table is-striped is-hoverable is-fullwidth">
+                    <tbody>
+                        {% for key, value in record.items() if key not in
+                        ('peso_non_conforme', 'dimensioni_non_conforme') %}
+                        <tr>
+                            <th>{{ key.replace('_', ' ') }}</th>
+                            <td>
+                                {% if 'Responsabile' in key %}
+                                <a
+                                    href="/togru/search?responsabile_laboratorio={{ value }}"
+                                    >{{ value }}</a
+                                >
+                                {% elif key == 'Codice SIPI Torino' %}
+                                <a
+                                    href="/togru/search?codice_sipi_torino={{ value }}"
+                                    >{{ value }}</a
+                                >
+                                {% else %} {{ value }} {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
-</div>
-<br>
-<h1 class="title">{{ record['Descrizione bene'] }}</h1>
+                {% if img_list %}
+                <h2 class="title">Documentazione fotografica</h2>
+                {% for img in img_list %}
 
-<table class="table is-striped is-hoverable is-fullwidth">
-<tbody>
-{% for key, value in record.items()  if key != 'id' %}
-<tr>
-<th>{{ key.replace('_', ' ') }}</th>
-<td>
-{% if key == 'Responsabile del laboratorio/ufficio' %}
-<a href="/togru/search?responsabile_laboratorio={{ value }}">{{ value }}</a>
-{% elif key == 'Codice SIPI Torino' %}
-<a href="/togru/search?codice_sipi_torino={{ value }}">{{ value }}</a>
-{% else %}
-{{ value }}
-{% endif %}
-</td>
-</tr>
-{% endfor %}
-    
-</tbody>
-</table>
+                <a href="/togru/static/images/{{ img }}"
+                    ><img src="/togru/static/images/{{ img }}" width="200px"
+                /></a>
 
-{% if img_list %}
-<h2 class="title">Documentazione fotografica</h2>
-{% for img in img_list %}
-
-<a href="/togru/static/images/{{ img }}"><img src="/togru/static/images/{{ img }}" width="200px"></a>
-
-{% endfor %}
-
-{% endif %}
-
-
-</div>
-</section>
-
-</body>
+                {% endfor %} {% endif %}
+            </div>
+        </section>
+    </body>
 </html>

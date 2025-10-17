@@ -15,7 +15,7 @@
 <form method="post" action="{{ url_for('delete_record', record_id=record.id, query_string='view') }}" style="display:inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo record?');">
 <button class="button is-danger" type="submit">Elimina</button>
 </form>
-    
+
 
 {% if query_string %}
 <a class="button is-link" href="/togru/search?{{ query_string }}">Torna alla ricerca</a>
@@ -24,6 +24,12 @@
 <br><br>
 
 <h1 class="title is-4">Modifica Bene (ID: {{ record.id }})</h1>
+
+{% if record.peso_non_conforme or record.dimensioni_non_conforme %}
+<div class="notification is-warning">
+    ⚠️ peso e/o dimensioni non conforme
+</div>
+{%endif%}
 
 
 <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
@@ -40,7 +46,7 @@
             </div>
         </div>
     </div>
-    
+
 
 <div class="column is-half">
     <div class="field">
@@ -63,7 +69,7 @@
                     {% endfor %}
                     <option value="altro">Altro...</option>
                 </select>
-    
+
                 </div>
             </div>
     </div>
@@ -82,14 +88,14 @@
 
 <div class="columns is-multiline is-mobile">
                 {% for field in [
-                    'num_inventario', 'num_inventario_ateneo', 
+                    'num_inventario', 'num_inventario_ateneo',
                     'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
                     'microscopia', 'catena_del_freddo', 'alta_specialistica', 'da_movimentare', 'trasporto_in_autonomia', 'da_disinventariare',
-                    'rosso_fase_alimentazione_privilegiata', 
+                    'rosso_fase_alimentazione_privilegiata',
                     'didattica',
-                    'data_carico', 'valore_convenzionale', 
+                    'data_carico', 'valore_convenzionale',
                     'denominazione_fornitore', 'anno_fabbricazione', 'numero_seriale',
-                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione', 
+                    'categoria_inventoriale', 'catalogazione_materiale_strumentazione',
                     'ditta_costruttrice_fornitrice'
                 ] %}
                 <div class="column is-one-quarter">
@@ -149,9 +155,9 @@
                     <button class="button is-primary" type="submit">Salva modifiche</button>
                 </div>
             </div>
-        
-        
-        
+
+
+
         </form>
 
 {% if img_list %}

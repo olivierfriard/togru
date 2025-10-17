@@ -135,15 +135,72 @@ def check_admin(f):
     return decorated_function
 
 
-@app.route(APP_ROOT + "/login")
-def login():
+@app.route(f"{APP_ROOT}/aggiungi_user", methods=["GET", "POST"])
+@check_login
+@check_admin
+def aggiungi_user():
+    if request.method == "GET":
+        with engine.connect() as conn:
+            users = conn.execute(
+                text(
+                    "SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email"
+                )
+            ).fetchall()
+
+        return render_template("aggiungi_user.html", users=users)
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        with engine.connect() as conn:
+            sql = text("INSERT INTO users (email, admin) VALUES (:email, :admin)")
+            _ = conn.execute(sql, {"email": email, "admin": False})
+            conn.commit()
+        flash("Utente aggiunto", "success")
+        return render_template("aggiungi_user.html")
+
+
+@app.route(APP_ROOT + "/attivita_utenti", methods=["GET"])
+@check_login
+@check_admin
+def attivita_utenti():
     """
-    Reindirizza l'utente alla schermata di autorizzazione di Google
+    returns list of active users
     """
-    google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(authorization_base_url)
-    session["oauth_state"] = state
-    return redirect(authorization_url)
+    with engine.connect() as conn:
+        sql = text(
+            (
+                "SELECT executed_by AS email,"
+                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                "MAX(executed_at) AS last_operation, "
+                "COUNT(*) AS num_operations from inventario_audit "
+                "WHERE executed_by like '%@%' GROUP BY executed_by "
+                "ORDER BY last_operation DESC"
+            )
+        )
+        audits = conn.execute(sql).fetchall()
+
+    return render_template("attivita_utenti.html", audit_records=audits)
+
+
+@app.route(APP_ROOT + "/attivita_utente/<email>", methods=["GET"])
+@check_login
+@check_admin
+def attivita_utente(email: str):
+    """
+    returns user activity
+    """
+    with engine.connect() as conn:
+        sql = text(
+            (
+                "SELECT descrizione_bene, operation_type, record_id, executed_at "
+                "FROM inventario_audit LEFT JOIN inventario ON inventario_audit.record_id = inventario.id "
+                "WHERE executed_by = :email "
+                "ORDER BY executed_at DESC"
+            )
+        )
+        attivita = conn.execute(sql, {"email": email}).fetchall()
+
+    return render_template("attivita_utente.html", attivita=attivita, email=email)
 
 
 @app.route(APP_ROOT + "/callback")
@@ -165,11 +222,11 @@ def callback():
     userinfo = response.json()
 
     with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT COUNT(*) AS n_user FROM users WHERE email = :email"),
+        n_user = conn.execute(
+            text("SELECT COUNT(*) FROM users WHERE email = :email"),
             {"email": userinfo["email"]},
-        ).fetchone()[0]
-        if not result:
+        ).scalar()
+        if not n_user:
             flash(
                 f"Spiacente {userinfo['name']}, non sei autorizzato ad accedere",
                 "danger",
@@ -183,16 +240,27 @@ def callback():
     # check if admin
     with engine.connect() as conn:
         if "email" in session:
-            result = conn.execute(
+            n = conn.execute(
                 text(
-                    "SELECT COUNT(*) AS n FROM users WHERE admin = TRUE and email = :email"
+                    "SELECT COUNT(*) FROM users WHERE admin = TRUE and email = :email"
                 ),
                 {"email": session["email"]},
-            )
-            if result.fetchone()[0]:
+            ).scalar()
+            if n:
                 session["admin"] = True
 
     return redirect(url_for("index"))
+
+
+@app.route(APP_ROOT + "/login")
+def login():
+    """
+    Reindirizza l'utente alla schermata di autorizzazione di Google
+    """
+    google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
+    authorization_url, state = google.authorization_url(authorization_base_url)
+    session["oauth_state"] = state
+    return redirect(authorization_url)
 
 
 @app.route(APP_ROOT + "/logout")
@@ -250,8 +318,8 @@ def tutti(mode: str = ""):
                     'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
                     'destinazione AS "Destinazione", '
                     'note AS "Note", '
-                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso ~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
-                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                     "FROM inventario WHERE deleted IS NULL "
                     "ORDER BY responsabile_laboratorio, descrizione_bene, id "
                 )
@@ -313,7 +381,9 @@ def view(record_id: int, query_string: str = ""):
                 "valore_convenzionale,"
                 "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                 "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
-                "ditta_costruttrice_fornitrice, note "
+                "ditta_costruttrice_fornitrice, note, "
+                r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                 "FROM inventario "
                 "WHERE id = :id"
             )
@@ -448,7 +518,9 @@ def modifica(record_id, query_string: str = ""):
                     "valore_convenzionale,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
-                    "ditta_costruttrice_fornitrice, note "
+                    "ditta_costruttrice_fornitrice, note, "
+                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                     "FROM inventario "
                     "WHERE id = :id"
                 )
@@ -1213,50 +1285,6 @@ def storico_utente(email: str = ""):
     return render_template("storico_utente.html", audit_records=audits, username=email)
 
 
-@app.route(APP_ROOT + "/attivita_utenti", methods=["GET"])
-@check_login
-@check_admin
-def attivita_utenti():
-    """
-    returns list of active users
-    """
-    with engine.connect() as conn:
-        sql = text(
-            (
-                "SELECT executed_by AS email,"
-                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
-                "MAX(executed_at) AS last_operation, "
-                "COUNT(*) AS num_operations from inventario_audit "
-                "WHERE executed_by like '%@%' GROUP BY executed_by "
-                "ORDER BY last_operation DESC"
-            )
-        )
-        audits = conn.execute(sql).fetchall()
-
-    return render_template("attivita_utenti.html", audit_records=audits)
-
-
-@app.route(APP_ROOT + "/attivita_utente/<email>", methods=["GET"])
-@check_login
-@check_admin
-def attivita_utente(email: str):
-    """
-    returns user activity
-    """
-    with engine.connect() as conn:
-        sql = text(
-            (
-                "SELECT descrizione_bene, operation_type, record_id, executed_at "
-                "FROM inventario_audit LEFT JOIN inventario ON inventario_audit.record_id = inventario.id "
-                "WHERE executed_by = :email "
-                "ORDER BY executed_at DESC"
-            )
-        )
-        attivita = conn.execute(sql, {"email": email}).fetchall()
-
-    return render_template("attivita_utente.html", attivita=attivita, email=email)
-
-
 def label(record_list: list) -> str:
     """
     create typst label for records
@@ -1423,30 +1451,6 @@ def etichetta(record_id: str = ""):
 @check_login
 def mappe():
     return render_template("mappe.html")
-
-
-@app.route(f"{APP_ROOT}/aggiungi_user", methods=["GET", "POST"])
-@check_login
-@check_admin
-def aggiungi_user():
-    if request.method == "GET":
-        with engine.connect() as conn:
-            users = conn.execute(
-                text(
-                    "SELECT email, INITCAP(REPLACE(REPLACE(email, '@unito.it', ''), '.', ' ')) AS name FROM users ORDER by email"
-                )
-            ).fetchall()
-
-        return render_template("aggiungi_user.html", users=users)
-
-    if request.method == "POST":
-        email = request.form.get("email")
-        with engine.connect() as conn:
-            sql = text("INSERT INTO users (email, admin) VALUES (:email, :admin)")
-            _ = conn.execute(sql, {"email": email, "admin": False})
-            conn.commit()
-        flash("Utente aggiunto", "success")
-        return render_template("aggiungi_user.html")
 
 
 @app.route(APP_ROOT + "/delete_user/<email>")
