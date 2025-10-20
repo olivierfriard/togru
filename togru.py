@@ -443,7 +443,7 @@ def index():
 
         n_beni_senza_responsabile = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
+                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
             )
         ).scalar()
 
