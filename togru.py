@@ -74,6 +74,7 @@ BOOLEAN_FIELDS = [
     "da_disinventariare",
     "rosso_fase_alimentazione_privilegiata",
     "didattica",
+    "collezione",
 ]
 
 # Creazione tabella
@@ -316,7 +317,8 @@ def duplica(record_id: int, query_string: str = ""):
                         "  da_movimentare, "
                         "  trasporto_in_autonomia, "
                         "  da_disinventariare, "
-                        "  didattica "
+                        "  didattica, "
+                        "  collezione "
                         ") "
                         "SELECT "
                         "  num_inventario, "
@@ -346,7 +348,8 @@ def duplica(record_id: int, query_string: str = ""):
                         "  da_movimentare, "
                         "  trasporto_in_autonomia, "
                         "  da_disinventariare, "
-                        "  didattica "
+                        "  didattica, "
+                        "  collezione "
                         "FROM inventario "
                         "WHERE id = :record_id "
                     )
@@ -457,6 +460,13 @@ def index():
         catena_freddo=catena_freddo,
     )
 
+@app.route(APP_ROOT + "/collezioni")
+def collezioni():
+    """
+    visualizza le collezioni
+    """
+    return redirect(f"{APP_ROOT}/search?collezione=true")
+
 
 # Visualizza record
 @app.route(APP_ROOT + "/tutti")
@@ -473,13 +483,13 @@ def tutti(mode: str = ""):
                     'quantita as "Quantità", '
                     'descrizione_bene AS "Descrizione bene", '
                     'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
-                    "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
+                    "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
                     'codice_sipi_torino AS "Codice SIPI Torino", '
                     'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
                     'destinazione AS "Destinazione", '
                     'note AS "Note", '
-                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
-                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                    r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                    "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                     "FROM inventario WHERE deleted IS NULL "
                     "ORDER BY responsabile_laboratorio, descrizione_bene, id "
                 )
@@ -524,7 +534,8 @@ def view(record_id: int, query_string: str = ""):
     with engine.connect() as conn:
         sql = text(
             (
-                """SELECT id AS "ID", descrizione_bene AS "Descrizione bene", """
+                'SELECT id AS "ID", descrizione_bene AS "Descrizione bene", '
+                "CASE WHEN collezione THEN 'SI' ELSE 'NO' END AS collezione,"
                 """quantita AS "Quantità", """
                 """responsabile_laboratorio AS "Responsabile del laboratorio/ufficio", """
                 """num_inventario AS "Numero di inventario", num_inventario_ateneo, data_carico,"""
@@ -542,8 +553,8 @@ def view(record_id: int, query_string: str = ""):
                 "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                 "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                 "ditta_costruttrice_fornitrice, note, "
-                r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
-                "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                 "FROM inventario "
                 "WHERE id = :id"
             )
@@ -618,7 +629,7 @@ def aggiungi(query_string: str = ""):
                 didattica, valore_convenzionale, esercizio_bene_migrato,
                 responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
-                ditta_costruttrice_fornitrice, note
+                ditta_costruttrice_fornitrice, note, collezione
             ) VALUES (
                 :quantita, :num_inventario, :num_inventario_ateneo, :data_carico,
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
@@ -626,7 +637,7 @@ def aggiungi(query_string: str = ""):
                 :rosso_fase_alimentazione_privilegiata, :didattica, :valore_convenzionale, :esercizio_bene_migrato,
                 :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
                 :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
-                :ditta_costruttrice_fornitrice, :note
+                :ditta_costruttrice_fornitrice, :note, :collezione
             )
             RETURNING id
         """)
@@ -669,18 +680,19 @@ def modifica(record_id: int, query_string: str = ""):
                     "codice_sipi_torino, codice_sipi_grugliasco, destinazione,"
                     "CASE WHEN microscopia THEN 'SI' ELSE 'NO' END AS microscopia,"
                     "CASE WHEN catena_del_freddo THEN 'SI' ELSE 'NO' END AS catena_del_freddo,"
-                    "CASE WHEN alta_specialistica THEN 'SI' ELSE 'NO' END AS alta_specialistica,                    "
+                    "CASE WHEN alta_specialistica THEN 'SI' ELSE 'NO' END AS alta_specialistica, "
                     "CASE WHEN da_movimentare THEN 'SI' ELSE 'NO' END AS da_movimentare,"
                     "CASE WHEN trasporto_in_autonomia THEN 'SI' ELSE 'NO' END AS trasporto_in_autonomia,"
                     "CASE WHEN da_disinventariare THEN 'SI' ELSE 'NO' END AS da_disinventariare,"
                     "CASE WHEN rosso_fase_alimentazione_privilegiata THEN 'SI' ELSE 'NO' END AS rosso_fase_alimentazione_privilegiata,"
                     "CASE WHEN didattica THEN 'SI' ELSE 'NO' END AS didattica,"
+                    "CASE WHEN collezione THEN 'SI' ELSE 'NO' END AS collezione,"
                     "valore_convenzionale,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                     "ditta_costruttrice_fornitrice, note, "
-                    r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
-                    "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                    r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') AS peso_non_conforme, "  #
+                    "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
                     "FROM inventario "
                     "WHERE id = :id"
                 )
@@ -756,7 +768,8 @@ def salva_modifiche(record_id):
             "    peso = :peso, "
             "    dimensioni = :dimensioni, "
             "    ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice, "
-            "    note = :note "
+            "    note = :note, "
+            "    collezione = :collezione "
             "WHERE id = :id "
         )
     )
@@ -830,6 +843,7 @@ def modifica_multipla():
     if campo in (
         "da_movimentare",
         "trasporto_in_autonomia",
+        "collezione",
     ) and nuovo_valore.upper() not in ("SI", "NO"):
         flash(
             Markup(
@@ -851,6 +865,7 @@ def modifica_multipla():
             "trasporto_in_autonomia",
             "catena_del_freddo",
             "didattica",
+            "collezione",
             "destinazione",
             "note",
         )
@@ -861,6 +876,7 @@ def modifica_multipla():
             "trasporto_in_autonomia",
             "catena_del_freddo",
             "didattica",
+            "collezione",
         ):
             nuovo_valore = nuovo_valore.upper() == "SI"
 
@@ -1040,6 +1056,7 @@ def search():
         # "descrizione_inventario",
         "descrizione_bene",
         "responsabile_laboratorio",
+        "collezione",
         "num_inventario",
         "num_inventario_ateneo",
         "data_carico",
@@ -1084,21 +1101,21 @@ def search():
             'quantita as "Quantità", '
             'descrizione_bene AS "Descrizione bene", '
             'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
-            "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, "
+            "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
             'codice_sipi_torino AS "Codice SIPI Torino", '
             'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
             'destinazione AS "Destinazione", '
             'note AS "Note", '
-            r"(da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
-            "(da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+            r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
+            "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
             "FROM inventario WHERE deleted IS NULL "
         )
         params: dict[str, str] = {}
 
         query_non_conforme: str = (
             "SELECT count(*) FROM inventario WHERE deleted IS NULL "
-            r"AND ((da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') "
-            r"OR (da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')) "
+            r"AND ((collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') "
+            r"OR (collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')) "
         )
 
         for field in fields:
