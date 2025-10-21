@@ -180,12 +180,21 @@ def attivita_utenti():
     with engine.connect() as conn:
         sql = text(
             (
-                "SELECT executed_by AS email,"
-                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
-                "MAX(executed_at) AS last_operation, "
-                "COUNT(*) AS num_operations from inventario_audit "
-                "WHERE executed_by like '%@%' GROUP BY executed_by "
-                "ORDER BY last_operation DESC"
+                #                "SELECT executed_by AS email,"
+                #                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                #                "MAX(executed_at) AS last_operation, "
+                #                "COUNT(*) AS num_operations "
+                #                "FROM inventario_audit "
+                #                "WHERE executed_by like '%@%' "
+                #                "GROUP BY executed_by "
+                #                "ORDER BY last_operation DESC"
+                "SELECT "
+                "    DATE(executed_at) AS day, "
+                "    executed_by AS user, "
+                "    COUNT(*) AS num_operations "
+                "FROM inventario_audit "
+                "GROUP BY day, executed_by "
+                "ORDER BY day DESC, executed_by; "
             )
         )
         audits = conn.execute(sql).fetchall()
