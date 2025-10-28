@@ -362,31 +362,6 @@ def duplica(record_id: int, query_string: str = ""):
         return redirect(url_for("search") + "?" + query_string)
 
 
-@app.route(APP_ROOT + "/login")
-def login():
-    """
-    Reindirizza l'utente alla schermata di autorizzazione di Google
-    """
-    google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
-    authorization_url, state = google.authorization_url(authorization_base_url)
-    session["oauth_state"] = state
-    return redirect(authorization_url)
-
-
-@app.route(APP_ROOT + "/logout")
-def logout():
-    """logout"""
-    if "email" in session:
-        del session["email"]
-    if "admin" in session:
-        del session["admin"]
-
-    if "name" in session:
-        del session["name"]
-
-    return redirect(url_for("index"))
-
-
 # Visualizza home page
 @app.route(APP_ROOT)
 @app.route(APP_ROOT + "/")
@@ -405,7 +380,7 @@ def index():
         n_beni_non_conforme = conn.execute(
             text(
                 (
-                    "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND not trasporto_in_autonomia "
+                    "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND not collezione AND da_movimentare AND not trasporto_in_autonomia "
                     r"AND (peso !~ '^-?[0-9]+(\.[0-9]+)?$' OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')"
                 )
             )
@@ -459,6 +434,32 @@ def index():
         microscopia_non_alta=microscopia_non_alta,
         catena_freddo=catena_freddo,
     )
+
+
+@app.route(APP_ROOT + "/login")
+def login():
+    """
+    Reindirizza l'utente alla schermata di autorizzazione di Google
+    """
+    google = OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
+    authorization_url, state = google.authorization_url(authorization_base_url)
+    session["oauth_state"] = state
+    return redirect(authorization_url)
+
+
+@app.route(APP_ROOT + "/logout")
+def logout():
+    """logout"""
+    if "email" in session:
+        del session["email"]
+    if "admin" in session:
+        del session["admin"]
+
+    if "name" in session:
+        del session["name"]
+
+    return redirect(url_for("index"))
+
 
 @app.route(APP_ROOT + "/collezioni")
 def collezioni():
@@ -1083,8 +1084,6 @@ def search():
         "ditta_costruttrice_fornitrice",
         "note",
     ]
-
-    n_beni_non_conformi: int = 0
 
     query_string = request.query_string.decode("utf-8")
 
