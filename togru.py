@@ -455,7 +455,6 @@ def index():
     )
 
 
-<<<<<<< HEAD
 @app.route(APP_ROOT + "/login")
 def login():
     """
@@ -1239,6 +1238,7 @@ def search_resp():
                     "   responsabile_laboratorio, "
                     "    COUNT(*) FILTER ( "
                     "        WHERE deleted IS NULL "
+                    "          AND collezione = FALSE "
                     "          AND da_movimentare = TRUE "
                     "          AND trasporto_in_autonomia = FALSE "
                     "          AND ( "
