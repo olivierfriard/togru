@@ -1109,6 +1109,8 @@ def search():
     # Controlla se almeno un parametro di ricerca è presente e non vuoto
     has_filter = any(request.args.get(field, "").strip() for field in fields)
 
+    n_beni_non_conformi: int = 0
+
     if not has_filter:
         # Nessun filtro: non eseguire query, ritorna lista vuota o messaggio
         records = []
