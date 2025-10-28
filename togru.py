@@ -2,30 +2,30 @@
 Servizio To-Gru (inventario per traslocco)
 """
 
-from flask import (
-    Flask,
-    request,
-    render_template,
-    redirect,
-    url_for,
-    flash,
-    send_file,
-    session,
-)
-
+import json
+import os
+import subprocess
+import uuid
+from datetime import datetime
 from functools import wraps
 from io import BytesIO
+from pathlib import Path
+
+import pandas as pd
+from flask import (
+    Flask,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
 from sqlalchemy import create_engine, text
-import pandas as pd
-import json
-import os
-from datetime import datetime
-from pathlib import Path
-import subprocess
-import uuid
-from typing import LiteralString, Literal
+
 # from werkzeug.utils import secure_filename
 
 __version__ = "2025-09-26 09:46"
@@ -140,6 +140,9 @@ def check_admin(f):
 @check_login
 @check_admin
 def aggiungi_user():
+    """
+    add a user
+    """
     if request.method == "GET":
         with engine.connect() as conn:
             users = conn.execute(
@@ -153,11 +156,18 @@ def aggiungi_user():
     if request.method == "POST":
         email = request.form.get("email")
         with engine.connect() as conn:
+            # text if user already present
+            sql = text("SELECT COUNT(*) FROM users WHERE email = :email")
+            if conn.execute(sql, {"email": email}).scalar():
+                flash(Markup(f"L'utente <b>{email}</b> è già abilitato"), "warning")
+                return redirect(url_for("aggiungi_user"))
+            # insert new user
             sql = text("INSERT INTO users (email, admin) VALUES (:email, :admin)")
             _ = conn.execute(sql, {"email": email, "admin": False})
             conn.commit()
-        flash("Utente aggiunto", "success")
-        return render_template("aggiungi_user.html")
+
+        flash(Markup(f"L'utente <b>{email}</b> è stato aggiunto"), "success")
+        return redirect(url_for("aggiungi_user"))
 
 
 @app.route(APP_ROOT + "/attivita_utenti", methods=["GET"])
@@ -170,12 +180,21 @@ def attivita_utenti():
     with engine.connect() as conn:
         sql = text(
             (
-                "SELECT executed_by AS email,"
-                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
-                "MAX(executed_at) AS last_operation, "
-                "COUNT(*) AS num_operations from inventario_audit "
-                "WHERE executed_by like '%@%' GROUP BY executed_by "
-                "ORDER BY last_operation DESC"
+                #                "SELECT executed_by AS email,"
+                #                "INITCAP(REPLACE(REPLACE(executed_by, '@unito.it', ''), '.', ' ')) AS user, "
+                #                "MAX(executed_at) AS last_operation, "
+                #                "COUNT(*) AS num_operations "
+                #                "FROM inventario_audit "
+                #                "WHERE executed_by like '%@%' "
+                #                "GROUP BY executed_by "
+                #                "ORDER BY last_operation DESC"
+                "SELECT "
+                "    DATE(executed_at) AS day, "
+                "    executed_by AS user, "
+                "    COUNT(*) AS num_operations "
+                "FROM inventario_audit "
+                "GROUP BY day, executed_by "
+                "ORDER BY day DESC, executed_by; "
             )
         )
         audits = conn.execute(sql).fetchall()
@@ -436,6 +455,7 @@ def index():
     )
 
 
+<<<<<<< HEAD
 @app.route(APP_ROOT + "/login")
 def login():
     """
@@ -1532,6 +1552,9 @@ def mappe():
 @check_login
 @check_admin
 def delete_user(email: str):
+    """
+    remove user
+    """
     with engine.connect() as conn:
         # check if email in DB
         n_users = conn.execute(
@@ -1539,25 +1562,16 @@ def delete_user(email: str):
         ).scalar()
         if not n_users:
             flash(f"Utente {email} non trovato", "danger")
-
-            # users list
-            users = conn.execute(
-                text("SELECT email FROM users ORDER by email")
-            ).fetchall()
-
-            return render_template("aggiungi_user.html", users=users)
+            return redirect(url_for("aggiungi_user"))
 
         # delete user
         _ = conn.execute(
             text("DELETE FROM users WHERE email = :email"), {"email": email}
         )
         conn.commit()
-        flash(f"Utente {email} cancellato", "success")
+        flash(Markup(f"L'utente <b>{email}</b> è stato cancellato"), "success")
 
-        # users list
-        users = conn.execute(text("SELECT email FROM users ORDER by email")).fetchall()
-
-        return render_template("aggiungi_user.html", users=users)
+        return redirect(url_for("aggiungi_user"))
 
 
 @app.route(APP_ROOT + "/version")
