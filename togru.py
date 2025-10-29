@@ -42,7 +42,7 @@ engine = create_engine(DATABASE_URL)
 # Carico le credenziali dal JSON
 try:
     with open("client_secret.json") as f:
-        config = json.load(f)["web"]
+        config: dict[str, str] = json.load(f)["web"]
 
     client_id = config["client_id"]
     client_secret = config["client_secret"]

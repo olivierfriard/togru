@@ -34,7 +34,8 @@
                                 href="/togru/search?codice_sipi_torino={{r.codice_sipi_torino}}"
                                 >{{ r.codice_sipi_torino }}</a
                             >
-                            {% if r.invalid_items_count %} ⚠️ {% endif %}
+                            {% if r.invalid_items_count %} ⚠️ {{
+                            r.invalid_items_count }}{% endif %}
                         </li>
                         {% endfor %}
                     </ul>

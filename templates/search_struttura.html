@@ -1,60 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-<meta charset="UTF-8" />
-<title>Ricerca Inventario per responsabile</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
-</head>
-<body>
-<section class="section">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Ricerca Inventario per responsabile</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+        />
+    </head>
+    <body>
+        <section class="section">
+            {% include "menu.html" %}
 
+            <div class="container">
+                <br /><br />
 
+                <h1 class="title is-4">Filtra per struttura</h1>
 
-  {% include "menu.html" %}
-
-  <div class="container">
-
-
-
-<br><br>
-
-<h1 class="title is-4">Filtra per struttura</h1>
-
-
-<div class='content'>
-<ul>
-  <li><a href="/togru/search?codice_sipi_torino=014_">Via dell'Accademia Albertina 13</a></li>
-  <li><a href="/togru/search?codice_sipi_torino=034_">Ortobotanico - Viale Mattioli</a></li>
-  <li><a href="/togru/search?codice_sipi_torino=050_">Centro della innovazione - via Quarello</a></li>
-  <li><a href="/togru/search?codice_sipi_torino=009_">Palazzo Campana</a></li>
-</ul>
-</div>
-
-
-{#<!--
-<form method="get" action="/togru/search">
-  <div class="field">
-    <label class="label">Struttura</label>
-    <div class="control">
-      <div class="select">
-        <select name="codice_sipi_torino"  onchange="this.form.submit()">
-         
-          <option value="014_">Via dell'Accademia Albertina 13</option>
-          <option value="034_">Ortobotanico</option>
-          <option value="050_">Via Quarello</option>
-          
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <div class="control">
-    <button type="submit" class="button is-link">Filtra</button>
-  </div>
-</form>
--->#}
-
-</div>
-</section>
-</body>
+                <div class="content">
+                    <ul>
+                        <li>
+                            <a href="/togru/search?codice_sipi_torino=014_"
+                                >Via dell'Accademia Albertina 13</a
+                            >
+                        </li>
+                        <li>
+                            <a href="/togru/search?codice_sipi_torino=034_"
+                                >Ortobotanico - Viale Mattioli</a
+                            >
+                        </li>
+                        <li>
+                            <a href="/togru/search?codice_sipi_torino=050_"
+                                >Centro della innovazione - via Quarello</a
+                            >
+                        </li>
+                        <li>
+                            <a href="/togru/search?codice_sipi_torino=009_"
+                                >Palazzo Campana</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </body>
 </html>

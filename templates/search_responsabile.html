@@ -37,7 +37,8 @@
                                 >{{ r.responsabile_laboratorio }}</a
                             >
 
-                            {% if r.invalid_items_count %} ⚠️ {% endif %}
+                            {% if r.invalid_items_count %} ⚠️ {{
+                            r.invalid_items_count }} {% endif %}
                         </li>
                         {% endfor %}
                     </ul>
