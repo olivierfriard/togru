@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -25,7 +25,6 @@ from flask import (
 from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
 from sqlalchemy import create_engine, text
-
 # from werkzeug.utils import secure_filename
 
 __version__ = "2025-09-26 09:46"
@@ -434,7 +433,7 @@ def delete_foto(img_id: str):
         (Path(app.config["UPLOAD_FOLDER"]) / img_id).unlink()
         # record
         with engine.connect() as conn:
-            conn.execute(
+            _ = conn.execute(
                 text(
                     f"INSERT INTO inventario_audit (operation_type, record_id, executed_by) VALUES ('DELETED FOTO {img_id}', :record_id, :executed_by)"
                 ),
@@ -461,7 +460,7 @@ def delete_record(record_id: int, query_string: str = ""):
             "UPDATE inventario SET deleted = :deleted_time WHERE id = :record_id"
         )
         _ = conn.execute(
-            sql, {"deleted_time": datetime.utcnow(), "record_id": record_id}
+            sql, {"deleted_time": datetime.now(timezone.utc), "record_id": record_id}
         )
         conn.commit()
 
@@ -682,7 +681,7 @@ def index():
     )
 
 
-def label(record_list: list) -> str:
+def label(record_list: list[str]) -> str:
     """
     create typst label for records
     """
@@ -877,92 +876,6 @@ def modifica(record_id: int, query_string: str = ""):
         peso_non_conforme=record["peso_non_conforme"],
         dimensioni_non_conforme=record["dimensioni_non_conforme"],
     )
-
-
-# Modifica record - salvataggio
-@app.route(APP_ROOT + "/salva_modifiche/<int:record_id>", methods=["POST"])
-@check_login
-def salva_modifiche(record_id):
-    data = dict(request.form)
-
-    for field in BOOLEAN_FIELDS:
-        value = request.form.get(field)
-        data[field] = value == "true"
-
-    # check for new responsabile
-    if data["responsabile_laboratorio"] == "altro":
-        data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
-
-    query = text(
-        (
-            "UPDATE inventario SET "
-            "    quantita = :quantita, "
-            "    descrizione_bene = :descrizione_bene, "
-            "    responsabile_laboratorio = :responsabile_laboratorio, "
-            "    num_inventario = :num_inventario, "
-            "    num_inventario_ateneo = :num_inventario_ateneo, "
-            "    data_carico = :data_carico, "
-            "    codice_sipi_torino = :codice_sipi_torino, "
-            "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
-            "    destinazione = :destinazione, "
-            "    microscopia = :microscopia, "
-            "    catena_del_freddo = :catena_del_freddo, "
-            "    alta_specialistica = :alta_specialistica, "
-            "    da_movimentare = :da_movimentare, "
-            "    trasporto_in_autonomia = :trasporto_in_autonomia, "
-            "    da_disinventariare = :da_disinventariare, "
-            "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
-            "    didattica = :didattica, "
-            "    valore_convenzionale = :valore_convenzionale, "
-            # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
-            "    denominazione_fornitore = :denominazione_fornitore, "
-            "    anno_fabbricazione = :anno_fabbricazione, "
-            "    numero_seriale = :numero_seriale, "
-            "    categoria_inventoriale = :categoria_inventoriale, "
-            "    catalogazione_materiale_strumentazione = :catalogazione_materiale_strumentazione, "
-            "    peso = :peso, "
-            "    dimensioni = :dimensioni, "
-            "    ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice, "
-            "    note = :note, "
-            "    collezione = :collezione "
-            "WHERE id = :id "
-        )
-    )
-    with engine.connect() as conn:
-        conn.execute(
-            text("SET LOCAL application_name = :user"), {"user": session["email"]}
-        )
-        conn.execute(query, {**data, "id": record_id})
-        conn.commit()
-
-    foto = request.files.get("foto")
-    if foto and foto.filename != "":
-        # filename = secure_filename(foto.filename)
-        img_list = [
-            x.stem
-            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
-        ]
-        if not img_list:
-            foto.save(
-                Path(app.config["UPLOAD_FOLDER"])
-                / Path(str(record_id) + "_1").with_suffix(Path(foto.filename).suffix)
-            )
-        else:
-            img_id = max([int(x.split("_")[1]) for x in img_list]) + 1
-            foto.save(
-                Path(app.config["UPLOAD_FOLDER"])
-                / Path(str(record_id) + f"_{img_id}").with_suffix(
-                    Path(foto.filename).suffix
-                )
-            )
-
-    query_string = request.form.get("query_string", "")
-    if query_string == "tutti":
-        return redirect(APP_ROOT + "/tutti")
-    elif query_string:
-        return redirect(APP_ROOT + f"/search?{query_string}")
-    else:
-        return redirect(url_for("index"))
 
 
 @app.route(APP_ROOT + "/modifica_multipla", methods=["POST"])
@@ -1179,6 +1092,92 @@ def upload_excel():
 
     return render_template("upload_excel.html")
 '''
+
+
+# Modifica record - salvataggio
+@app.route(APP_ROOT + "/salva_modifiche/<int:record_id>", methods=["POST"])
+@check_login
+def salva_modifiche(record_id):
+    data = dict(request.form)
+
+    for field in BOOLEAN_FIELDS:
+        value = request.form.get(field)
+        data[field] = value == "true"
+
+    # check for new responsabile
+    if data["responsabile_laboratorio"] == "altro":
+        data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
+
+    query = text(
+        (
+            "UPDATE inventario SET "
+            "    quantita = :quantita, "
+            "    descrizione_bene = :descrizione_bene, "
+            "    responsabile_laboratorio = :responsabile_laboratorio, "
+            "    num_inventario = :num_inventario, "
+            "    num_inventario_ateneo = :num_inventario_ateneo, "
+            "    data_carico = :data_carico, "
+            "    codice_sipi_torino = :codice_sipi_torino, "
+            "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
+            "    destinazione = :destinazione, "
+            "    microscopia = :microscopia, "
+            "    catena_del_freddo = :catena_del_freddo, "
+            "    alta_specialistica = :alta_specialistica, "
+            "    da_movimentare = :da_movimentare, "
+            "    trasporto_in_autonomia = :trasporto_in_autonomia, "
+            "    da_disinventariare = :da_disinventariare, "
+            "    rosso_fase_alimentazione_privilegiata = :rosso_fase_alimentazione_privilegiata, "
+            "    didattica = :didattica, "
+            "    valore_convenzionale = :valore_convenzionale, "
+            # "    esercizio_bene_migrato = :esercizio_bene_migrato, "
+            "    denominazione_fornitore = :denominazione_fornitore, "
+            "    anno_fabbricazione = :anno_fabbricazione, "
+            "    numero_seriale = :numero_seriale, "
+            "    categoria_inventoriale = :categoria_inventoriale, "
+            "    catalogazione_materiale_strumentazione = :catalogazione_materiale_strumentazione, "
+            "    peso = :peso, "
+            "    dimensioni = :dimensioni, "
+            "    ditta_costruttrice_fornitrice = :ditta_costruttrice_fornitrice, "
+            "    note = :note, "
+            "    collezione = :collezione "
+            "WHERE id = :id "
+        )
+    )
+    with engine.connect() as conn:
+        _ = conn.execute(
+            text("SET LOCAL application_name = :user"), {"user": session["email"]}
+        )
+        _ = conn.execute(query, {**data, "id": record_id})
+        conn.commit()
+
+    foto = request.files.get("foto")
+    if foto and foto.filename != "":
+        # filename = secure_filename(foto.filename)
+        img_list = [
+            x.stem
+            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
+        ]
+        if not img_list:
+            foto.save(
+                Path(app.config["UPLOAD_FOLDER"])
+                / Path(str(record_id) + "_1").with_suffix(Path(foto.filename).suffix)
+            )
+        else:
+            img_id = max([int(x.split("_")[1]) for x in img_list]) + 1
+            foto.save(
+                Path(app.config["UPLOAD_FOLDER"])
+                / Path(str(record_id) + f"_{img_id}").with_suffix(
+                    Path(foto.filename).suffix
+                )
+            )
+
+    query_string = request.form.get("query_string", "")
+    if query_string == "tutti":
+        return redirect(APP_ROOT + "/tutti")
+    elif query_string:
+        return redirect(APP_ROOT + f"/search?{query_string}")
+    else:
+        return redirect(url_for("index"))
 
 
 @app.route(APP_ROOT + "/search", methods=["GET"])
