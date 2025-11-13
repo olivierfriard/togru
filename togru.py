@@ -24,7 +24,8 @@ from flask import (
 )
 from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
-from sqlalchemy import create_engine, text
+from sqlalchemy import bindparam, create_engine, text
+
 # from werkzeug.utils import secure_filename
 
 __version__ = "2025-09-26 09:46"
@@ -1312,11 +1313,55 @@ def search():
             records = result.fetchall()
             keys = result.keys()
 
+    ids = [x[0] for x in records]
+    print(ids)
+
     # Se viene richiesta esportazione Excel e ci sono risultati
     if request.args.get("export", "").lower() == "xlsx" and records:
+        ids = [x[0] for x in records]
+        print(ids)
+        query = text(
+            "SELECT id, "
+            'quantita as "Quantità", '
+            'descrizione_bene AS "Descrizione bene",'
+            'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
+            "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
+            'peso AS "Peso (Kg)",'
+            'dimensioni AS "Dimensioni (cm)",'
+            'codice_sipi_torino AS "Codice SIPI Torino", '
+            'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
+            'destinazione AS "Destinazione", '
+            'note AS "Note", '
+            r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
+            "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+            "FROM inventario WHERE id IN :ids AND deleted IS NULL "
+        ).bindparams(bindparam("ids", expanding=True))
+        with engine.connect() as conn:
+            results = conn.execute(query, {"ids": ids})
+            records = results.fetchall()
+            keys = results.keys()
+
+        # volume totale m3
+        query = text("""
+            SELECT
+                SUM(
+                    (
+                        (split_part(dimensioni, 'x', 1))::numeric *
+                        (split_part(dimensioni, 'x', 2))::numeric *
+                        (split_part(dimensioni, 'x', 3))::numeric
+                    ) / 1000000.0
+                ) AS volume_totale_m3
+            FROM inventario WHERE id IN :ids AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$' AND deleted IS NULL
+        """).bindparams(bindparam("ids", expanding=True))
+        with engine.connect() as conn:
+            volume_totale = conn.execute(query, {"ids": ids}).scalar()
+            print(volume_totale)
+
         df = pd.DataFrame(records, columns=keys)
         df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
         df = df.replace({True: "SI", False: "NO"})
+        # add volume totale
+        df["volume totale (m³)"] = volume_totale
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             df.to_excel(writer, index=False, sheet_name="Risultati")
