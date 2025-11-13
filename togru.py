@@ -1326,8 +1326,19 @@ def search():
             'descrizione_bene AS "Descrizione bene",'
             'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
             "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
-            'peso AS "Peso (Kg)",'
-            'dimensioni AS "Dimensioni (cm)",'
+            'peso AS "Peso singolo (Kg)", '
+            """(NULLIF(regexp_replace(peso, '[^0-9\.]', '', 'g'), '')::numeric) * quantita AS "Peso totale (Kg)", """
+            'dimensioni AS "Dimensioni singolo (cm)",'
+            """
+            CASE
+                    WHEN dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
+                    THEN
+                        ROUND((split_part(dimensioni, 'x', 1)::numeric *
+                         split_part(dimensioni, 'x', 2)::numeric *
+                         split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4)
+                    ELSE NULL
+                END AS "Volume totale (m³)",
+            """
             'codice_sipi_torino AS "Codice SIPI Torino", '
             'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
             'destinazione AS "Destinazione", '
@@ -1349,19 +1360,30 @@ def search():
                         (split_part(dimensioni, 'x', 1))::numeric *
                         (split_part(dimensioni, 'x', 2))::numeric *
                         (split_part(dimensioni, 'x', 3))::numeric
-                    ) / 1000000.0
+                    ) / 1000000.0 * quantita
                 ) AS volume_totale_m3
             FROM inventario WHERE id IN :ids AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$' AND deleted IS NULL
         """).bindparams(bindparam("ids", expanding=True))
         with engine.connect() as conn:
             volume_totale = conn.execute(query, {"ids": ids}).scalar()
-            print(volume_totale)
+
+        #  peso totale
+        query = text("""
+            SELECT SUM(peso::numeric * quantita)
+            FROM inventario WHERE id IN :ids AND peso ~  '^[0-9]+(\.[0-9]+)?' AND deleted IS NULL
+        """).bindparams(bindparam("ids", expanding=True))
+
+        with engine.connect() as conn:
+            peso_totale = conn.execute(query, {"ids": ids}).scalar()
 
         df = pd.DataFrame(records, columns=keys)
         df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
         df = df.replace({True: "SI", False: "NO"})
         # add volume totale
-        df["volume totale (m³)"] = volume_totale
+        df["volume totale tutti beni (m³)"] = round(volume_totale, 2)
+        # add peso totale
+        df["Peso totale tutti beni (Kg)"] = round(peso_totale, 2)
+
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
             df.to_excel(writer, index=False, sheet_name="Risultati")
