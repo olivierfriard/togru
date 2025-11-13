@@ -1327,7 +1327,16 @@ def search():
             'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
             "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
             'peso AS "Peso singolo (Kg)", '
-            """(NULLIF(regexp_replace(peso, '[^0-9\.]', '', 'g'), '')::numeric) * quantita AS "Peso totale (Kg)", """
+            # """(NULLIF(regexp_replace(peso, '[^0-9\.]', '', 'g'), '')::numeric) * quantita AS "Peso x quantità (Kg)", """
+            """
+            CASE
+            WHEN peso ~  '^[0-9]+(\.[0-9]+)?'
+               THEN
+                  ROUND(peso::numeric * quantita * 1, 3)::text
+               ELSE NULL
+            END AS "Peso x quantità (Kg)",
+
+            """
             'dimensioni AS "Dimensioni singolo (cm)",'
             """
             CASE
@@ -1337,7 +1346,7 @@ def search():
                          split_part(dimensioni, 'x', 2)::numeric *
                          split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4)
                     ELSE NULL
-                END AS "Volume totale (m³)",
+                END AS "Volume x quantità (m³)",
             """
             'codice_sipi_torino AS "Codice SIPI Torino", '
             'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
@@ -1351,6 +1360,8 @@ def search():
             results = conn.execute(query, {"ids": ids})
             records = results.fetchall()
             keys = results.keys()
+
+        print(records)
 
         # volume totale m3
         query = text("""
