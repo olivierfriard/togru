@@ -1314,78 +1314,80 @@ def search():
             keys = result.keys()
 
     ids = [x[0] for x in records]
-    print(ids)
 
     # Se viene richiesta esportazione Excel e ci sono risultati
     if request.args.get("export", "").lower() == "xlsx" and records:
         ids = [x[0] for x in records]
-        print(ids)
-        query = text(
-            "SELECT id, "
-            'quantita as "Quantità", '
-            'descrizione_bene AS "Descrizione bene",'
-            'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
-            "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
-            'peso AS "Peso singolo (Kg)", '
-            # """(NULLIF(regexp_replace(peso, '[^0-9\.]', '', 'g'), '')::numeric) * quantita AS "Peso x quantità (Kg)", """
-            """
-            CASE
-            WHEN peso ~  '^[0-9]+(\.[0-9]+)?'
-               THEN
-                  ROUND(peso::numeric * quantita * 1, 3)::text
-               ELSE NULL
-            END AS "Peso x quantità (Kg)",
-
-            """
-            'dimensioni AS "Dimensioni singolo (cm)",'
-            """
-            CASE
-                    WHEN dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
-                    THEN
-                        ROUND((split_part(dimensioni, 'x', 1)::numeric *
-                         split_part(dimensioni, 'x', 2)::numeric *
-                         split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4)
-                    ELSE NULL
-                END AS "Volume x quantità (m³)",
-            """
-            'codice_sipi_torino AS "Codice SIPI Torino", '
-            'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
-            'destinazione AS "Destinazione", '
-            'note AS "Note", '
-            r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
-            "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
-            "FROM inventario WHERE id IN :ids AND deleted IS NULL "
-        ).bindparams(bindparam("ids", expanding=True))
         with engine.connect() as conn:
-            results = conn.execute(query, {"ids": ids})
+            results = conn.execute(
+                text(
+                    (
+                        "SELECT id, "
+                        'quantita as "Quantità", '
+                        'descrizione_bene AS "Descrizione bene",'
+                        'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
+                        "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
+                        'peso AS "Peso singolo (Kg)", '
+                        """
+                CASE
+                WHEN peso ~  '^[0-9]+(\.[0-9]+)?$'
+                   THEN
+                      ROUND(peso::numeric * quantita * 1, 3)::text
+                   ELSE NULL
+                END AS "Peso x quantità (Kg)",
+
+                """
+                        'dimensioni AS "Dimensioni singolo (cm)",'
+                        """
+                CASE
+                        WHEN dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
+                        THEN
+                            ROUND((split_part(dimensioni, 'x', 1)::numeric *
+                             split_part(dimensioni, 'x', 2)::numeric *
+                             split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4)
+                        ELSE NULL
+                    END AS "Volume x quantità (m³)",
+                """
+                        'codice_sipi_torino AS "Codice SIPI Torino", '
+                        'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
+                        'destinazione AS "Destinazione", '
+                        'note AS "Note", '
+                        r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
+                        "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
+                        "FROM inventario WHERE id IN :ids AND deleted IS NULL "
+                    )
+                ).bindparams(bindparam("ids", expanding=True)),
+                {"ids": ids},
+            )
             records = results.fetchall()
             keys = results.keys()
 
-        print(records)
-
         # volume totale m3
-        query = text("""
-            SELECT
-                SUM(
-                    (
-                        (split_part(dimensioni, 'x', 1))::numeric *
-                        (split_part(dimensioni, 'x', 2))::numeric *
-                        (split_part(dimensioni, 'x', 3))::numeric
-                    ) / 1000000.0 * quantita
-                ) AS volume_totale_m3
-            FROM inventario WHERE id IN :ids AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$' AND deleted IS NULL
-        """).bindparams(bindparam("ids", expanding=True))
         with engine.connect() as conn:
-            volume_totale = conn.execute(query, {"ids": ids}).scalar()
+            volume_totale = conn.execute(
+                text("""
+                SELECT
+                    SUM(
+                        (
+                            (split_part(dimensioni, 'x', 1))::numeric *
+                            (split_part(dimensioni, 'x', 2))::numeric *
+                            (split_part(dimensioni, 'x', 3))::numeric
+                        ) / 1000000.0 * quantita
+                    ) AS volume_totale_m3
+                FROM inventario WHERE id IN :ids AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$' AND deleted IS NULL
+            """).bindparams(bindparam("ids", expanding=True)),
+                {"ids": ids},
+            ).scalar()
 
         #  peso totale
-        query = text("""
-            SELECT SUM(peso::numeric * quantita)
-            FROM inventario WHERE id IN :ids AND peso ~  '^[0-9]+(\.[0-9]+)?' AND deleted IS NULL
-        """).bindparams(bindparam("ids", expanding=True))
-
         with engine.connect() as conn:
-            peso_totale = conn.execute(query, {"ids": ids}).scalar()
+            peso_totale = conn.execute(
+                text(
+                    "SELECT SUM(peso::numeric * quantita) "
+                    "FROM inventario WHERE id IN :ids AND peso ~ '^[0-9]+(\.[0-9]+)?$' AND deleted IS NULL"
+                ).bindparams(bindparam("ids", expanding=True)),
+                {"ids": ids},
+            ).scalar()
 
         df = pd.DataFrame(records, columns=keys)
         df = df.drop(columns=["peso_non_conforme", "dimensioni_non_conforme"])
