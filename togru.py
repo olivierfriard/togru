@@ -1316,7 +1316,7 @@ def search():
     ids = [x[0] for x in records]
 
     # Se viene richiesta esportazione Excel e ci sono risultati
-    if request.args.get("export", "").lower() == "xlsx" and records:
+    if request.args.get("export", "").lower() in ("xlsx", "ods") and records:
         ids = [x[0] for x in records]
         with engine.connect() as conn:
             results = conn.execute(
@@ -1328,26 +1328,21 @@ def search():
                         'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
                         "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
                         'peso AS "Peso singolo (Kg)", '
-                        """
-                CASE
-                WHEN peso ~  '^[0-9]+(\.[0-9]+)?$'
-                   THEN
-                      ROUND(peso::numeric * quantita * 1, 3)::text
-                   ELSE NULL
-                END AS "Peso x quantità (Kg)",
-
-                """
+                        "CASE "
+                        "WHEN peso ~  '^[0-9]+(\.[0-9]+)?$' "
+                        "   THEN "
+                        "     ROUND(peso::numeric * quantita * 1, 3)::text "
+                        "   ELSE NULL "
+                        'END AS "Peso x quantità (Kg)", '
                         'dimensioni AS "Dimensioni singolo (cm)",'
-                        """
-                CASE
-                        WHEN dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
-                        THEN
-                            ROUND((split_part(dimensioni, 'x', 1)::numeric *
-                             split_part(dimensioni, 'x', 2)::numeric *
-                             split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4)
-                        ELSE NULL
-                    END AS "Volume x quantità (m³)",
-                """
+                        "CASE "
+                        "WHEN dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                        "THEN "
+                        "    ROUND((split_part(dimensioni, 'x', 1)::numeric * "
+                        "     split_part(dimensioni, 'x', 2)::numeric * "
+                        "     split_part(dimensioni, 'x', 3)::numeric) / 1000000.0 * quantita, 4) "
+                        "ELSE NULL "
+                        'END AS "Volume x quantità (m³)", '
                         'codice_sipi_torino AS "Codice SIPI Torino", '
                         'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
                         'destinazione AS "Destinazione", '
@@ -1362,7 +1357,7 @@ def search():
             records = results.fetchall()
             keys = results.keys()
 
-        # volume totale m3
+        # volume totale m³
         with engine.connect() as conn:
             volume_totale = conn.execute(
                 text("""
@@ -1398,15 +1393,20 @@ def search():
         df["Peso totale tutti beni (Kg)"] = round(peso_totale, 2)
 
         output = BytesIO()
-        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        spreadsheet_engine: Literal["xlsxwriter", "odf"] = (
+            "xlsxwriter" if request.args.get("export", "").lower() == "xlsx" else "odf"
+        )
+        with pd.ExcelWriter(output, engine=spreadsheet_engine) as writer:
             df.to_excel(writer, index=False, sheet_name="Risultati")
         output.seek(0)
 
         return send_file(
             output,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            if spreadsheet_engine == "xlsxwriter"
+            else "application/vnd.oasis.opendocument.spreadsheet",
             as_attachment=True,
-            download_name="risultati_ricerca.xlsx",
+            download_name=f"risultati_ricerca.{'xlsx' if spreadsheet_engine == 'xlsxwriter' else 'ods'}",
         )
 
     return render_template(
