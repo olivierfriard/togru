@@ -1329,7 +1329,7 @@ def search():
                         "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
                         'peso AS "Peso singolo (Kg)", '
                         "CASE "
-                        "WHEN peso ~  '^[0-9]+(\.[0-9]+)?$' "
+                        "WHEN peso ~  '^[0-9]+(\\.[0-9]+)?$' "
                         "   THEN "
                         "     ROUND(peso::numeric * quantita * 1, 3)::text "
                         "   ELSE NULL "
@@ -1379,7 +1379,7 @@ def search():
             peso_totale = conn.execute(
                 text(
                     "SELECT SUM(peso::numeric * quantita) "
-                    "FROM inventario WHERE id IN :ids AND peso ~ '^[0-9]+(\.[0-9]+)?$' AND deleted IS NULL"
+                    "FROM inventario WHERE id IN :ids AND peso ~ '^[0-9]+(\\.[0-9]+)?$' AND deleted IS NULL"
                 ).bindparams(bindparam("ids", expanding=True)),
                 {"ids": ids},
             ).scalar()
