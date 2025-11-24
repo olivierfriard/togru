@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.14 (Debian 15.14-0+deb12u1)
--- Dumped by pg_dump version 15.14 (Debian 15.14-0+deb12u1)
+\restrict wdBeDhpdDCCUHGraCBKEUmmDXUfgC7TaJ3UQvagQ0jrDfgitRKHENKubGJR59Rc
+
+-- Dumped from database version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -105,7 +107,8 @@ CREATE TABLE public.inventario (
     trasporto_in_autonomia boolean DEFAULT false,
     da_disinventariare boolean DEFAULT false,
     didattica boolean DEFAULT false,
-    quantita integer DEFAULT 1
+    quantita integer DEFAULT 1,
+    collezione boolean DEFAULT false
 );
 
 
@@ -141,7 +144,7 @@ CREATE SEQUENCE public.inventario_audit_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.inventario_audit_id_seq OWNER TO togru_user;
+ALTER SEQUENCE public.inventario_audit_id_seq OWNER TO togru_user;
 
 --
 -- Name: inventario_audit_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: togru_user
@@ -163,7 +166,7 @@ CREATE SEQUENCE public.inventario_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.inventario_id_seq OWNER TO togru_user;
+ALTER SEQUENCE public.inventario_id_seq OWNER TO togru_user;
 
 --
 -- Name: inventario_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: togru_user
@@ -178,11 +181,34 @@ ALTER SEQUENCE public.inventario_id_seq OWNED BY public.inventario.id;
 
 CREATE TABLE public.users (
     email text,
-    admin boolean
+    admin boolean,
+    id integer NOT NULL
 );
 
 
 ALTER TABLE public.users OWNER TO togru_user;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: togru_user
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO togru_user;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: togru_user
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
 
 --
 -- Name: inventario id; Type: DEFAULT; Schema: public; Owner: togru_user
@@ -199,6 +225,13 @@ ALTER TABLE ONLY public.inventario_audit ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: togru_user
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
 -- Name: inventario_audit inventario_audit_pkey; Type: CONSTRAINT; Schema: public; Owner: togru_user
 --
 
@@ -212,6 +245,14 @@ ALTER TABLE ONLY public.inventario_audit
 
 ALTER TABLE ONLY public.inventario
     ADD CONSTRAINT inventario_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: togru_user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
 --
@@ -238,4 +279,6 @@ CREATE TRIGGER inventario_audit_trigger AFTER INSERT OR DELETE OR UPDATE ON publ
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict wdBeDhpdDCCUHGraCBKEUmmDXUfgC7TaJ3UQvagQ0jrDfgitRKHENKubGJR59Rc
 

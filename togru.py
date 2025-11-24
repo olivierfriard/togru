@@ -1457,11 +1457,14 @@ def search_resp():
 @app.route(APP_ROOT + "/search_sipi_torino")
 @check_login
 def search_sipi_torino():
+    """
+    Show list of clickable SIPI
+    """
     with engine.connect() as conn:
         result = conn.execute(
             text(
                 (
-                    "SELECT codice_sipi_torino, "
+                    "SELECT i.codice_sipi_torino, "
                     "    COUNT(*) FILTER ( "
                     "        WHERE deleted IS NULL "
                     "          AND da_movimentare = TRUE "
@@ -1470,12 +1473,13 @@ def search_sipi_torino():
                     r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
                     "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
                     "          ) "
-                    "    ) AS invalid_items_count "
-                    "FROM inventario "
-                    "WHERE codice_sipi_torino != '' "
-                    "AND deleted IS NULL "
-                    "GROUP BY codice_sipi_torino "
-                    "ORDER BY codice_sipi_torino "
+                    "    ) AS invalid_items_count, "
+                    "(SELECT denominazione FROM locali WHERE codice_sipi_torino = i.codice_sipi_torino LIMIT 1) AS denominazione "
+                    "FROM inventario i LEFT JOIN locali l ON i.codice_sipi_torino=l.codice_sipi_torino "
+                    "WHERE i.codice_sipi_torino != '' "
+                    "AND i.deleted IS NULL "
+                    "GROUP BY i.codice_sipi_torino "
+                    "ORDER BY i.codice_sipi_torino "
                 )
             )
         )

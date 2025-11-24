@@ -21,24 +21,27 @@
                 beni da fare trasportare)<br />
 
                 <div class="content">
-                    <ul>
-                        <li>
-                            <a href="/togru/search?codice_sipi_torino=SENZA"
-                                >SENZA</a
-                            >
-                        </li>
+                    <div class="table-container">
+                    <table class="table is-striped is-narrow is-hoverable">
+                        <tr><td><a href="/togru/search?codice_sipi_torino=SENZA">SENZA</a></td>
+                        <td></td><td></td>
+                        </tr>
 
                         {% for r in sipi_list %}
-                        <li>
-                            <a
+                        <tr>
+                          <td>  <a
                                 href="/togru/search?codice_sipi_torino={{r.codice_sipi_torino}}"
                                 >{{ r.codice_sipi_torino }}</a
-                            >
+                            ></td>
+                         <td> {{ r.denominazione if r.denominazione is not none else '' }}</td>
+                         <td>
                             {% if r.invalid_items_count %} ⚠️ {{
                             r.invalid_items_count }}{% endif %}
-                        </li>
+                         </td>
+                        </tr>
                         {% endfor %}
                     </ul>
+                </div>
                 </div>
             </div>
         </section>
