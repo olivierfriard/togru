@@ -614,19 +614,19 @@ def duplica(record_id: int, query_string: str = ""):
 def index():
     with engine.connect() as conn:
         n_beni = conn.execute(
-            text("SELECT COUNT(*) FROM inventario WHERE deleted IS NULL")
+            text("SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL")
         ).scalar()
 
         n_beni_da_movimentare = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND not trasporto_in_autonomia"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare AND not trasporto_in_autonomia"
             )
         ).scalar()
 
         n_beni_non_conforme = conn.execute(
             text(
                 (
-                    "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND not collezione AND da_movimentare AND not trasporto_in_autonomia "
+                    "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND not collezione AND da_movimentare AND not trasporto_in_autonomia "
                     r"AND (peso !~ '^-?[0-9]+(\.[0-9]+)?$' OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')"
                 )
             )
@@ -634,37 +634,37 @@ def index():
 
         n_beni_da_movimentare_in_autonomia = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND trasporto_in_autonomia"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare AND trasporto_in_autonomia"
             )
         ).scalar()
 
         alta_specialistica = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND alta_specialistica"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND alta_specialistica"
             )
         ).scalar()
 
         microscopia = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia"
             )
         ).scalar()
 
         microscopia_non_alta = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia AND not alta_specialistica"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND microscopia AND not alta_specialistica"
             )
         ).scalar()
 
         catena_freddo = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND da_movimentare AND catena_del_freddo"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare AND catena_del_freddo"
             )
         ).scalar()
 
         n_beni_senza_responsabile = conn.execute(
             text(
-                "SELECT COUNT(*) FROM inventario WHERE deleted IS NULL AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND (responsabile_laboratorio = '' OR responsabile_laboratorio IS NULL)"
             )
         ).scalar()
 
@@ -1474,7 +1474,8 @@ def search_sipi_torino():
                     "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
                     "          ) "
                     "    ) AS invalid_items_count, "
-                    "(SELECT denominazione FROM locali WHERE codice_sipi_torino = i.codice_sipi_torino LIMIT 1) AS denominazione "
+                    "(SELECT denominazione FROM locali WHERE codice_sipi_torino = i.codice_sipi_torino LIMIT 1) AS denominazione, "
+                    "(SELECT utilizzo FROM locali WHERE codice_sipi_torino = i.codice_sipi_torino LIMIT 1) AS utilizzo "
                     "FROM inventario i LEFT JOIN locali l ON i.codice_sipi_torino=l.codice_sipi_torino "
                     "WHERE i.codice_sipi_torino != '' "
                     "AND i.deleted IS NULL "
