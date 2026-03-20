@@ -28,11 +28,11 @@ from sqlalchemy import bindparam, create_engine, text
 
 # from werkzeug.utils import secure_filename
 
-__version__ = "2025-09-26 09:46"
+__version__ = "2026-03-20 11:42"
 
 APP_ROOT = "/togru"
 
-app = Flask(__name__, static_url_path="/togru/static")
+app = Flask(__name__, static_url_path=f"{APP_ROOT}/static")
 app.secret_key = "sldjhalsdasd2435"  # needed for flash messages
 
 
@@ -1316,6 +1316,13 @@ def search():
 
     ids = [x[0] for x in records]
 
+    # check for doc photo
+    doc_photo = {
+        int(x.stem.split("_")[0]): x.name
+        for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
+        if int(x.stem.split("_")[0]) in ids
+    }
+
     # Se viene richiesta esportazione Excel e ci sono risultati
     if request.args.get("export", "").lower() in ("xlsx", "ods") and records:
         ids = [x[0] for x in records]
@@ -1419,6 +1426,7 @@ def search():
         boolean_fields=BOOLEAN_FIELDS,
         columns=keys,
         n_beni_non_conformi=n_beni_non_conformi,
+        doc_photo=doc_photo,
     )
 
 
@@ -1586,11 +1594,21 @@ def tutti(mode: str = ""):
             download_name="togru_tutti_beni.xlsx",
         )
     else:
+        ids = [x[0] for x in records]
+
+        # check for doc photo
+        doc_photo = {
+            int(x.stem.split("_")[0]): x.name
+            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
+            if int(x.stem.split("_")[0]) in ids
+        }
+
         return render_template(
             "tutti_record.html",
             records=records,
             query_string="tutti",
             columns=columns,
+            doc_photo=doc_photo,
         )
 
 
@@ -1600,7 +1618,7 @@ def version():
     display version of service
     """
 
-    return f"(c) Olivier Friard 2025<br>v. {__version__}"
+    return f"(c) Olivier Friard 2025-2026<br>v. {__version__}"
 
 
 @app.route(APP_ROOT + "/view/<int:record_id>")
@@ -1647,10 +1665,12 @@ def view(record_id: int, query_string: str = ""):
 
         record_dict["note"] = Markup(record_dict["note"].replace("\r", "<br>"))
 
-        # check for images
+        # check for doc photo
         img_list = [
             x.name
-            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
+            for x in sorted(
+                list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
+            )
         ]
 
     return render_template(

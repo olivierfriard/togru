@@ -19,7 +19,49 @@
 .emoji {
       cursor: pointer;
     }
+
+.foto-btn {
+    cursor: pointer;
+    font-size: 20px;
+    background: none;
+    border: none;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.modal-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    display: block;
+}
+
+.close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
 </style>
+
+
 
 <div class="table-container">
 <table class="table is-striped is-fullwidth">
@@ -64,6 +106,10 @@
 {% if r.microscopia is true %}<span class="emoji" title="Microscopia">🔬</span>{% endif %}
 {% if r.alta_specialistica is true %}<span class="emoji" title="Alta specialistica">⚙️</span>{% endif %}
 {% if r.collezione is true %}<span class="emoji" title="Collezione">📦</span>{% endif %}
+{% if r.ID in doc_photo %}<button class="foto-btn" title="Vedi foto" onclick="apriImmagine('{{ url_for('static', filename='images/' +  doc_photo[r.ID] ) }}')"><big>🖼</big></button>
+
+{% endif %}
+
 
 </td>
 </td>
@@ -87,4 +133,25 @@
 {% endfor %}
 </tbody>
 </table>
+
+
+<div id="modalImg" class="modal" onclick="chiudiImmagine()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close" onclick="chiudiImmagine()">&times;</span>
+      <img id="imgPreview" src="" alt="Immagine bene">
+    </div>
+  </div>
+
+  <script>
+    function apriImmagine(src) {
+      document.getElementById('imgPreview').src = src;
+      document.getElementById('modalImg').style.display = 'flex';
+    }
+
+    function chiudiImmagine() {
+      document.getElementById('modalImg').style.display = 'none';
+      document.getElementById('imgPreview').src = '';
+    }
+  </script>
+
 </div>{# table-container #}

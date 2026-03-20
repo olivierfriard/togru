@@ -32,6 +32,22 @@
 {%endif%}
 
 
+<div class="block"><h1 class="title">
+{% for key, value in record.items() if key not in ('peso_non_conforme', 'dimensioni_non_conforme') %}
+    {% if key == 'microcopia' %}🔬{% endif %}
+    {% if key == 'da_movimentare' and value == 'SI' %}<span class="emoji" title="Da movimentare">🟩</span>{% endif %}
+    {% if key == 'trasporto_in_autonomia'  and value == 'SI' %}<span class="emoji" title="Trasporto in autonomia">🚗</span>{% endif %}
+    {% if key == 'alta_specialistica'  and value == 'SI' %}<span class="emoji" title="Alta specialistica">⚙️</span>{% endif %}
+    {% if key == 'catena_del_freddo'  and value == 'SI' %}<span class="emoji" title="Catena del freddo">❄️</span>{% endif %}
+    {% if key == 'collezione'  and value == 'SI' %}<span class="emoji" title="Collezione">📦</span>{% endif %}
+{% endfor %}
+
+{% if img_list %}<span class="emoji" title="Documentazione fotografica">🖼</span>{%endif%}
+
+</h1>
+            </div>
+
+
 <form action="{{ url_for('salva_modifiche', record_id=record.id) }}" method="POST"  enctype="multipart/form-data" onsubmit="return controllaSubmit();">
 
 <input type="hidden" name="query_string" value="{{ query_string }}">
