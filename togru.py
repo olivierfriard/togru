@@ -864,7 +864,8 @@ def modifica(record_id: int, query_string: str = ""):
 
         # check for images
         img_list = [
-            x.name for x in list(Path(app.config["UPLOAD_FOLDER"]).glob("*_*.*"))
+            x.name
+            for x in list(Path(app.config["UPLOAD_FOLDER"]).glob(f"{record_id}_*.*"))
         ]
 
     return render_template(
