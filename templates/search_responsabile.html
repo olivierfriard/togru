@@ -1,49 +1,48 @@
 <!doctype html>
 <html lang="it">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Ricerca Inventario per responsabile</title>
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
-        />
-    </head>
-    <body>
-        <section class="section">
-            {% include "menu.html" %}
 
-            <div class="container">
-                <br /><br />
+<head>
+    <meta charset="UTF-8" />
+    <title>Ricerca Inventario per responsabile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
 
-                <h1 class="title is-4">Filtra per Responsabile Laboratorio</h1>
+<body>
+    <section class="section">
+        {% include "menu.html" %}
 
-                ⚠️ indica un peso e/o delle dimensioni non conforme (solo per i
-                beni da fare trasportare)<br />
+        <div class="container">
+            <br /><br />
 
-                <div class="content">
-                    <ul>
-                        <li>
-                            <a
-                                href="/togru/search?responsabile_laboratorio=SENZA"
-                                >Senza responsabile</a
-                            >
-                        </li>
-                        <br />
+            <h1 class="title is-4">Filtra per Responsabile Laboratorio</h1>
 
-                        {% for r in resp %}
-                        <li>
-                            <a
-                                href="/togru/search?responsabile_laboratorio={{ r.responsabile_laboratorio }}"
-                                >{{ r.responsabile_laboratorio }}</a
-                            >
+            ⚠️ indica un peso e/o delle dimensioni non conforme (solo per i
+            beni da fare trasportare)<br /><br /><br />
 
-                            {% if r.invalid_items_count %} ⚠️ {{
-                            r.invalid_items_count }} {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            <div class="content">
+                <ul>
+                    <li>
+                        <a href="/togru/search?responsabile_laboratorio=SENZA">Senza responsabile</a>
+
+                        {% if senza_resp.invalid_items_count %} ⚠️ {{
+                        senza_resp.invalid_items_count }} {% endif %}
+
+                    </li>
+                    <br />
+
+                    {% for r in resp %}
+                    <li>
+                        <a href="/togru/search?responsabile_laboratorio={{ r.responsabile_laboratorio }}">{{
+                            r.responsabile_laboratorio }}</a>
+
+                        {% if r.invalid_items_count %} ⚠️ {{
+                        r.invalid_items_count }} {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
-        </section>
-    </body>
+        </div>
+    </section>
+</body>
+
 </html>

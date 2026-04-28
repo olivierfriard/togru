@@ -28,12 +28,11 @@ from sqlalchemy import bindparam, create_engine, text
 
 # from werkzeug.utils import secure_filename
 
-__version__ = "2026-03-20 11:42"
+__version__ = "2026-04-28 14:48"
 
 APP_ROOT = "/togru"
 
 app = Flask(__name__, static_url_path=f"{APP_ROOT}/static")
-app.secret_key = "sldjhalsdasd2435"  # needed for flash messages
 
 
 DATABASE_URL = "postgresql://togru_user@localhost:5432/togru"
@@ -43,6 +42,8 @@ engine = create_engine(DATABASE_URL)
 try:
     with open("client_secret.json") as f:
         config: dict[str, str] = json.load(f)["web"]
+
+    app.secret_key = config["flask_secret_key"]  # needed for flash messages
 
     client_id = config["client_id"]
     client_secret = config["client_secret"]
@@ -626,8 +627,12 @@ def index():
         n_beni_non_conforme = conn.execute(
             text(
                 (
-                    "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND not collezione AND da_movimentare AND not trasporto_in_autonomia "
-                    r"AND (peso !~ '^-?[0-9]+(\.[0-9]+)?$' OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')"
+                    "SELECT SUM(quantita) FROM inventario "
+                    "WHERE deleted IS NULL "
+                    "      AND not collezione "
+                    "      AND da_movimentare "
+                    "      AND not trasporto_in_autonomia "
+                    r"     AND (peso !~ '^-?[0-9]+(\.[0-9]+)?$' OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')"
                 )
             )
         ).scalar()
@@ -1434,7 +1439,7 @@ def search():
 @check_login
 def search_resp():
     with engine.connect() as conn:
-        result = conn.execute(
+        results_responsabili = conn.execute(
             text(
                 (
                     "SELECT "
@@ -1455,10 +1460,34 @@ def search_resp():
                     "ORDER BY responsabile_laboratorio "
                 )
             )
-        )
+        ).fetchall()
+
+        result_senza_responsabile = conn.execute(
+            text(
+                (
+                    "SELECT "
+                    "   responsabile_laboratorio, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND collezione = FALSE "
+                    "          AND da_movimentare = TRUE "
+                    "          AND trasporto_in_autonomia = FALSE "
+                    "          AND ( "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario "
+                    "WHERE responsabile_laboratorio = '' "
+                    "GROUP BY responsabile_laboratorio "
+                )
+            )
+        ).fetchone()
+
     return render_template(
         "search_responsabile.html",
-        resp=result.fetchall(),
+        resp=results_responsabili,
+        senza_resp=result_senza_responsabile,
     )
 
 
@@ -1470,7 +1499,7 @@ def search_sipi_torino():
     Show list of clickable SIPI
     """
     with engine.connect() as conn:
-        result = conn.execute(
+        results_sipi = conn.execute(
             text(
                 (
                     "SELECT i.codice_sipi_torino, "
@@ -1492,11 +1521,35 @@ def search_sipi_torino():
                     "ORDER BY i.codice_sipi_torino "
                 )
             )
-        )
+        ).fetchall()
+
+        result_senza_sipi = conn.execute(
+            text(
+                (
+                    "SELECT codice_sipi_torino, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND da_movimentare = TRUE "
+                    "          AND trasporto_in_autonomia = FALSE "
+                    "          AND ( "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario  "
+                    "WHERE codice_sipi_torino = '' "
+                    "AND deleted IS NULL "
+                    "GROUP BY codice_sipi_torino "
+                )
+            )
+        ).fetchone()
+
+    print(f"{result_senza_sipi=}")
 
     return render_template(
         "search_sipi_torino.html",
-        sipi_list=result.fetchall(),
+        sipi_list=results_sipi,
+        result_senza_sipi=result_senza_sipi,
     )
 
 

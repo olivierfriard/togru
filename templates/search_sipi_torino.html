@@ -1,50 +1,53 @@
 <!doctype html>
 <html lang="it">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Filtra per codice SIPI Torino</title>
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
-        />
-    </head>
-    <body>
-        <section class="section">
-            {% include "menu.html" %}
 
-            <div class="container">
-                <br /><br />
+<head>
+    <meta charset="UTF-8" />
+    <title>Filtra per codice SIPI Torino</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
 
-                <h1 class="title is-4">Filtra per codice SIPI Torino</h1>
+<body>
+    <section class="section">
+        {% include "menu.html" %}
 
-                ⚠️ indica un peso e/o delle dimensioni non conforme (solo per i
-                beni da fare trasportare)<br />
+        <div class="container">
+            <br /><br />
 
-                <div class="content">
-                    <div class="table-container">
+            <h1 class="title is-4">Filtra per codice SIPI Torino</h1>
+
+            ⚠️ indica un peso e/o delle dimensioni non conforme (solo per i
+            beni da fare trasportare)<br /><br /><br />
+
+            <div class="content">
+                <div class="table-container">
                     <table class="table is-striped is-narrow is-hoverable">
-                        <tr><td><a href="/togru/search?codice_sipi_torino=SENZA">SENZA</a></td>
-                        <td></td><td></td><td></td>
+                        <tr>
+                            <td><a href="/togru/search?codice_sipi_torino=SENZA">SENZA</a></td>
+                            <td></td>
+                            <td></td>
+                            <td>{% if result_senza_sipi.invalid_items_count
+                                %} ⚠️ {{
+                                result_senza_sipi.invalid_items_count }}{% endif %}</td>
                         </tr>
 
                         {% for r in sipi_list %}
                         <tr>
-                          <td>  <a
-                                href="/togru/search?codice_sipi_torino={{r.codice_sipi_torino}}"
-                                >{{ r.codice_sipi_torino }}</a
-                            ></td>
-                         <td> {{ r.denominazione if r.denominazione is not none else '' }}</td>
-                         <td> {{ r.utilizzo if r.utilizzo is not none else '' }}</td>
-                         <td>
-                            {% if r.invalid_items_count %} ⚠️ {{
-                            r.invalid_items_count }}{% endif %}
-                         </td>
+                            <td> <a href="/togru/search?codice_sipi_torino={{r.codice_sipi_torino}}">{{
+                                    r.codice_sipi_torino }}</a></td>
+                            <td> {{ r.denominazione if r.denominazione is not none else '' }}</td>
+                            <td> {{ r.utilizzo if r.utilizzo is not none else '' }}</td>
+                            <td>
+                                {% if r.invalid_items_count %} ⚠️ {{
+                                r.invalid_items_count }}{% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
-                    </ul>
-                </div>
+                        </ul>
                 </div>
             </div>
-        </section>
-    </body>
+        </div>
+    </section>
+</body>
+
 </html>
