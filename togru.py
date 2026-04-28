@@ -624,6 +624,37 @@ def index():
             )
         ).scalar()
 
+        volume_totale = conn.execute(
+            text("""
+            SELECT
+                ROUND(SUM(
+                    (
+                        (split_part(dimensioni, 'x', 1))::numeric *
+                        (split_part(dimensioni, 'x', 2))::numeric *
+                        (split_part(dimensioni, 'x', 3))::numeric
+                    ) / 1000000.0 * quantita
+                ),1) AS volume_totale_m3
+            FROM inventario
+            WHERE
+                dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
+                AND da_movimentare
+                AND NOT trasporto_in_autonomia
+                AND deleted IS NULL
+        """)
+        ).scalar()
+
+        peso_totale = conn.execute(
+            text(
+                "SELECT ROUND(SUM(peso::numeric * quantita)) "
+                "FROM inventario "
+                "WHERE  "
+                "    peso ~ '^[0-9]+(\\.[0-9]+)?$' "
+                "    AND da_movimentare "
+                "    AND NOT trasporto_in_autonomia "
+                "    AND deleted IS NULL"
+            )
+        ).scalar()
+
         n_beni_non_conforme = conn.execute(
             text(
                 (
@@ -645,7 +676,12 @@ def index():
 
         alta_specialistica = conn.execute(
             text(
-                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare  AND alta_specialistica"
+                (
+                    "SELECT SUM(quantita) FROM inventario "
+                    "WHERE deleted IS NULL "
+                    "      AND da_movimentare IS True "
+                    "      AND alta_specialistica IS True "
+                )
             )
         ).scalar()
 
@@ -684,6 +720,8 @@ def index():
         microscopia=microscopia,
         microscopia_non_alta=microscopia_non_alta,
         catena_freddo=catena_freddo,
+        peso_totale=peso_totale,
+        volume_totale=volume_totale,
     )
 
 
@@ -1247,14 +1285,17 @@ def search():
             'note AS "Note", '
             r"(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$')  AS peso_non_conforme, "
             "(collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$') AS dimensioni_non_conforme "
-            "FROM inventario WHERE deleted IS NULL "
+            "FROM inventario "
+            "WHERE deleted IS NULL "
         )
         params: dict[str, str] = {}
 
         query_non_conforme: str = (
-            "SELECT count(*) FROM inventario WHERE deleted IS NULL "
-            r"AND ((collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') "
-            r"OR (collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')) "
+            "SELECT count(*) FROM inventario "
+            " WHERE "
+            "    deleted IS NULL "
+            r"   AND ((collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND peso !~ '^-?[0-9]+(\.[0-9]+)?$') "
+            r"     OR (collezione = false AND da_movimentare = true AND trasporto_in_autonomia = false AND dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$')) "
         )
 
         for field in fields:
@@ -1313,6 +1354,8 @@ def search():
         with engine.connect() as conn:
             n_beni_non_conformi: int = conn.execute(sql_non_conforme, params).scalar()
 
+        print(f"{query=}")
+
         sql = text(query)
         with engine.connect() as conn:
             result = conn.execute(sql, params)
@@ -1321,6 +1364,8 @@ def search():
 
     ids = [x[0] for x in records]
 
+    n_beni = sum([x[1] for x in records])
+
     # check for doc photo
     doc_photo = {
         int(x.stem.split("_")[0]): x.name
@@ -1328,7 +1373,44 @@ def search():
         if int(x.stem.split("_")[0]) in ids
     }
 
-    # Se viene richiesta esportazione Excel e ci sono risultati
+    # volume totale m³
+    with engine.connect() as conn:
+        volume_totale = conn.execute(
+            text("""
+            SELECT
+                ROUND(SUM(
+                    (
+                        (split_part(dimensioni, 'x', 1))::numeric *
+                        (split_part(dimensioni, 'x', 2))::numeric *
+                        (split_part(dimensioni, 'x', 3))::numeric
+                    ) / 1000000.0 * quantita
+                ),1) AS volume_totale_m3
+            FROM inventario
+            WHERE id IN :ids
+                AND dimensioni ~ '^[0-9]+x[0-9]+x[0-9]+$'
+                AND da_movimentare
+                AND NOT trasporto_in_autonomia
+                AND deleted IS NULL
+        """).bindparams(bindparam("ids", expanding=True)),
+            {"ids": ids},
+        ).scalar()
+
+    #  peso totale
+    with engine.connect() as conn:
+        peso_totale = conn.execute(
+            text(
+                "SELECT ROUND(SUM(peso::numeric * quantita)) "
+                "FROM inventario "
+                "WHERE id IN :ids "
+                "    AND peso ~ '^[0-9]+(\\.[0-9]+)?$' "
+                "    AND da_movimentare "
+                "    AND NOT trasporto_in_autonomia "
+                "    AND deleted IS NULL"
+            ).bindparams(bindparam("ids", expanding=True)),
+            {"ids": ids},
+        ).scalar()
+
+    # Se viene richiesta esportazione spreadsheet e ci sono risultati
     if request.args.get("export", "").lower() in ("xlsx", "ods") and records:
         ids = [x[0] for x in records]
         with engine.connect() as conn:
@@ -1424,6 +1506,7 @@ def search():
 
     return render_template(
         "search.html",
+        n_beni=n_beni,
         records=records,
         request_args=request.args,
         fields=fields,
@@ -1432,6 +1515,8 @@ def search():
         columns=keys,
         n_beni_non_conformi=n_beni_non_conformi,
         doc_photo=doc_photo,
+        volume_totale=volume_totale,
+        peso_totale=peso_totale,
     )
 
 
@@ -1446,9 +1531,9 @@ def search_resp():
                     "   responsabile_laboratorio, "
                     "    COUNT(*) FILTER ( "
                     "        WHERE deleted IS NULL "
-                    "          AND collezione = FALSE "
-                    "          AND da_movimentare = TRUE "
-                    "          AND trasporto_in_autonomia = FALSE "
+                    "          AND NOT collezione "
+                    "          AND da_movimentare "
+                    "          AND NOT trasporto_in_autonomia "
                     "          AND ( "
                     r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
                     "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "

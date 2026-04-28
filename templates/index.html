@@ -1,127 +1,446 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<title>To-Gru</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <meta charset="UTF-8">
+    <title>To-Gru</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <style>
+        :root {
+            --dashboard-bg: #111827;
+            --dashboard-surface: #1f2937;
+            --dashboard-border: #334155;
+            --dashboard-primary: #7aa2ff;
+            --dashboard-primary-soft: #1e2b4d;
+            --dashboard-warning-soft: #3a321c;
+            --dashboard-danger-soft: #3b2228;
+            --dashboard-text-soft: #9caec4;
+            --dashboard-text: #e5edf7;
+        }
+
+        body {
+            background: var(--dashboard-bg);
+            min-height: 100vh;
+            color: var(--dashboard-text);
+        }
+
+        .dashboard-shell {
+            margin-top: 1.5rem;
+        }
+
+        .dashboard-hero {
+            background: linear-gradient(135deg, #1b2432 0%, #253247 100%);
+            color: var(--dashboard-text);
+            border-radius: 22px;
+            padding: 2rem;
+            border: 1px solid var(--dashboard-border);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+        }
+
+        .metric-card,
+        .dashboard-panel,
+        .dashboard-history {
+            background: var(--dashboard-surface);
+            border: 1px solid var(--dashboard-border);
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+        }
+
+        .metric-card {
+            height: 100%;
+            padding: 1.25rem;
+        }
+
+        .metric-card.is-alert {
+            position: relative;
+            overflow: hidden;
+            border-width: 2px;
+        }
+
+        .metric-card.is-alert::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 6px;
+            border-radius: 18px 0 0 18px;
+        }
+
+        .metric-card.is-alert .metric-value {
+            font-size: 2.4rem;
+        }
+
+        .metric-card.is-alert .metric-note a,
+        .metric-card.is-alert .metric-note {
+            font-weight: 600;
+        }
+
+        .metric-card.is-alert-responsabile {
+            background: #1e3a4c;
+            border-color: #4ea8de;
+        }
+
+        .metric-card.is-alert-responsabile::before {
+            background: #4ea8de;
+        }
+
+        .metric-card.is-alert-nonconforme {
+            background: #3a321c;
+            border-color: #f9c74f;
+        }
+
+        .metric-card.is-alert-nonconforme::before {
+            background: #f9c74f;
+        }
+
+        .metric-label {
+            color: var(--dashboard-text-soft);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            color: var(--dashboard-text);
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-top: 0.4rem;
+        }
+
+        .metric-note {
+            color: var(--dashboard-text-soft);
+            margin-top: 0.5rem;
+        }
+
+        .dashboard-panel {
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .panel-heading-inline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel-heading-inline .title,
+        .dashboard-history .title {
+            margin-bottom: 0;
+        }
+
+        .highlight-row {
+            background-color: #182230;
+            border: 1px solid var(--dashboard-border);
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+        }
+
+        .highlight-row+.highlight-row {
+            margin-top: 0.75rem;
+        }
+
+        .highlight-row strong {
+            color: var(--dashboard-text);
+        }
+
+        .dashboard-history {
+            padding: 1.5rem;
+        }
+
+        .history-list {
+            margin-top: 1rem;
+        }
+
+        .history-item {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 1rem;
+            padding: 0.9rem 0;
+            border-bottom: 1px solid #2c394c;
+        }
+
+        .history-item:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .history-date {
+            font-weight: 700;
+            color: var(--dashboard-primary);
+        }
+
+        .title,
+        .subtitle,
+        strong,
+        a {
+            color: var(--dashboard-text);
+        }
+
+        .subtitle.has-text-white-bis {
+            color: var(--dashboard-text-soft) !important;
+        }
+
+        .metric-note a {
+            color: #9cc4ff;
+        }
+
+        .notification a {
+            color: inherit;
+        }
+
+        @media screen and (max-width: 768px) {
+            .dashboard-hero {
+                padding: 1.5rem;
+            }
+
+            .history-item {
+                grid-template-columns: 1fr;
+                gap: 0.35rem;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<section class="section">
-{% include "menu.html" %}
-<div class="container">
+    <section class="section">
+        {% include "menu.html" %}
+        <div class="container dashboard-shell">
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-  {% for category, message in messages %}
-    <div class="notification is-{{ category }}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
-{% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="notification is-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
 
-{% if session['email'] %}
-<br>
-<h4 class="subtitle is-4">Ciao {{ session['name'] }}</h4>
+            {% if session['email'] %}
+            <section class="dashboard-hero">
+                <div class="columns is-vcentered is-variable is-6">
+                    <div class="column is-8">
+                        <p class="subtitle is-5 has-text-white-bis mb-0">
+                            Traslocco DBIOS - Inventario beni
+                        </p>
+                    </div>
+                    <div class="column is-4">
+                        <div class="columns is-multiline is-mobile">
+                            <div class="column is-12">
+                                <div class="metric-card">
+                                    <p class="metric-label">Totale beni</p>
+                                    <p class="metric-value">{{ n_records }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
+            <div class="columns is-multiline mt-5">
+                <div class="column is-12">
+                    <div class="columns is-multiline">
+                        <div class="column is-6-desktop is-6-tablet">
+                            <div class="metric-card is-alert is-alert-responsabile">
+                                <p class="metric-label">BENI Senza responsabile</p>
+                                <p class="metric-value">{{ n_beni_senza_responsabile }}</p>
+                                <p class="metric-note">
+                                    <a href="{{ url_for('search', responsabile_laboratorio='SENZA' ) }}">
+                                        Verifica assegnazioni
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="column is-6-desktop is-6-tablet">
+                            <div class="metric-card is-alert is-alert-nonconforme">
+                                <p class="metric-label">BENI Non conformi</p>
+                                <p class="metric-value">{{ n_beni_non_conforme }}</p>
+                                <p class="metric-note">Peso e/o dimensioni da correggere</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="column is-7-desktop">
+                    <div class="dashboard-panel">
+                        <div class="panel-heading-inline">
+                            <div>
+                                <h2 class="title is-4">Movimentazioni</h2>
+                                <p class="subtitle is-6 mb-0">Stato operativo dei beni da trasferire</p>
+                            </div>
+                            <span class="tag is-medium"
+                                style="background: var(--dashboard-primary-soft); color: var(--dashboard-primary);">
+                                Focus operativo
+                            </span>
+                        </div>
 
+                        <div class="highlight-row">
+                            <div class="level is-mobile mb-0">
+                                <div class="level-left">
+                                    <div>
+                                        <p class="metric-label">Da fare movimentare</p>
+                                        <strong class="is-size-4">{{ n_beni_da_movimentare }}</strong>
+                                        <div class="mt-3">
+                                            <p class="metric-note mb-1">
+                                                Peso totale:
+                                                <strong>
+                                                    {% if peso_totale > 1000 %}
+                                                    {{ (peso_totale / 1000)|round(2) }} t
+                                                    {% else %}
+                                                    {{ peso_totale }} Kg
+                                                    {% endif %}
+                                                </strong>
+                                            </p>
+                                            <p class="metric-note mb-0">
+                                                Volume totale: <strong>{{ volume_totale }} m³</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="level-right has-text-right">
+                                    <p class="metric-note">Da pianificare con supporto logistico</p>
+                                </div>
+                            </div>
+                        </div>
 
+                        <div class="highlight-row">
+                            <div class="level is-mobile mb-0">
+                                <div class="level-left">
+                                    <div>
+                                        <p class="metric-label">Trasporto in autonomia</p>
+                                        <strong class="is-size-4">{{ n_beni_da_movimentare_in_autonomia }}</strong>
+                                    </div>
+                                </div>
+                                <div class="level-right has-text-right">
+                                    <p class="metric-note">Gestibili senza servizio esterno</p>
+                                </div>
+                            </div>
+                        </div>
 
+                    </div>
+                </div>
 
-<div class="block">
-<p class="subtitle is-5">Beni / strumenti inseriti nel database: <b>{{ n_records }}</b></p>
-<p class="subtitle is-5">Beni / strumenti senza responsabile: <a href="{{ url_for("search", responsabile_laboratorio='SENZA')}}"><b>{{ n_beni_senza_responsabile }}</b></a></p>
-<p class="subtitle is-4">Beni / strumenti da movimentare</p>
-<p class="subtitle is-5">Da fare movimentare: <b>{{ n_beni_da_movimentare }}</b>
-(⚠️ peso e/o dimensioni non conforme: <b>{{ n_beni_non_conforme }}</b>)
-</p>
-<p class="subtitle is-5">Trasporto in autonomia: <b>{{ n_beni_da_movimentare_in_autonomia}}</b>
-<p class="subtitle is-5">Alta specislistica: <b><a href="/togru/search?alta_specialistica=true&da_movimentare=true">{{ alta_specialistica}}</a></b>
-<p class="subtitle is-5">Microscopia: <b><a href="/togru/search?microscopia=true&da_movimentare=true">{{ microscopia}}</a></b>
-    (non alta specialistica <b><a href="/togru/search?microscopia=true&da_movimentare=true&alta_specialistica=false">{{ microscopia_non_alta}}</a></b>)
-<p class="subtitle is-5">Catena del freddo da rispettare: <b><a href="/togru/search?catena_del_freddo=true&da_movimentare=true">{{ catena_freddo}}</a></b>
-</p>
-</div>
-<br><br>
-<div class="block">
-<a class="button is-link" href="https://pad.cisti.org/p/dbios_togru">Spazio di discussione</a>
-</div>
+                <div class="column is-12">
+                    <div class="dashboard-panel">
+                        <div class="panel-heading-inline">
+                            <div>
+                                <h2 class="title is-4">Aree speciali</h2>
 
-<div class="block">
-Storico del servizio
-<pre>
+                            </div>
+                        </div>
 
-2026-03-20: risolto errore su visualizzazione documentazione fotografica
-            aggiunta icona "doc foto" nell'elenco dei beni per visualizzazione foto  diretta
+                        <div class="columns is-multiline">
+                            <div class="column is-4-desktop">
+                                <div class="highlight-row" style="background: #1d2940;">
+                                    <p class="metric-label">Alta specialistica</p>
+                                    <p class="metric-value is-size-3 mb-2">{{ alta_specialistica }}</p>
+                                    <a href="/togru/search?alta_specialistica=true&da_movimentare=true"><strong>Apri
+                                            elenco</strong></a>
+                                </div>
+                            </div>
+                            <div class="column is-4-desktop">
+                                <div class="highlight-row" style="background: #1b3140;">
+                                    <p class="metric-label">Microscopia</p>
+                                    <p class="metric-value is-size-3 mb-2">{{ microscopia }}</p>
+                                    <p class="metric-note mb-2">Non alta specialistica: <strong>{{ microscopia_non_alta
+                                            }}</strong></p>
+                                    <a href="/togru/search?microscopia=true&da_movimentare=true"><strong>Apri
+                                            elenco</strong></a>
+                                </div>
+                            </div>
+                            <div class="column is-4-desktop">
+                                <div class="highlight-row" style="background: var(--dashboard-warning-soft);">
+                                    <p class="metric-label">Catena del freddo</p>
+                                    <p class="metric-value is-size-3 mb-2">{{ catena_freddo }}</p>
+                                    <a href="/togru/search?catena_del_freddo=true&da_movimentare=true"><strong>Apri
+                                            elenco</strong></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-2025-12-05: aggiunta quantità beni a statistica su home page
+                <div class="column is-12">
+                    <div class="dashboard-history">
+                        <div class="panel-heading-inline">
+                            <div>
+                                <h2 class="title is-4">Storico del servizio</h2>
+                                <p class="subtitle is-6 mb-0">Aggiornamenti recenti della piattaforma</p>
+                            </div>
+                        </div>
+                        <div class="history-list">
+                            <div class="history-item">
+                                <div class="history-date">2026-03-20</div>
+                                <div>Risolto errore su visualizzazione documentazione fotografica e aggiunta icona "doc
+                                    foto" nell'elenco dei beni per accesso diretto.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-12-05</div>
+                                <div>Aggiunta quantita beni alla statistica in home page.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-11-20</div>
+                                <div>Aggiunto export dei risultati della ricerca in formato OpenDocument ODS.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-11-13</div>
+                                <div>Aggiunto peso totale di tutti i beni e volume singolo e totale in m³.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-10-20</div>
+                                <div>Aggiunto tag SI/NO per collezione; le collezioni non sono considerate nel controllo
+                                    peso e dimensioni.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-10-10</div>
+                                <div>Aggiunto controllo peso e dimensioni per beni da movimentare non in autonomia con
+                                    regole di compilazione dedicate.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-09-26</div>
+                                <div>Risolto problema di visualizzazione per responsabili contenenti il carattere slash
+                                    (/).</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-09-15</div>
+                                <div>Aggiunto id TOGRU alle etichette come identificatore univoco.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-07-16</div>
+                                <div>Aggiunta possibilita di creare copie di un bene.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-07-11</div>
+                                <div>Aggiunta possibilita di allegare una o piu fotografie.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-07-10</div>
+                                <div>Aggiunte mappe Grugliasco.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-07-09</div>
+                                <div>Aggiunta opzione per stampa di etichette multiple.</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-07-08</div>
+                                <div>Aggiunta funzione per filtrare per struttura e modifica multipla per "Catena del
+                                    freddo".</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-date">2025-06-09</div>
+                                <div>Aggiunta una sezione mappe con codici SIPI.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
-2025-11-20: aggiunto export dei risultati della ricerca in OpenDocument (ODS)
-
-2025-11-13: aggiunto peso totale tutti i beni e volume (singolo e totale) in m³
-
-2025-10-20: aggiunto tag SI/NO per collezione. Le collezioni non sono prese in considerazione per il controllo del peso / dimensioni
-
-2025-10-10: aggiunto controllo peso e dimensioni per beni da movimentare non in autonomia
-            Il peso deve essere espresso in Kg (senza unità e usando il punto come separatore decimale)
-            Le dimensioni devono essere espresse in centimetri arrotondati seguendo il formato HxlxH (senza separatori decimale, senza spazi)
-
-
-2025-09-26: risolto problema di visualizzazione per responsabili contenenti il carattere slash (/)
-
-2025-09-15: aggiunto id TOGRU alle etichette (come identificatore univoco)
-
-2025-07-16: aggiunto possibilità di creare copie di un bene
-
-2025-07-11: aggiunto possibilità di aggiungere una o più fotografie
-
-2025-07-10: aggiunte mappe Grugliasco
-
-2025-07-09: aggiunta opzione per stampa di etichette multiple
-
-2025-07-08: aggiunta funzione per filtrare per struttura
-                aggiunta Modifica multipla per "Catena del freddo"
-
-2025-06-09: aggiunto una sezione mappe (con codici SIPI)
-
-</pre>
-</div>
-
-
-
-{% endif %}
-
-
-
-
-</div>
-</section>
-<!--
-    <script>
-  // Au chargement de la page
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme) {
-  body.classList.remove('light-mode', 'dark-mode');
-  body.classList.add(savedTheme);
-  toggleButton.textContent = savedTheme === 'dark-mode' ? '☀️ Mode clair' : '🌙 Mode sombre';
-}
-
-// Lors du clic sur le bouton
-toggleButton.addEventListener('click', () => {
-  if (body.classList.contains('light-mode')) {
-    body.classList.remove('light-mode');
-    body.classList.add('dark-mode');
-    toggleButton.textContent = '☀️ Mode clair';
-    localStorage.setItem('theme', 'dark-mode');
-  } else {
-    body.classList.remove('dark-mode');
-    body.classList.add('light-mode');
-    toggleButton.textContent = '🌙 Mode sombre';
-    localStorage.setItem('theme', 'light-mode');
-  }
-});
-</script>
--->
+        </div>
+    </section>
 </body>
+
 </html>

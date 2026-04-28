@@ -1,231 +1,279 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8" />
     <title>Ricerca Inventario</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
 </head>
+
 <body>
-<section class="section">
+    <section class="section">
 
-{% include "menu.html" %}
-
-
-
-<br><br>
-
-<h1 class="title is-4">Ricerca nell'inventario</h1>
-
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-  {% for category, message in messages %}
-    <div class="notification is-{{ category }}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
-{% endwith %}
-
-<form method="get" action="{{ url_for('search') }}">
-<div class="columns is-multiline">
-{% for field in fields %}
-<div class="column is-2">
-<div class="field is-small">
-<label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
-<div class="control">
-{% if field in boolean_fields %}
-
-<select class="input" name="{{ field }}">
-    <option value="" {% if request_args.get(field, '') == '' %}selected{% endif %}>SI o NO</option>
-    <option value="true" {% if request_args.get(field, '') == 'true' %}selected{% endif %}>SI</option>
-    <option value="false" {% if request_args.get(field, '') == 'false' %}selected{% endif %}>NO</option>
-</select>
-
-
-{% else %}
-    <input class="input is-small"
-                type="text"
-                name="{{ field }}"
-                value="{{ request_args.get(field, '') }}"
-                placeholder="Cerca {{ field.replace('_', ' ') }}" >
-{% endif %}
-
-</div>
-</div>
-</div>
-{% endfor %}
-</div>
-
-<div class="field is-grouped">
-<div class="control">
-    <button class="button is-primary" type="submit">Cerca</button>
-</div>
+        {% include "menu.html" %}
 
 
 
+        <br><br>
 
-<div class="control">
-<a href="{{ url_for('search') }}" class="button is-light">Reset</a>
-
- <button class="button is-info" type="submit" name="export" value="ods">Esporta in OpenDocument format (ODS)</button>
-<button class="button is-info" type="submit" name="export" value="xlsx">Esporta in XLSX</button>
+        <h1 class="title is-4">Ricerca nell'inventario</h1>
 
 
-</div>
-</div>
-</form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="notification is-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="get" action="{{ url_for('search') }}">
+            <div class="columns is-multiline">
+                {% for field in fields %}
+                <div class="column is-2">
+                    <div class="field is-small">
+                        <label class="label is-size-7">{{ field.replace('_', ' ').capitalize() }}</label>
+                        <div class="control">
+                            {% if field in boolean_fields %}
+
+                            <select class="input" name="{{ field }}">
+                                <option value="" {% if request_args.get(field, '' )=='' %}selected{% endif %}>SI o NO
+                                </option>
+                                <option value="true" {% if request_args.get(field, '' )=='true' %}selected{% endif %}>SI
+                                </option>
+                                <option value="false" {% if request_args.get(field, '' )=='false' %}selected{% endif %}>
+                                    NO</option>
+                            </select>
+
+
+                            {% else %}
+                            <input class="input is-small" type="text" name="{{ field }}"
+                                value="{{ request_args.get(field, '') }}"
+                                placeholder="Cerca {{ field.replace('_', ' ') }}">
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="field is-grouped">
+                <div class="control">
+                    <button class="button is-primary" type="submit">Cerca</button>
+                </div>
 
 
 
 
-{% if records %}
+                <div class="control">
+                    <a href="{{ url_for('search') }}" class="button is-light">Reset</a>
 
-{# etichette multiple #}
-<br>
-<form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
 
-<div class="control">
-    <a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
-    {% if records %}
+                    <div class="dropdown is-hoverable">
+                        <div class="dropdown-trigger">
+                            <button class="button is-info" type="button">
+                                <span>Esporta</span>
+                            </button>
+                        </div>
 
-    <button class="button is-info" type="submit">Stampa etichette</button>
-    {% endif %}
-</div>
+                        <div class="dropdown-menu" role="menu">
+                            <div class="dropdown-content">
+                                <button class="dropdown-item" type="submit" name="export" value="ods">
+                                    Esporta in OpenDocument format (ODS)
+                                </button>
 
-</form>
+                                <button class="dropdown-item" type="submit" name="export" value="xlsx">
+                                    Esporta in Microsoft-Excel (XLSX)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-<hr />
 
-<div class="mb-5">
-<button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
-</div>
-
-<div id="form_modifica_multipla_wrapper" style="display: none;">
-
-<!-- Form per aggiornamento multiplo di un campo -->
-<form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
-<input type="hidden" name="query_string" value="{{ query_string }}">
-
-<div class="field is-horizontal">
-<div class="field-label is-normal">
-<label class="label">Campo</label>
-</div>
-<div class="field-body">
-<div class="field">
-<div class="control">
-<div class="select">
-<select name="campo">
-<option value="responsabile_laboratorio">Responsabile laboratorio</option>
-<option value="codice_sipi_torino">Codice SIPI Torino</option>
-<option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
-<option value="da_movimentare">Da movimentare</option>
-<option value="trasporto_in_autonomia">Trasporto in autonomia</option>
-<option value="catena_del_freddo">Catena del freddo</option>
-<option value="didattica">Didattica</option>
-<option value="collezione">Collezione</option>
-<option value="destinazione">Destinazione</option>
-<option value="note">Note</option>
-</select>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<div class="field is-horizontal">
-<div class="field-label is-normal">
-<label class="label">Nuovo valore</label>
-</div>
-<div class="field-body">
-<div class="field">
-<div class="control">
-<input class="input" type="text" name="nuovo_valore" placeholder="Scrivi il nuovo valore... SI/NO per i campi booleani" required />
-</div>
-</div>
-</div>
-</div>
-
-<div class="control mb-5 mt-4">
-<button class="button is-danger" type="submit">Aggiorna selezionati</button>
-</div>
-</form>
-</div><!-- per nascondere -->
+                </div>
+            </div>
+        </form>
 
 
 
 
+        {% if records %}
 
-<div class="mb-5">
-<b>{{ records|length }}</b> ben{% if records|length > 1%}i{%else%}e{%endif%} trovat{% if records|length > 1%}i{%else%}o{%endif%}<br>
-</div>
+        {# etichette multiple #}
+        <br>
+        <form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
+
+            <div class="control">
+                <a href="{{ url_for('aggiungi', query_string=query_string) }}" class="button is-info">Aggiungi bene</a>
+                {% if records %}
+
+                <button class="button is-info" type="submit">Stampa etichette</button>
+                {% endif %}
+            </div>
+
+        </form>
+
+        <hr />
+
+        <div class="mb-5">
+            <button class="button is-warning" type="button" id="toggle_modifica_multipla">Modifica Multipla</button>
+        </div>
+
+        <div id="form_modifica_multipla_wrapper" style="display: none;">
+
+            <!-- Form per aggiornamento multiplo di un campo -->
+            <form method="post" action="{{ url_for('modifica_multipla') }}" id="form_modifica_multipla">
+                <input type="hidden" name="query_string" value="{{ query_string }}">
+
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Campo</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <div class="select">
+                                    <select name="campo">
+                                        <option value="responsabile_laboratorio">Responsabile laboratorio</option>
+                                        <option value="codice_sipi_torino">Codice SIPI Torino</option>
+                                        <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
+                                        <option value="da_movimentare">Da movimentare</option>
+                                        <option value="trasporto_in_autonomia">Trasporto in autonomia</option>
+                                        <option value="catena_del_freddo">Catena del freddo</option>
+                                        <option value="didattica">Didattica</option>
+                                        <option value="collezione">Collezione</option>
+                                        <option value="destinazione">Destinazione</option>
+                                        <option value="note">Note</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Nuovo valore</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input class="input" type="text" name="nuovo_valore"
+                                    placeholder="Scrivi il nuovo valore... SI/NO per i campi booleani" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control mb-5 mt-4">
+                    <button class="button is-danger" type="submit">Aggiorna selezionati</button>
+                </div>
+            </form>
+        </div><!-- per nascondere -->
 
 
-{% if n_beni_non_conformi %}
-<div class="notification is-warning">
-⚠️ <b>{{ n_beni_non_conformi }}</b> beni da fare movimentare con peso e/o dimensioni non conformi
-</div>
-{% endif %}
-
-
-{% include "table.html" %}
-
-{% else %}
-<br><br>
-    <h1 class="title is-5">Nessun risultato trovato</h1>
-
-{% endif %}
-</section>
-
-<script>
-    document.getElementById('select_all').addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('input[name="record_ids"]');
-        checkboxes.forEach(cb => cb.checked = this.checked);
-    });
-
-    document.getElementById('toggle_modifica_multipla').addEventListener('click', function() {
-    const wrapper = document.getElementById('form_modifica_multipla_wrapper');
-    wrapper.style.display = (wrapper.style.display === 'none' || wrapper.style.display === '') ? 'block' : 'none';
-});
-
-
-document.getElementById('form_modifica_multipla').addEventListener('submit', function(e) {
-    const selected = document.querySelectorAll('input[name="record_ids"]:checked');
-    if (selected.length === 0) {
-        e.preventDefault();
-        alert('Seleziona almeno un record da aggiornare.');
-    }
-});
-
-
-document.getElementById('form_etichette_multiple').addEventListener('submit', function(e) {
-    const selected = document.querySelectorAll('input[name="record_ids"]:checked');
-    if (selected.length === 0) {
-        e.preventDefault();
-        alert('Seleziona almeno un record.');
-    }
-
-
-const form = this;
-
-    // Remove any previously cloned checkboxes
-    form.querySelectorAll('input[name="record_ids"]').forEach(el => el.remove());
-
-    // Clone selected checkboxes into form_etichette_multiple
-    selected.forEach(function(checkbox) {
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'record_ids';
-        hiddenInput.value = checkbox.value;
-        form.appendChild(hiddenInput);
-    });
 
 
 
-});
+
+        <div class="notification  mb-5">
+            {% set count = records|length %}
+            {% set plurale = count != 1 %}
+
+            <span>
+                <strong>{{ n_beni }}</strong>
+                ben{{ 'i' if plurale else 'e' }}
+                trovat{{ 'i' if plurale else 'o' }}
+            </span>
+
+            <span class="mx-2">·</span>
+
+            <span>Da movimentare:</span>
+
+            <span class="tag is-info  ml-2">
+                {{ volume_totale }} m³
+            </span>
+
+            <span class="tag is-info ml-1">
+                {% if peso_totale > 1000 %}
+                {{ (peso_totale / 1000)|round(2) }} t
+                {% else %}
+                {{ peso_totale }} Kg
+                {% endif %}
+            </span>
+
+        </div>
+
+        {% if n_beni_non_conformi %}
+        <div class="notification is-warning">
+            ⚠️ <b>{{ n_beni_non_conformi }}</b> beni da fare movimentare con peso e/o dimensioni non conformi
+        </div>
+        {% endif %}
 
 
-</script>
+
+        {% include "table.html" %}
+
+        {% else %}
+        <br><br>
+        <h1 class="title is-5">Nessun risultato trovato</h1>
+
+        {% endif %}
+    </section>
+
+    <script>
+        document.getElementById('select_all').addEventListener('change', function () {
+            const checkboxes = document.querySelectorAll('input[name="record_ids"]');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        document.getElementById('toggle_modifica_multipla').addEventListener('click', function () {
+            const wrapper = document.getElementById('form_modifica_multipla_wrapper');
+            wrapper.style.display = (wrapper.style.display === 'none' || wrapper.style.display === '') ? 'block' : 'none';
+        });
+
+
+        document.getElementById('form_modifica_multipla').addEventListener('submit', function (e) {
+            const selected = document.querySelectorAll('input[name="record_ids"]:checked');
+            if (selected.length === 0) {
+                e.preventDefault();
+                alert('Seleziona almeno un record da aggiornare.');
+            }
+        });
+
+
+        document.getElementById('form_etichette_multiple').addEventListener('submit', function (e) {
+            const selected = document.querySelectorAll('input[name="record_ids"]:checked');
+            if (selected.length === 0) {
+                e.preventDefault();
+                alert('Seleziona almeno un record.');
+            }
+
+
+            const form = this;
+
+            // Remove any previously cloned checkboxes
+            form.querySelectorAll('input[name="record_ids"]').forEach(el => el.remove());
+
+            // Clone selected checkboxes into form_etichette_multiple
+            selected.forEach(function (checkbox) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'record_ids';
+                hiddenInput.value = checkbox.value;
+                form.appendChild(hiddenInput);
+            });
+
+
+
+        });
+
+
+    </script>
 
 </body>
+
 </html>
