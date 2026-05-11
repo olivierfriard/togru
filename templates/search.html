@@ -198,8 +198,9 @@
             </span>
 
             <span class="tag is-info ml-1">
-                {% if peso_totale > 1000 %}
-                {{ (peso_totale / 1000)|round(2) }} t
+
+                {% if (peso_totale | default(0, true)) > 1000 %}
+                {{ ((peso_totale | default(0, true)) / 1000)|round(2) }} t
                 {% else %}
                 {{ peso_totale }} Kg
                 {% endif %}
