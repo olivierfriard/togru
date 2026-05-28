@@ -1663,6 +1663,65 @@ def search_resp():
     )
 
 
+@app.route(APP_ROOT + "/search_gruppo_ricerca")
+@check_login
+def search_gruppo_ricerca():
+    with engine.connect() as conn:
+        gruppi = conn.execute(
+            text(
+                (
+                    "SELECT "
+                    "    gruppo_ricerca, "
+                    "    SUM(quantita) AS n_beni, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND NOT collezione "
+                    "          AND da_movimentare "
+                    "          AND NOT trasporto_in_autonomia "
+                    "          AND ( "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario "
+                    "WHERE gruppo_ricerca <> '' "
+                    "AND gruppo_ricerca IS NOT NULL "
+                    "AND deleted IS NULL "
+                    "GROUP BY gruppo_ricerca "
+                    "ORDER BY gruppo_ricerca "
+                )
+            )
+        ).fetchall()
+
+        senza_gruppo = conn.execute(
+            text(
+                (
+                    "SELECT "
+                    "    SUM(quantita) AS n_beni, "
+                    "    COUNT(*) FILTER ( "
+                    "        WHERE deleted IS NULL "
+                    "          AND NOT collezione "
+                    "          AND da_movimentare "
+                    "          AND NOT trasporto_in_autonomia "
+                    "          AND ( "
+                    r"              peso !~ '^-?[0-9]+(\.[0-9]+)?$' "
+                    "              OR dimensioni !~ '^[0-9]+x[0-9]+x[0-9]+$' "
+                    "          ) "
+                    "    ) AS invalid_items_count "
+                    "FROM inventario "
+                    "WHERE (gruppo_ricerca = '' OR gruppo_ricerca IS NULL) "
+                    "AND deleted IS NULL "
+                )
+            )
+        ).fetchone()
+
+    return render_template(
+        "search_gruppo_ricerca.html",
+        gruppi=gruppi,
+        senza_gruppo=senza_gruppo,
+    )
+
+
 # book2
 @app.route(APP_ROOT + "/search_sipi_torino")
 @check_login
