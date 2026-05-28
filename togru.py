@@ -1541,6 +1541,7 @@ def search_resp():
                     "    ) AS invalid_items_count "
                     "FROM inventario "
                     "WHERE responsabile_laboratorio <> '' "
+                    "AND deleted IS NULL "
                     "GROUP BY responsabile_laboratorio "
                     "ORDER BY responsabile_laboratorio "
                 )
