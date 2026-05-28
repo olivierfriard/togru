@@ -105,7 +105,7 @@
 <div class="columns is-multiline is-mobile">
                 {% for field in [
                     'collezione', 'num_inventario', 'num_inventario_ateneo',
-                    'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
+                    'gruppo_ricerca', 'codice_sipi_torino', 'codice_sipi_grugliasco', 'destinazione', 'peso', 'dimensioni',
                     'microscopia', 'catena_del_freddo', 'alta_specialistica', 'da_movimentare', 'trasporto_in_autonomia', 'da_disinventariare',
                     'rosso_fase_alimentazione_privilegiata',
                     'didattica',
@@ -136,6 +136,14 @@
 <select class="input" name="{{ field }}">
     <option value="true" {% if record[field] == 'SI' %}selected{% endif %}>SI</option>
     <option value="false" {% if record[field] == 'NO' %}selected{% endif %}>NO</option>
+</select>
+
+                            {% elif field in choice_fields %}
+<select class="input" name="{{ field }}">
+    <option value="" {% if not record[field] %}selected{% endif %}>Nessun gruppo</option>
+    {% for option in choice_fields[field] %}
+    <option value="{{ option }}" {% if record[field] == option %}selected{% endif %}>{{ option }}</option>
+    {% endfor %}
 </select>
 
                             {% else %}

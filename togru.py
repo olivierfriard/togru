@@ -60,6 +60,11 @@ try:
     if "127.0.0.1" in redirect_uri:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     app.config["UPLOAD_FOLDER"] = "static/images"
+    app.config["TYPST_PATH"] = (
+        os.environ.get("TOGRU_TYPST_PATH")
+        or config.get("typst_path")
+        or "/usr/bin/typst"
+    )
 
 
 except Exception:
@@ -77,6 +82,41 @@ BOOLEAN_FIELDS = [
     "didattica",
     "collezione",
 ]
+
+GRUPPI_RICERCA = (
+    "AGR/11",
+    "BIO/01",
+    "BIO/02",
+    "BIO/03",
+    "BIO/04",
+    "BIO/05",
+    "BIO/06",
+    "BIO/07",
+    "BIO/08",
+    "BIO/09",
+    "BIO/10",
+    "BIO/11",
+    "BIO/18",
+    "BIO/19",
+    "LANT/10",
+)
+
+CHOICE_FIELDS = {
+    "gruppo_ricerca": GRUPPI_RICERCA,
+}
+
+
+def normalize_gruppo_ricerca(value: str | None) -> str | None:
+    value = (value or "").strip().upper()
+    if value in ("", "NULL", "SENZA"):
+        return None
+    if value not in GRUPPI_RICERCA:
+        raise ValueError(
+            "Il gruppo ricerca deve essere NULL oppure uno tra: "
+            + ", ".join(GRUPPI_RICERCA)
+        )
+    return value
+
 
 # Creazione tabella
 with engine.connect() as conn:
@@ -97,6 +137,7 @@ with engine.connect() as conn:
             valore_convenzionale TEXT,
             esercizio_bene_migrato TEXT,
             responsabile_laboratorio TEXT,
+            gruppo_ricerca TEXT,
             denominazione_fornitore TEXT,
             anno_fabbricazione TEXT,
             numero_seriale TEXT,
@@ -163,6 +204,7 @@ def aggiungi(query_string: str = ""):
             "aggiungi.html",
             responsabili=responsabili,
             boolean_fields=BOOLEAN_FIELDS,
+            choice_fields=CHOICE_FIELDS,
             query_string=query_string,
             search_responsabile=search_responsabile,
         )
@@ -179,6 +221,14 @@ def aggiungi(query_string: str = ""):
         if data["responsabile_laboratorio"] == "altro":
             data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
 
+        try:
+            data["gruppo_ricerca"] = normalize_gruppo_ricerca(
+                data.get("gruppo_ricerca")
+            )
+        except ValueError as exc:
+            flash(str(exc), "danger")
+            return redirect(request.referrer or url_for("aggiungi"))
+
         query = text("""
             INSERT INTO inventario (
             quantita,
@@ -187,7 +237,7 @@ def aggiungi(query_string: str = ""):
                 microscopia, catena_del_freddo, alta_specialistica, da_movimentare, trasporto_in_autonomia, da_disinventariare,
                 rosso_fase_alimentazione_privilegiata,
                 didattica, valore_convenzionale, esercizio_bene_migrato,
-                responsabile_laboratorio, denominazione_fornitore, anno_fabbricazione, numero_seriale,
+                responsabile_laboratorio, gruppo_ricerca, denominazione_fornitore, anno_fabbricazione, numero_seriale,
                 categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,
                 ditta_costruttrice_fornitrice, note, collezione
             ) VALUES (
@@ -195,7 +245,7 @@ def aggiungi(query_string: str = ""):
                 :descrizione_bene, :codice_sipi_torino, :codice_sipi_grugliasco, :destinazione,
                 :microscopia, :catena_del_freddo, :alta_specialistica, :da_movimentare, :trasporto_in_autonomia, :da_disinventariare,
                 :rosso_fase_alimentazione_privilegiata, :didattica, :valore_convenzionale, :esercizio_bene_migrato,
-                :responsabile_laboratorio, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
+                :responsabile_laboratorio, :gruppo_ricerca, :denominazione_fornitore, :anno_fabbricazione, :numero_seriale,
                 :categoria_inventoriale, :catalogazione_materiale_strumentazione, :peso, :dimensioni,
                 :ditta_costruttrice_fornitrice, :note, :collezione
             )
@@ -405,7 +455,7 @@ def etichetta(record_id: str = ""):
         temp_pdf_path = f"/tmp/label_{record_id}.pdf"
 
         _ = subprocess.run(
-            ["/usr/bin/typst", "compile", temp_typst_path, temp_pdf_path]
+            [app.config["TYPST_PATH"], "compile", temp_typst_path, temp_pdf_path]
         )
 
         # send file to client
@@ -548,6 +598,7 @@ def duplica(record_id: int, query_string: str = ""):
                         "  valore_convenzionale, "
                         "  esercizio_bene_migrato, "
                         "  responsabile_laboratorio, "
+                        "  gruppo_ricerca, "
                         "  denominazione_fornitore, "
                         "  anno_fabbricazione, "
                         "  numero_seriale, "
@@ -579,6 +630,7 @@ def duplica(record_id: int, query_string: str = ""):
                         "  valore_convenzionale, "
                         "  esercizio_bene_migrato, "
                         "  responsabile_laboratorio, "
+                        "  gruppo_ricerca, "
                         "  denominazione_fornitore, "
                         "  anno_fabbricazione, "
                         "  numero_seriale, "
@@ -756,9 +808,6 @@ def label(record_list: list[str]) -> str:
             f"""#text(size: 12pt)[*`{record["descrizione_bene"].replace("`", "'") if record["descrizione_bene"] else " "}`*] """
         )
 
-        out.append(
-            f"""#text(size: 12pt)[*`{record["descrizione_bene"].replace("`", "'") if record["descrizione_bene"] else " "}`*]"""
-        )
         out.append("")
         out.append("#grid(columns: (14cm, 5cm),")
         out.append("[")
@@ -886,6 +935,7 @@ def modifica(record_id: int, query_string: str = ""):
                     "CASE WHEN didattica THEN 'SI' ELSE 'NO' END AS didattica,"
                     "CASE WHEN collezione THEN 'SI' ELSE 'NO' END AS collezione,"
                     "valore_convenzionale,"
+                    "gruppo_ricerca,"
                     "denominazione_fornitore, anno_fabbricazione, numero_seriale,"
                     "categoria_inventoriale, catalogazione_materiale_strumentazione, peso, dimensioni,"
                     "ditta_costruttrice_fornitrice, note, "
@@ -918,6 +968,7 @@ def modifica(record_id: int, query_string: str = ""):
         responsabili=responsabili,
         img_list=img_list,
         boolean_fields=BOOLEAN_FIELDS,
+        choice_fields=CHOICE_FIELDS,
         peso_non_conforme=record["peso_non_conforme"],
         dimensioni_non_conforme=record["dimensioni_non_conforme"],
     )
@@ -957,6 +1008,7 @@ def modifica_multipla():
             "catena_del_freddo",
             "didattica",
             "collezione",
+            "gruppo_ricerca",
             "destinazione",
             "note",
         )
@@ -970,6 +1022,12 @@ def modifica_multipla():
             "collezione",
         ):
             nuovo_valore = nuovo_valore.upper() == "SI"
+        elif campo == "gruppo_ricerca":
+            try:
+                nuovo_valore = normalize_gruppo_ricerca(nuovo_valore)
+            except ValueError as exc:
+                flash(str(exc), "danger")
+                return redirect(url_for("search") + "?" + query_string)
 
         with engine.connect() as conn:
             for rid in record_ids:
@@ -1153,6 +1211,12 @@ def salva_modifiche(record_id):
     if data["responsabile_laboratorio"] == "altro":
         data["responsabile_laboratorio"] = data["nuovo_responsabile_laboratorio"]
 
+    try:
+        data["gruppo_ricerca"] = normalize_gruppo_ricerca(data.get("gruppo_ricerca"))
+    except ValueError as exc:
+        flash(str(exc), "danger")
+        return redirect(request.referrer or url_for("modifica", record_id=record_id))
+
     query = text(
         (
             "UPDATE inventario SET "
@@ -1162,6 +1226,7 @@ def salva_modifiche(record_id):
             "    num_inventario = :num_inventario, "
             "    num_inventario_ateneo = :num_inventario_ateneo, "
             "    data_carico = :data_carico, "
+            "    gruppo_ricerca = :gruppo_ricerca, "
             "    codice_sipi_torino = :codice_sipi_torino, "
             "    codice_sipi_grugliasco = :codice_sipi_grugliasco, "
             "    destinazione = :destinazione, "
@@ -1233,6 +1298,7 @@ def search():
         # "descrizione_inventario",
         "descrizione_bene",
         "responsabile_laboratorio",
+        "gruppo_ricerca",
         "collezione",
         "num_inventario",
         "num_inventario_ateneo",
@@ -1278,6 +1344,7 @@ def search():
             'quantita as "Quantità", '
             'descrizione_bene AS "Descrizione bene", '
             'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
+            "COALESCE(gruppo_ricerca, '') AS \"Gruppo ricerca\", "
             "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
             'codice_sipi_torino AS "Codice SIPI Torino", '
             'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
@@ -1325,6 +1392,23 @@ def search():
                             query += f" AND ({subquery})"
                             query_non_conforme += f" AND ({subquery})"
                             continue
+
+                    if field == "gruppo_ricerca":
+                        if value == "SENZA":
+                            query += f" AND ({field} = '' OR {field} IS NULL)"
+                            query_non_conforme += (
+                                f" AND ({field} = '' OR {field} IS NULL)"
+                            )
+                        else:
+                            try:
+                                value = normalize_gruppo_ricerca(value)
+                            except ValueError as exc:
+                                flash(str(exc), "danger")
+                                return redirect(url_for("search"))
+                            query += f" AND {field} = :{field}"
+                            query_non_conforme += f" AND {field} = :{field}"
+                            params[field] = value
+                        continue
 
                     if value == "SENZA":
                         # add senza Codice SIPI Torino
@@ -1421,6 +1505,7 @@ def search():
                         'quantita as "Quantità", '
                         'descrizione_bene AS "Descrizione bene",'
                         'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
+                        "COALESCE(gruppo_ricerca, '') AS \"Gruppo ricerca\","
                         "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
                         'peso AS "Peso singolo (Kg)", '
                         "CASE "
@@ -1512,6 +1597,7 @@ def search():
         fields=fields,
         query_string=query_string,
         boolean_fields=BOOLEAN_FIELDS,
+        choice_fields=CHOICE_FIELDS,
         columns=keys,
         n_beni_non_conformi=n_beni_non_conformi,
         doc_photo=doc_photo,
@@ -1701,6 +1787,7 @@ def tutti(mode: str = ""):
                     'quantita as "Quantità", '
                     'descrizione_bene AS "Descrizione bene", '
                     'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio", '
+                    "COALESCE(gruppo_ricerca, '') AS \"Gruppo ricerca\", "
                     "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
                     'codice_sipi_torino AS "Codice SIPI Torino", '
                     'codice_sipi_grugliasco AS "Codice SIPI Grugliasco", '
@@ -1775,6 +1862,7 @@ def view(record_id: int, query_string: str = ""):
                 "CASE WHEN collezione THEN 'SI' ELSE 'NO' END AS collezione,"
                 """quantita AS "Quantità", """
                 """responsabile_laboratorio AS "Responsabile del laboratorio/ufficio", """
+                """COALESCE(gruppo_ricerca, '') AS "Gruppo ricerca", """
                 """num_inventario AS "Numero di inventario", num_inventario_ateneo, data_carico,"""
                 """codice_sipi_torino AS "Codice SIPI Torino", codice_sipi_grugliasco AS "Codice SIPI Grugliasco", """
                 "destinazione AS Destinazione,"

@@ -48,6 +48,18 @@
                             </select>
 
 
+                            {% elif field in choice_fields %}
+                            <select class="input is-small" name="{{ field }}">
+                                <option value="" {% if request_args.get(field, '' )=='' %}selected{% endif %}>Tutti
+                                </option>
+                                <option value="SENZA" {% if request_args.get(field, '' )=='SENZA' %}selected{% endif %}>Senza gruppo
+                                </option>
+                                {% for option in choice_fields[field] %}
+                                <option value="{{ option }}" {% if request_args.get(field, '' )==option %}selected{% endif %}>{{ option }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
                             {% else %}
                             <input class="input is-small" type="text" name="{{ field }}"
                                 value="{{ request_args.get(field, '') }}"
@@ -138,6 +150,7 @@
                                 <div class="select">
                                     <select name="campo">
                                         <option value="responsabile_laboratorio">Responsabile laboratorio</option>
+                                        <option value="gruppo_ricerca">Gruppo ricerca</option>
                                         <option value="codice_sipi_torino">Codice SIPI Torino</option>
                                         <option value="codice_sipi_grugliasco">Codice SIPI Grugliasco</option>
                                         <option value="da_movimentare">Da movimentare</option>
