@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Filtra per gruppo ricerca</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+</head>
+
+<body>
+    <section class="section">
+        {% include "menu.html" %}
+
+        <div class="container">
+            <br /><br />
+
+            <h1 class="title is-4">Filtra per gruppo ricerca</h1>
+
+            ⚠️ indica un peso e/o delle dimensioni non conforme (solo per i
+            beni da fare trasportare)<br /><br /><br />
+
+            <div class="content">
+                <ul>
+                    <li>
+                        <a href="{{ url_for('search', gruppo_ricerca='SENZA') }}">Senza gruppo</a>
+                        {% if senza_gruppo.invalid_items_count %} ⚠️ {{
+                        senza_gruppo.invalid_items_count }} {% endif %}
+                    </li>
+                    <br />
+
+                    {% for gruppo in gruppi %}
+                    <li>
+                        <a href="{{ url_for('search', gruppo_ricerca=gruppo.gruppo_ricerca) }}">{{
+                            gruppo.gruppo_ricerca }}</a>
+                        {% if gruppo.n_beni %}<span class="has-text-grey">({{ gruppo.n_beni }})</span>{% endif %}
+                        {% if gruppo.invalid_items_count %} ⚠️ {{
+                        gruppo.invalid_items_count }} {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>
