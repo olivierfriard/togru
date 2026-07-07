@@ -1,6 +1,6 @@
 bind = "unix:/home/ofriard/togru/togru.sock"
 
-workers = 4
+workers = 1
 
 timeout = 360
 
