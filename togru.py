@@ -1291,7 +1291,7 @@ def salva_modifiche(record_id):
 
 
 @app.route(APP_ROOT + "/search", methods=["GET"])
-@check_login
+# @check_login
 def search():
     # Lista di tutti i campi su cui cercare
     fields = [
@@ -1607,7 +1607,7 @@ def search():
 
 
 @app.route(APP_ROOT + "/search_resp")
-@check_login
+# @check_login
 def search_resp():
     with engine.connect() as conn:
         results_responsabili = conn.execute(
@@ -1664,7 +1664,7 @@ def search_resp():
 
 
 @app.route(APP_ROOT + "/search_gruppo_ricerca")
-@check_login
+# @check_login
 def search_gruppo_ricerca():
     with engine.connect() as conn:
         gruppi = conn.execute(
@@ -1724,7 +1724,7 @@ def search_gruppo_ricerca():
 
 # book2
 @app.route(APP_ROOT + "/search_sipi_torino")
-@check_login
+# @check_login
 def search_sipi_torino():
     """
     Show list of clickable SIPI
@@ -1785,7 +1785,7 @@ def search_sipi_torino():
 
 
 @app.route(APP_ROOT + "/search_struttura")
-@check_login
+# @check_login
 def search_struttura():
     return render_template(
         "search_struttura.html",
@@ -1909,7 +1909,7 @@ def version():
 @app.route(APP_ROOT + "/view/<int:record_id>")
 @app.route(APP_ROOT + "/view/<int:record_id>/")
 @app.route(APP_ROOT + "/view/<int:record_id>/<path:query_string>")
-@check_login
+# @check_login
 def view(record_id: int, query_string: str = ""):
     """
     visualizza bene

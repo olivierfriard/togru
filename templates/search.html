@@ -12,12 +12,9 @@
 
         {% include "menu.html" %}
 
-
-
         <br><br>
 
         <h1 class="title is-4">Ricerca nell'inventario</h1>
-
 
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -52,10 +49,12 @@
                             <select class="input is-small" name="{{ field }}">
                                 <option value="" {% if request_args.get(field, '' )=='' %}selected{% endif %}>Tutti
                                 </option>
-                                <option value="SENZA" {% if request_args.get(field, '' )=='SENZA' %}selected{% endif %}>Senza gruppo
+                                <option value="SENZA" {% if request_args.get(field, '' )=='SENZA' %}selected{% endif %}>
+                                    Senza gruppo
                                 </option>
                                 {% for option in choice_fields[field] %}
-                                <option value="{{ option }}" {% if request_args.get(field, '' )==option %}selected{% endif %}>{{ option }}
+                                <option value="{{ option }}" {% if request_args.get(field, '' )==option %}selected{%
+                                    endif %}>{{ option }}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -116,6 +115,7 @@
 
         {# etichette multiple #}
         <br>
+        {% if 'email' in session %}
         <form method="post" action="{{ url_for('etichetta') }}" id="form_etichette_multiple">
 
             <div class="control">
@@ -188,7 +188,7 @@
         </div><!-- per nascondere -->
 
 
-
+        {% endif %}
 
 
 

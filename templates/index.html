@@ -219,7 +219,7 @@
             {% endif %}
             {% endwith %}
 
-            {% if session['email'] %}
+
             <section class="dashboard-hero">
                 <div class="columns is-vcentered is-variable is-6">
                     <div class="column is-8">
@@ -359,7 +359,7 @@
                         </div>
                     </div>
                 </div>
-
+                {% if 'email' in session %}
                 <div class="column is-12">
                     <div class="dashboard-history">
                         <div class="panel-heading-inline">
@@ -440,8 +440,9 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
+
 
         </div>
     </section>
