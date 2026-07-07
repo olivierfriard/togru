@@ -26,9 +26,11 @@ from markupsafe import Markup
 from requests_oauthlib import OAuth2Session
 from sqlalchemy import bindparam, create_engine, text
 
+import df_to_ods
+
 # from werkzeug.utils import secure_filename
 
-__version__ = "2026-04-28 14:48"
+__version__ = "2026-07-07 11:32"
 
 APP_ROOT = "/togru"
 
@@ -1576,10 +1578,18 @@ def search():
         spreadsheet_engine: Literal["xlsxwriter", "odf"] = (
             "xlsxwriter" if request.args.get("export", "").lower() == "xlsx" else "odf"
         )
-        with pd.ExcelWriter(output, engine=spreadsheet_engine) as writer:
-            df.to_excel(writer, index=False, sheet_name="Risultati")
-        output.seek(0)
+        if spreadsheet_engine == "xlsxwriter":
+            with pd.ExcelWriter(output, engine=spreadsheet_engine) as writer:
+                df.to_excel(writer, index=False, sheet_name="Risultati")
 
+        else:
+            output = df_to_ods.dataframe_to_ods(
+                df,
+                sheet_name="Risultati",
+                include_index=False,
+            )
+
+        output.seek(0)
         return send_file(
             output,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
