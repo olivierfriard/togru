@@ -1315,6 +1315,7 @@ def salva_modifiche(record_id):
 def search():
     # Lista di tutti i campi su cui cercare
     fields = [
+        "id",
         # "descrizione_inventario",
         "descrizione_bene",
         "responsabile_laboratorio",
@@ -1375,7 +1376,7 @@ def search():
             "FROM inventario "
             "WHERE deleted IS NULL "
         )
-        params: dict[str, str] = {}
+        params: dict[str, object] = {}
 
         query_non_conforme: str = (
             "SELECT count(*) FROM inventario "
@@ -1395,6 +1396,15 @@ def search():
             else:
                 value = request.args.get(field, "").strip()
                 if value:
+                    if field == "id":
+                        if not value.isdigit():
+                            flash("ID non valido", "danger")
+                            return redirect(url_for("search"))
+                        query += " AND id = :id"
+                        query_non_conforme += " AND id = :id"
+                        params["id"] = int(value)
+                        continue
+
                     # add senza responsabile
                     if field == "responsabile_laboratorio":
                         if value == "SENZA":

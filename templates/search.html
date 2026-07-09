@@ -59,6 +59,11 @@
                                 {% endfor %}
                             </select>
 
+                            {% elif field == 'id' %}
+                            <input class="input is-small" type="number" name="{{ field }}"
+                                value="{{ request_args.get(field, '') }}"
+                                placeholder="Cerca ID">
+
                             {% else %}
                             <input class="input is-small" type="text" name="{{ field }}"
                                 value="{{ request_args.get(field, '') }}"
