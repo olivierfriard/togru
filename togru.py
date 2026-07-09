@@ -763,6 +763,22 @@ def index():
             )
         ).scalar()
 
+        # n beni da fare movimentare senza codice SIPI di provenienza
+        n_beni_da_movimentare_senza_sipi_prov = conn.execute(
+            text(
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare IS TRUE AND trasporto_in_autonomia IS FALSE AND codice_sipi_torino = ''"
+            )
+        ).scalar()
+
+
+        # n beni da fare movimentare senza codice SIPI destinazione
+        n_beni_da_movimentare_senza_sipi_dest = conn.execute(
+            text(
+                "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare IS TRUE AND trasporto_in_autonomia IS FALSE AND codice_sipi_grugliasco = ''"
+            )
+        ).scalar()
+
+
     return render_template(
         "index.html",
         n_records=n_beni,
@@ -776,6 +792,8 @@ def index():
         catena_freddo=catena_freddo,
         peso_totale=peso_totale,
         volume_totale=volume_totale,
+        n_beni_da_movimentare_senza_sipi_dest=n_beni_da_movimentare_senza_sipi_dest,
+        n_beni_da_movimentare_senza_sipi_prov=n_beni_da_movimentare_senza_sipi_prov
     )
 
 
