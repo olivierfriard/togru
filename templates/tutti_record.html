@@ -21,7 +21,7 @@
 {% endif %}
 {% endwith %}
 
-<p class="subtitle is-5 mt-5">Numero totale beni: <b>{{ records|length }}</b></p>
+<p class="subtitle is-5 mt-5">Numero totale beni: <b>{{ n_beni }}</b></p>
 
 <a href="{{ url_for('tutti', mode='spreadsheet') }}" class="button  is-primary">Esporta in XLSX</a>
 
@@ -54,4 +54,3 @@
 
 </body>
 </html>
-

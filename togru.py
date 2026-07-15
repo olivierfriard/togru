@@ -1898,8 +1898,9 @@ def tutti(mode: str = ""):
             )
         )
         records = results.fetchall()
-
         columns = results.keys()
+
+        n_beni = conn.execute(text("SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL")).scalar()
 
     if mode == "spreadsheet":
         df = pd.DataFrame(records, columns=columns)
@@ -1932,6 +1933,7 @@ def tutti(mode: str = ""):
             query_string="tutti",
             columns=columns,
             doc_photo=doc_photo,
+            n_beni=n_beni
         )
 
 
