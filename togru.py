@@ -770,14 +770,12 @@ def index():
             )
         ).scalar()
 
-
         # n beni da fare movimentare senza codice SIPI destinazione
         n_beni_da_movimentare_senza_sipi_dest = conn.execute(
             text(
                 "SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL AND da_movimentare IS TRUE AND trasporto_in_autonomia IS FALSE AND codice_sipi_grugliasco = ''"
             )
         ).scalar()
-
 
     return render_template(
         "index.html",
@@ -793,7 +791,7 @@ def index():
         peso_totale=peso_totale,
         volume_totale=volume_totale,
         n_beni_da_movimentare_senza_sipi_dest=n_beni_da_movimentare_senza_sipi_dest,
-        n_beni_da_movimentare_senza_sipi_prov=n_beni_da_movimentare_senza_sipi_prov
+        n_beni_da_movimentare_senza_sipi_prov=n_beni_da_movimentare_senza_sipi_prov,
     )
 
 
@@ -1468,7 +1466,7 @@ def search():
         with engine.connect() as conn:
             n_beni_non_conformi: int = conn.execute(sql_non_conforme, params).scalar()
 
-        print(f"{query=}")
+        # print(f"{query=}")
 
         sql = text(query)
         with engine.connect() as conn:
@@ -1534,6 +1532,7 @@ def search():
                         "SELECT id, "
                         'quantita as "Quantità", '
                         'descrizione_bene AS "Descrizione bene",'
+                        'numero_seriale AS "Numero seriale",'
                         'responsabile_laboratorio AS "Responsabile Laboratorio / Ufficio",'
                         "COALESCE(gruppo_ricerca, '') AS \"Gruppo ricerca\","
                         "da_movimentare, catena_del_freddo, trasporto_in_autonomia, microscopia, alta_specialistica, collezione, "
@@ -1900,7 +1899,9 @@ def tutti(mode: str = ""):
         records = results.fetchall()
         columns = results.keys()
 
-        n_beni = conn.execute(text("SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL")).scalar()
+        n_beni = conn.execute(
+            text("SELECT SUM(quantita) FROM inventario WHERE deleted IS NULL")
+        ).scalar()
 
     if mode == "spreadsheet":
         df = pd.DataFrame(records, columns=columns)
@@ -1933,7 +1934,7 @@ def tutti(mode: str = ""):
             query_string="tutti",
             columns=columns,
             doc_photo=doc_photo,
-            n_beni=n_beni
+            n_beni=n_beni,
         )
 
 
